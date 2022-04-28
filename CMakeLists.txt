@@ -1,0 +1,22 @@
+# 指定CMake编译最低要求版本
+CMAKE_MINIMUM_REQUIRED(VERSION 3.14)
+# 给项目命名
+PROJECT(CMAKE_BASH)
+# 收集c/c++文件并赋值给变量SRC_LIST_CPP  ${PROJECT_SOURCE_DIR}代表区当前项目录
+FILE(GLOB SRC_LIST_C_2 ${PROJECT_SOURCE_DIR}/src/readline/*.c)
+FILE(GLOB SRC_LIST_C ${PROJECT_SOURCE_DIR}/src/*.c)
+FILE(GLOB SRC_LIST_DEF ${PROJECT_SOURCE_DIR}/src/*.def)
+SET(SRC ${SRC_LIST_C_2} ${SRC_LIST_C} ${SRC_LIST_DEF})
+# 指定头文件目录
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include)
+
+add_definitions("-Wall -g")
+# 指定生成库文件的目录
+#SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+# 取变量SRC_LIST_CPP 与 SRC_LIST_C的值
+# 指定生成libmyprint 动态库（默认为静态库）
+# SHARED指定生成库类型为动态库 STATIC为静态库
+ADD_LIBRARY(BASH_SHARED SHARED ${SRC})
+#add_executable(test ${SRC})
+# TARGET_LINK_LIBRARIES(test dl)
+TARGET_LINK_LIBRARIES(BASH_SHARED dl)

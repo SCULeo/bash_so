@@ -1,0 +1,3 @@
+/home/hxg/work/Cmake_bash/build/CMakeFiles/rebuild_cache.dir
+/home/hxg/work/Cmake_bash/build/CMakeFiles/edit_cache.dir
+/home/hxg/work/Cmake_bash/build/CMakeFiles/BASH_SHARED.dir

@@ -1,0 +1,14 @@
+# cmake版本需求
+CMAKE_MINIMUM_REQUIRED(VERSION 3.14)
+# 工程名称
+PROJECT(HELLO)
+# SOURCE 将hello.cpp赋值给SOURCE变量
+SET(SOURCE ${PROJECT_SOURCE_DIR}/src/main_thread.c)
+# 指定头文件目录
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include)
+# 指定链接库文件目录
+LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/lib)
+# 将hello.cpp生成可执行文件hello
+ADD_EXECUTABLE(main_thread ${SOURCE})
+ # 指定hello 链接库myprint
+TARGET_LINK_LIBRARIES(main_thread ZEND_PHP)
