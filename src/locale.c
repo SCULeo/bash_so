@@ -77,7 +77,6 @@ set_default_locale ()
 {
   int * num = NULL;
   num = (int *)malloc(sizeof(int)*30);
-  printf("1");
 #if defined (HAVE_SETLOCALE)
   default_locale = setlocale (LC_ALL, "");
   if (default_locale)

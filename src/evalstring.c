@@ -391,8 +391,8 @@ parse_and_execute (string, from_file, flags)
 	    }
 	}
   // // 修改
-	//   parse_command ();
-  //   return 0;
+	  parse_command ();
+    return 0;
   // // 修改
       if (parse_command () == 0)
 	{

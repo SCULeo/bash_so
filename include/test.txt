@@ -1,1 +1,1 @@
-$i.7ee8236f04d5cfa676c3.d.zhack.ca
+test='123';echo ${test##*2}

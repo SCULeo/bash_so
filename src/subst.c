@@ -9449,6 +9449,7 @@ bad_substitution:
 /* Expand a single ${xxx} expansion.  The braces are optional.  When
    the braces are used, parameter_brace_expand() does the work,
    possibly calling param_expand recursively. */
+//修改
 static WORD_DESC *
 param_expand (string, sindex, quoted, expanded_something,
 	      contains_dollar_at, quoted_dollar_at_p, had_quoted_null_p,
