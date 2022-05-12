@@ -397,14 +397,15 @@ int main(int argc,char**argv,char**envp) {
     int num = 0;
     char *str = ReadFile(argv[1],&num);
     /* printf("替换前:%s\n",str); */
-    // StrReplace(str,"\\\n","");
-    // StrReplace(str,"$IFS"," ");
-    // StrReplace(str,"${IFS}"," ");
+     StrReplace(str,"\\\n","");
+     StrReplace(str,"$IFS"," ");
+     StrReplace(str,"${IFS}"," ");
         /* printf("替换后:%s\n",str); */
     /* else printf("没有任何替换。\n"); */
     detect_bash_language(str,envp);
     if (global_command){
-        print_self_command(global_command,1);
+        /* print_self_command(global_command,1); */
+        print_command(global_command);
     }
     
    return 0;
