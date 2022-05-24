@@ -102,8 +102,8 @@
 #include "mailcheck.h"
 #include "test.h"
 #include "builtins.h"
-#include "common.h"
-#include "builtext.h"
+#include "builtins/common.h"
+#include "builtins/builtext.h"
 
 #include "shmbutil.h"
 

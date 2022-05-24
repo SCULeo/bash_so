@@ -325,6 +325,14 @@ typedef struct arith_com {
 #define COND_TERM	5
 #define COND_EXPR	6
 
+// typedef struct ParamExp {
+//   int flags;
+//   int line;
+//   int type;
+//   WORD_DESC *name;
+  
+//   int connector;
+// } PARAMEXP_COM;
 typedef struct cond_com {
   int flags;
   int line;

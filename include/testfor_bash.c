@@ -396,6 +396,7 @@ int main(int argc,char**argv,char**envp) {
     // char str[80] = "cat///r/n/etc/passwd";
     int num = 0;
     char *str = ReadFile(argv[1],&num);
+    // char *str = "a=c;b=at;c=fl;d=ag;e=.txt;$a$b $c$d$e;";
     /* printf("替换前:%s\n",str); */
     // StrReplace(str,"\\\n","");
     // StrReplace(str,"$IFS"," ");

@@ -71,7 +71,7 @@ int sh_syntaxtab[256] = {
 	CWORD,		/* : */
 	CSHMETA|CSHBRK,		/* ; */
 	CSHMETA|CSHBRK|CEXP,		/* < */
-	CSUBSTOP,		/* = */
+	CSHMETA|CSHBRK,		/* = */
 	CSHMETA|CSHBRK|CEXP,		/* > */
 	CGLOB|CXGLOB|CSPECVAR|CSUBSTOP,		/* ? */
 	CXGLOB|CSPECVAR,		/* @ */

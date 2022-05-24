@@ -373,7 +373,7 @@ static FILE *yyerrstream;
 
 %start inputunit
 
-%left '&' ';' '\n' yacc_EOF
+%left '&' '=' ';' '\n' yacc_EOF
 %left AND_AND OR_OR
 %right '|' BAR_AND
 %%
@@ -1117,6 +1117,13 @@ list0:  	list1 '\n' newline_list
 			  else
 			    $$ = command_connect ($1, (COMMAND *)NULL, '&');
 			}
+	|	list1 '=' newline_list
+			{
+			  if ($1->type == cm_connection)
+			    $$ = connect_async_list ($1, (COMMAND *)NULL, '=');
+			  else
+			    $$ = command_connect ($1, (COMMAND *)NULL, '=');
+			}
 	|	list1 ';' newline_list
 
 	;
@@ -1131,6 +1138,13 @@ list1:		list1 AND_AND newline_list list1
 			    $$ = connect_async_list ($1, $4, '&');
 			  else
 			    $$ = command_connect ($1, $4, '&');
+			}
+	|	list1 '=' newline_list list1
+			{
+			  if ($1->type == cm_connection)
+			    $$ = connect_async_list ($1, $4, '=');
+			  else
+			    $$ = command_connect ($1, $4, '=');
 			}
 	|	list1 ';' newline_list list1
 			{ $$ = command_connect ($1, $4, ';'); }
@@ -1191,6 +1205,22 @@ simple_list:	simple_list1
 			      YYACCEPT;
 			    }
 			}
+	|	simple_list1 '='
+			{
+			  if ($1->type == cm_connection)
+			    $$ = connect_async_list ($1, (COMMAND *)NULL, '=');
+			  else
+			    $$ = command_connect ($1, (COMMAND *)NULL, '=');
+			  if (need_here_doc)
+			    gather_here_documents ();
+			  if ((parser_state & PST_CMDSUBST) && current_token == shell_eof_token)
+			    {
+			      global_command = $1;
+			      eof_encountered = 0;
+			      rewind_input_string ();
+			      YYACCEPT;
+			    }
+			}
 	|	simple_list1 ';'
 			{
 			  $$ = $1;
@@ -1216,6 +1246,13 @@ simple_list1:	simple_list1 AND_AND newline_list simple_list1
 			    $$ = connect_async_list ($1, $3, '&');
 			  else
 			    $$ = command_connect ($1, $3, '&');
+			}
+	|	simple_list1 '=' simple_list1
+			{
+			  if ($1->type == cm_connection)
+			    $$ = connect_async_list ($1, $3, '=');
+			  else
+			    $$ = command_connect ($1, $3, '=');
 			}
 	|	simple_list1 ';' simple_list1
 			{ $$ = command_connect ($1, $3, ';'); }
@@ -2219,6 +2256,7 @@ STRING_INT_ALIST other_token_alist[] = {
   { ")", ')' },
   { "|", '|' },
   { "&", '&' },
+  { "=", '=' },
   { "newline", '\n' },
   { (char *)NULL, 0}
 };
@@ -3016,6 +3054,7 @@ time_command_acceptable ()
     case AND_AND:
     case OR_OR:
     case '&':
+	case '=':
     case WHILE:
     case DO:
     case UNTIL:
@@ -5255,37 +5294,37 @@ read_token_word (character)
 	  goto next_character;
         }
       /* Identify possible compound array variable assignment. */
-      else if MBTEST(character == '=' && token_index > 0 && (assignment_acceptable (last_read_token) || (parser_state & PST_ASSIGNOK)) && token_is_assignment (token, token_index))
-	{
-	  peek_char = shell_getc (1);
-	  if MBTEST(peek_char == '(')		/* ) */
-	    {
-	      ttok = parse_compound_assignment (&ttoklen);
+//       else if MBTEST(character == '=' && token_index > 0 && (assignment_acceptable (last_read_token) || (parser_state & PST_ASSIGNOK)) && token_is_assignment (token, token_index))
+// 	{
+// 	  peek_char = shell_getc (1);
+// 	  if MBTEST(peek_char == '(')		/* ) */
+// 	    {
+// 	      ttok = parse_compound_assignment (&ttoklen);
 
-	      RESIZE_MALLOCED_BUFFER (token, token_index, ttoklen + 4,
-				      token_buffer_size,
-				      TOKEN_DEFAULT_GROW_SIZE);
+// 	      RESIZE_MALLOCED_BUFFER (token, token_index, ttoklen + 4,
+// 				      token_buffer_size,
+// 				      TOKEN_DEFAULT_GROW_SIZE);
 
-	      token[token_index++] = '=';
-	      token[token_index++] = '(';
-	      if (ttok)
-		{
-		  strcpy (token + token_index, ttok);
-		  token_index += ttoklen;
-		}
-	      token[token_index++] = ')';
-	      FREE (ttok);
-	      all_digit_token = 0;
-	      compound_assignment = 1;
-#if 1
-	      goto next_character;
-#else
-	      goto got_token;		/* ksh93 seems to do this */
-#endif
-	    }
-	  else
-	    shell_ungetc (peek_char);
-	}
+// 	      token[token_index++] = '=';
+// 	      token[token_index++] = '(';
+// 	      if (ttok)
+// 		{
+// 		  strcpy (token + token_index, ttok);
+// 		  token_index += ttoklen;
+// 		}
+// 	      token[token_index++] = ')';
+// 	      FREE (ttok);
+// 	      all_digit_token = 0;
+// 	      compound_assignment = 1;
+// #if 1
+// 	      goto next_character;
+// #else
+// 	      goto got_token;		/* ksh93 seems to do this */
+// #endif
+// 	    }
+// 	  else
+// 	    shell_ungetc (peek_char);
+// 	}
 #endif
 
       /* When not parsing a multi-character word construct, shell meta-
@@ -5295,6 +5334,11 @@ read_token_word (character)
 	  shell_ungetc (character);
 	  goto got_token;
 	}
+	  if (character=='=')
+	  {
+		  shell_ungetc (character);
+	  	  goto got_token;
+	  }
 
 got_character:
       if (character == CTLESC || character == CTLNUL)
@@ -5470,6 +5514,7 @@ reserved_word_acceptable (toksym)
     case ')':
     case '|':
     case '&':
+	case '=':
     case '{':
     case '}':		/* XXX */
     case AND_AND:
