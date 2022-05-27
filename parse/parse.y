@@ -53,8 +53,8 @@
 #include "mailcheck.h"
 #include "test.h"
 #include "builtins.h"
-#include "builtins/common.h"
-#include "builtins/builtext.h"
+#include "common.h"
+#include "builtext.h"
 
 #include "shmbutil.h"
 
@@ -373,9 +373,9 @@ static FILE *yyerrstream;
 
 %start inputunit
 
-%left '&' '=' ';' '\n' yacc_EOF
+%left '&' ';' '\n'  yacc_EOF
 %left AND_AND OR_OR
-%right '|' BAR_AND
+%right '|' BAR_AND '='
 %%
 
 inputunit:	simple_list simple_list_terminator
@@ -3513,6 +3513,8 @@ itrace("shell_getc: bash_input.location.string = `%s'", bash_input.location.stri
 	return (character);
     }
 
+
+	
   /* Hack <&- (close stdin) case.  Also <&N- (dup and close). */
   if MBTEST(character == '-' && (last_read_token == LESS_AND || last_read_token == GREATER_AND))
     return (character);
@@ -5019,7 +5021,6 @@ read_token_word (character)
 {
   /* The value for YYLVAL when a WORD is read. */
   WORD_DESC *the_word;
-
   /* Index into the token that we are building. */
   int token_index;
 
@@ -5046,6 +5047,22 @@ read_token_word (character)
   char *ttok, *ttrans;
   int ttoklen, ttranslen;
   intmax_t lvalue;
+
+  /*self_flag*/
+  /* variable_substitution becomes non-zero if we see a ${}. */
+  int  variable_substitution=0;
+
+  /* command_substitution becomes non-zero if we see a $(). */
+  int command_substitution = 0;
+
+	/* process_substitution becomes non-zero if we see a <(). */
+  int process_substitution = 0;
+
+   /*brace becomes non-zero if we see a <().*/
+   int brace = 0;
+
+   /*arithmetic_substitution becomes non-zero if we see a $(()).*/
+   int arithmetic_substitution = 0;
 
   if (token_buffer_size < TOKEN_DEFAULT_INITIAL_SIZE)
     token = (char *)xrealloc (token, token_buffer_size = TOKEN_DEFAULT_INITIAL_SIZE);
@@ -5093,7 +5110,6 @@ read_token_word (character)
 	      goto got_character;
 	    }
 	}
-
       /* Parse a matched pair of quote characters. */
       if MBTEST(shellquote (character))
 	{
@@ -5172,13 +5188,59 @@ read_token_word (character)
 	 the shell expansions that must be read as a single word. */
       if (shellexp (character))
 	{
-	  peek_char = shell_getc (1);
+	  peek_char = shell_getc(1);
+	  int peek_char_2;
+	  int peek_char_3;
+	  if (character=='$')
+	  {
+		  peek_char_2 = shell_getc(1);
+		  peek_char_3 = shell_getc(1);
+		  if (peek_char=='I'&&peek_char_2=='F'&&peek_char_3=='S')
+		  {
+			if (token_index>0)
+			{
+				shell_ungetc (peek_char_3);
+			  shell_ungetc (peek_char_2);
+			  shell_ungetc (peek_char);
+			  shell_ungetc (character);
+			  goto got_token;
+			}
+			token[token_index++]=character;
+			token[token_index++]=peek_char;
+			token[token_index++]=peek_char_2;
+	  		token[token_index++]=peek_char_3;
+			goto got_token;
+		  }else{
+			  shell_ungetc (peek_char_3);
+			  shell_ungetc (peek_char_2);
+			  
+		  }
+	  }
 	  /* $(...), <(...), >(...), $((...)), ${...}, and $[...] constructs */
 	  if MBTEST(peek_char == '(' ||
 		((peek_char == '{' || peek_char == '[') && character == '$'))	/* ) ] } */
 	    {
 	      if (peek_char == '{')		/* } */
-		ttok = parse_matched_pair (cd, '{', '}', &ttoklen, P_FIRSTCLOSE|P_DOLBRACE);
+		  {
+			  if (token_index>0)
+			  {
+				  shell_ungetc (peek_char);
+				  shell_ungetc (character);
+				  goto got_token;
+			  }
+			  ttok = parse_matched_pair (cd, '{', '}', &ttoklen, P_FIRSTCLOSE|P_DOLBRACE);
+			  if (ttok!=""&&character=='$')
+			  {
+				  variable_substitution = 1;
+				  token[token_index++]=character;
+				  token[token_index++]=peek_char;
+				  strcpy (token + token_index, ttok);
+	  			  token_index += ttoklen;
+				  goto got_token;
+			  }
+			  
+		  }
+		
 	      else if (peek_char == '(')		/* ) */
 		{
 		  /* XXX - push and pop the `(' as a delimiter for use by
@@ -5186,14 +5248,49 @@ read_token_word (character)
 		     appearing in the $(...) string get added to the
 		     history literally rather than causing a possibly-
 		     incorrect `;' to be added. ) */
+			if (token_index>0)
+			  {
+				  shell_ungetc (peek_char);
+				  shell_ungetc (character);
+				  goto got_token;
+			  }
 		  push_delimiter (dstack, peek_char);
 		  ttok = parse_comsub (cd, '(', ')', &ttoklen, P_COMMAND);
 		  pop_delimiter (dstack);
+		  
+		  if (ttok!=""&&(character=='$'))
+			  {
+				  
+				  token[token_index++]=character;
+				  token[token_index++]=peek_char;
+				  strcpy (token + token_index, ttok);
+	  			  token_index += ttoklen;
+				  if (token[2]=='(')
+				  {
+					  arithmetic_substitution = 1;
+				  }else{
+					  command_substitution = 1;
+				  }
+				  goto got_token;
+			  }
+		  if (ttok!=""&&(character=='<'||character=='>')&&token_index==0)
+			  {
+				  process_substitution = 1;
+				  token[token_index++]=character;
+				  token[token_index++]=peek_char;
+				  strcpy (token + token_index, ttok);
+	  			  token_index += ttoklen;
+				  goto got_token;
+			  }
 		}
 	      else
 		ttok = parse_matched_pair (cd, '[', ']', &ttoklen, 0);
 	      if (ttok == &matched_pair_error)
 		return -1;		/* Bail immediately. */
+		if (character =='$')
+		{
+			arithmetic_substitution = 1;
+		}
 	      RESIZE_MALLOCED_BUFFER (token, token_index, ttoklen + 3,
 				      token_buffer_size,
 				      TOKEN_DEFAULT_GROW_SIZE);
@@ -5271,7 +5368,11 @@ read_token_word (character)
 	  else
 	    shell_ungetc (peek_char);
 	}
-
+	else if (character=='=')
+	  {
+		  shell_ungetc (character);
+	  	  goto got_token;
+	  }
 #if defined (ARRAY_VARS)
       /* Identify possible array subscript assignment; match [...].  If
 	 parser_state&PST_COMPASSIGN, we need to parse [sub]=words treating
@@ -5294,39 +5395,54 @@ read_token_word (character)
 	  goto next_character;
         }
       /* Identify possible compound array variable assignment. */
-//       else if MBTEST(character == '=' && token_index > 0 && (assignment_acceptable (last_read_token) || (parser_state & PST_ASSIGNOK)) && token_is_assignment (token, token_index))
-// 	{
-// 	  peek_char = shell_getc (1);
-// 	  if MBTEST(peek_char == '(')		/* ) */
-// 	    {
-// 	      ttok = parse_compound_assignment (&ttoklen);
+      else if MBTEST(character == '=' && token_index > 0 && (assignment_acceptable (last_read_token) || (parser_state & PST_ASSIGNOK)) && token_is_assignment (token, token_index))
+	{
+	  peek_char = shell_getc (1);
+	  if MBTEST(peek_char == '(')		/* ) */
+	    {
+	      ttok = parse_compound_assignment (&ttoklen);
 
-// 	      RESIZE_MALLOCED_BUFFER (token, token_index, ttoklen + 4,
-// 				      token_buffer_size,
-// 				      TOKEN_DEFAULT_GROW_SIZE);
+	      RESIZE_MALLOCED_BUFFER (token, token_index, ttoklen + 4,
+				      token_buffer_size,
+				      TOKEN_DEFAULT_GROW_SIZE);
 
-// 	      token[token_index++] = '=';
-// 	      token[token_index++] = '(';
-// 	      if (ttok)
-// 		{
-// 		  strcpy (token + token_index, ttok);
-// 		  token_index += ttoklen;
-// 		}
-// 	      token[token_index++] = ')';
-// 	      FREE (ttok);
-// 	      all_digit_token = 0;
-// 	      compound_assignment = 1;
-// #if 1
-// 	      goto next_character;
-// #else
-// 	      goto got_token;		/* ksh93 seems to do this */
-// #endif
-// 	    }
-// 	  else
-// 	    shell_ungetc (peek_char);
-// 	}
+	      token[token_index++] = '=';
+	      token[token_index++] = '(';
+	      if (ttok)
+		{
+		  strcpy (token + token_index, ttok);
+		  token_index += ttoklen;
+		}
+	      token[token_index++] = ')';
+	      FREE (ttok);
+	      all_digit_token = 0;
+	      compound_assignment = 1;
+#if 1
+	      goto next_character;
+#else
+	      goto got_token;		/* ksh93 seems to do this */
 #endif
-
+	    }
+	  else
+	    shell_ungetc (peek_char);
+	}
+#endif
+	 if (character == '{')		/* } */
+		  {
+			  if (token_index>0)
+			  {
+				  shell_ungetc (character);
+				  goto got_token;
+			  }
+			  ttok = parse_matched_pair (cd, '{', '}', &ttoklen, P_FIRSTCLOSE|P_DOLBRACE);
+			  brace = 1;
+			  token[token_index++]=character;
+			  strcpy (token + token_index, ttok);
+	  		  token_index += ttoklen;
+			  goto got_token;
+			  
+			  
+		  }
       /* When not parsing a multi-character word construct, shell meta-
 	 characters break words. */
       if MBTEST(shellbreak (character))
@@ -5334,11 +5450,7 @@ read_token_word (character)
 	  shell_ungetc (character);
 	  goto got_token;
 	}
-	  if (character=='=')
-	  {
-		  shell_ungetc (character);
-	  	  goto got_token;
-	  }
+	 
 
 got_character:
       if (character == CTLESC || character == CTLNUL)
@@ -5421,8 +5533,16 @@ got_token:
   the_word->word = (char *)xmalloc (1 + token_index);
   the_word->flags = 0;
   strcpy (the_word->word, token);
-  if (dollar_present)
-    the_word->flags |= W_HASDOLLAR;
+  if (brace)
+	the_word->self_flags = W_BRACE;
+  if(process_substitution)
+	the_word->self_flags = W_PROCESS_SUBSTITUTION;
+  if (arithmetic_substitution)
+	the_word->self_flags = W_ARITHMETIC_SUBSTITUTION;
+  if(command_substitution)
+	the_word->self_flags = W_COMMAND_SUBSTITUTION;
+  if(variable_substitution)
+	the_word->self_flags = W_VARIABLE_SUBSTITUTION;
   if (quoted)
     the_word->flags |= W_QUOTED;		/*(*/
   if (compound_assignment && token[token_index-1] == ')')
