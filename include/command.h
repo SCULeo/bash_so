@@ -73,6 +73,25 @@ enum command_type { cm_for, cm_case, cm_while, cm_if, cm_simple, cm_select,
 		    cm_connection, cm_function_def, cm_until, cm_group,
 		    cm_arith, cm_cond, cm_arith_for, cm_subshell, cm_coproc };
 
+/* Possible values for the `self_flags' field of a WORD_DESC. */
+enum self_flag_type{
+  W_VARIABLE_SUBSTITUTION=1,
+  W_PROCESS_SUBSTITUTION,
+  W_BRACE,
+  W_COMMAND_SUBSTITUTION,
+  W_ARITHMETIC_SUBSTITUTION,
+  W_SEPARATOR
+};
+
+
+
+
+
+
+
+
+
+
 /* Possible values for the `flags' field of a WORD_DESC. */
 #define W_HASDOLLAR	(1 << 0)	/* Dollar sign present. */
 #define W_QUOTED	(1 << 1)	/* Some form of quote character is present. */
@@ -131,6 +150,7 @@ enum command_type { cm_for, cm_case, cm_while, cm_if, cm_simple, cm_select,
 typedef struct word_desc {
   char *word;		/* Zero terminated string. */
   int flags;		/* Flags associated with this word. */
+  int self_flags;
 } WORD_DESC;
 
 /* A linked list of words. */

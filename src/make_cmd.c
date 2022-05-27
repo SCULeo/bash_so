@@ -76,6 +76,7 @@ alloc_word_desc ()
   ocache_alloc (wdcache, WORD_DESC, temp);
   temp->flags = 0;
   temp->word = 0;
+  temp->self_flags = 0;
   return temp;
 }
 
@@ -124,10 +125,29 @@ make_word_flags (w, string)
 	  w->flags |= W_QUOTED;
 	  break;
 	}
-
-      ADVANCE_CHAR (string, slen, i);
-    }
-
+  ADVANCE_CHAR (string, slen, i);
+}
+  w->self_flags = 0;
+  i = 0;
+  while (i < slen)
+    {
+      switch (string[i])
+	{
+    case '$':
+      if (i+1<slen&&string[i]=='{')
+      {
+        w->self_flags = W_COMMAND_SUBSTITUTION;
+      }
+      break;
+    case '<':
+      if (i+1<slen&&string[i]=='(')
+      {
+        w->self_flags = W_PROCESS_SUBSTITUTION;
+      }
+      break;
+	  }
+    ADVANCE_CHAR (string, slen, i);
+  }
   return (w);
 }
 

@@ -57,6 +57,7 @@ void print_tab(int num)
         printf("    ");
     }
 }
+char* self_flags_type[] ={"NULL","variable substitution","process substitution","brace","command substitution","arithmetic substitution","separator"};
 char* command_type[] ={"cm_for","cm_case", "cm_while", "cm_if", "cm_simple", "cm_select",
 		    "cm_connection", "cm_function_def", "cm_until", "cm_group",
 		    "cm_arith", "cm_cond", "cm_arith_for", "cm_subshell", "cm_coproc"};
@@ -102,6 +103,8 @@ void print_word_desc(WORD_DESC*name,int num){
     print_tab(num+1);
     printf("word:%s\n",name->word);
     print_tab(num+1);
+    printf("self_flags:%s\n",self_flags_type[name->self_flags]);
+    print_tab(num);
     printf("flags:%d\n",name->flags);
     print_tab(num);
     printf("}\n");
@@ -117,6 +120,8 @@ void print_WORD_LIST(WORD_LIST*map_list,int num){
         printf("{\n");
         print_tab(num+2);
         printf("word:%s\n",temp->word->word);
+        print_tab(num+2);
+        printf("self_flags:%s\n",self_flags_type[temp->word->self_flags]);
         print_tab(num+2);
         printf("flags:%d\n",temp->word->flags);
         temp = temp->next;
