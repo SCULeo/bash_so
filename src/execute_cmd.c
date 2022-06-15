@@ -54,7 +54,7 @@
 #include <errno.h>
 
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif
 
 #define NEED_FPURGE_DECL
@@ -196,32 +196,32 @@ static int execute_intern_function PARAMS((WORD_DESC *, FUNCTION_DEF *));
 
 /* Set to 1 if fd 0 was the subject of redirection to a subshell.  Global
    so that reader_loop can set it to zero before executing a command. */
-int stdin_redir;
+__thread int stdin_redir;
 
 /* The name of the command that is currently being executed.
    `test' needs this, for example. */
-char *this_command_name;
+__thread char *this_command_name;
 
 /* The printed representation of the currently-executing command (same as
    the_printed_command), except when a trap is being executed.  Useful for
    a debugger to know where exactly the program is currently executing. */
-char *the_printed_command_except_trap;
+__thread char *the_printed_command_except_trap;
 
 /* For catching RETURN in a function. */
-int return_catch_flag;
-int return_catch_value;
+__thread int return_catch_flag;
+__thread int return_catch_value;
 procenv_t return_catch;
 
 /* The value returned by the last synchronous command. */
-volatile int last_command_exit_value;
+__thread volatile int last_command_exit_value;
 
 /* Whether or not the last command (corresponding to last_command_exit_value)
    was terminated by a signal, and, if so, which one. */
-int last_command_exit_signal;
+__thread int last_command_exit_signal;
 
 /* Are we currently ignoring the -e option for the duration of a builtin's
    execution? */
-int builtin_ignoring_errexit = 0;
+__thread int builtin_ignoring_errexit = 0;
 
 /* The list of redirections to perform which will undo the redirections
    that I made in the shell. */
@@ -234,30 +234,30 @@ REDIRECT *exec_redirection_undo_list = (REDIRECT *)NULL;
 
 /* When greater than zero, value is the `level' of builtins we are
    currently executing (e.g. `eval echo a' would have it set to 2). */
-int executing_builtin = 0;
+__thread int executing_builtin = 0;
 
 /* Non-zero if we are executing a command list (a;b;c, etc.) */
-int executing_list = 0;
+__thread int executing_list = 0;
 
 /* Non-zero if failing commands in a command substitution should not exit the
    shell even if -e is set.  Used to pass the CMD_IGNORE_RETURN flag down to
    commands run in command substitutions by parse_and_execute. */
-int comsub_ignore_return = 0;
+__thread int comsub_ignore_return = 0;
 
 /* Non-zero if we have just forked and are currently running in a subshell
    environment. */
-int subshell_environment;
+__thread int subshell_environment;
 
 /* Count of nested subshells, like SHLVL.  Available via $BASH_SUBSHELL */
-int subshell_level = 0;
+__thread int subshell_level = 0;
 
 /* Currently-executing shell function. */
-SHELL_VAR *this_shell_function;
+__thread SHELL_VAR *this_shell_function;
 
 /* If non-zero, matches in case and [[ ... ]] are case-insensitive */
-int match_ignore_case = 0;
+//  int match_ignore_case = 0;
 
-int executing_command_builtin = 0;
+__thread int executing_command_builtin = 0;
 
 struct stat SB;		/* used for debugging */
 
@@ -277,19 +277,19 @@ static int connection_count;
 
 /* $LINENO ($BASH_LINENO) for use by an ERR trap.  Global so parse_and_execute
    can save and restore it. */
-int line_number_for_err_trap;
+__thread int line_number_for_err_trap;
 
 /* A sort of function nesting level counter */
-int funcnest = 0;
-int funcnest_max = 0;
+__thread int funcnest = 0;
+__thread int funcnest_max = 0;
 
-int evalnest = 0;
-int evalnest_max = EVALNEST_MAX;
+__thread int evalnest = 0;
+__thread int evalnest_max = EVALNEST_MAX;
 
-int sourcenest = 0;
-int sourcenest_max = SOURCENEST_MAX;
+__thread int sourcenest = 0;
+__thread int sourcenest_max = SOURCENEST_MAX;
 
-volatile int from_return_trap = 0;
+__thread volatile int from_return_trap = 0;
 
 int lastpipe_opt = 0;
 
@@ -5739,7 +5739,7 @@ initialize_subshell ()
 #if defined (HISTORY)
   /* Forget about the history lines we have read.  This is a non-interactive
      subshell. */
-  history_lines_this_session = 0;
+  // history_lines_this_session = 0;
 #endif
 
   /* Forget about the way job control was working. We are in a subshell. */

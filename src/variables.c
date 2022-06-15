@@ -67,14 +67,14 @@
 
 #if defined (READLINE)
 #  include "bashline.h"
-#  include <readline/readline.h>
+#  include <readline.h>
 #else
 #  include <tilde/tilde.h>
 #endif
 
 #if defined (HISTORY)
 #  include "bashhist.h"
-#  include <readline/history.h>
+#  include <history.h>
 #endif /* HISTORY */
 
 #if defined (PROGRAMMABLE_COMPLETION)
@@ -145,8 +145,8 @@ int tempenv_assign_error;
 /* Some funky variables which are known about specially.  Here is where
    "$*", "$1", and all the cruft is kept. */
 char *dollar_vars[10];
-WORD_LIST *rest_of_args = (WORD_LIST *)NULL;
-int posparam_count = 0;
+__thread WORD_LIST *rest_of_args = (WORD_LIST *)NULL;
+__thread int posparam_count = 0;
 
 /* The value of $$. */
 pid_t dollar_dollar_pid;
@@ -591,18 +591,18 @@ initialize_shell_variables (env, privmode)
   if (temp_var && imported_p (temp_var))
     sv_strict_posix (temp_var->name);
 
-#if defined (HISTORY)
-  /* Set history variables to defaults, and then do whatever we would
-     do if the variable had just been set.  Do this only in the case
-     that we are remembering commands on the history list. */
-  if (remember_on_history)
-    {
-      name = bash_tilde_expand (posixly_correct ? "~/.sh_history" : "~/.bash_history", 0);
+// #if defined (HISTORY)
+//   /* Set history variables to defaults, and then do whatever we would
+//      do if the variable had just been set.  Do this only in the case
+//      that we are remembering commands on the history list. */
+//   if (remember_on_history)
+//     {
+//       name = bash_tilde_expand (posixly_correct ? "~/.sh_history" : "~/.bash_history", 0);
 
-      set_if_not ("HISTFILE", name);
-      free (name);
-    }
-#endif /* HISTORY */
+//       set_if_not ("HISTFILE", name);
+//       free (name);
+//     }
+// #endif /* HISTORY */
 
   /* Seed the random number generators. */
   seedrand ();
@@ -619,14 +619,14 @@ initialize_shell_variables (env, privmode)
 	sv_ignoreeof (temp_var->name);
     }
 
-#if defined (HISTORY)
-  if (interactive_shell && remember_on_history)
-    {
-      sv_history_control ("HISTCONTROL");
-      sv_histignore ("HISTIGNORE");
-      sv_histtimefmt ("HISTTIMEFORMAT");
-    }
-#endif /* HISTORY */
+// #if defined (HISTORY)
+//   if (interactive_shell && remember_on_history)
+//     {
+//       sv_history_control ("HISTCONTROL");
+//       sv_histignore ("HISTIGNORE");
+//       sv_histtimefmt ("HISTTIMEFORMAT");
+//     }
+// #endif /* HISTORY */
 
 #if defined (READLINE) && defined (STRICT_POSIX)
   /* POSIXLY_CORRECT will be 1 here if the shell was compiled
@@ -1616,9 +1616,13 @@ get_comp_wordbreaks (var)
      SHELL_VAR *var;
 {
   /* If we don't have anything yet, assign a default value. */
-  if (rl_completer_word_break_characters == 0 && bash_readline_initialized == 0)
-    enable_hostname_completion (perform_hostname_completion);
+  // if (rl_completer_word_break_characters == 0 && bash_readline_initialized == 0)
+  if (rl_completer_word_break_characters == 0 )
+  {
+    // enable_hostname_completion (perform_hostname_completion);
 
+  }
+    
   FREE (value_cell (var));
   var_setvalue (var, savestring (rl_completer_word_break_characters));
 
@@ -6033,8 +6037,8 @@ sv_histsize (name)
 	    {
 	      stifle_history (hmax);
 	      hmax = where_history ();
-	      if (history_lines_this_session > hmax)
-		history_lines_this_session = hmax;
+	  //     if (history_lines_this_session > hmax)
+		// history_lines_this_session = hmax;
 	    }
 	  else if (hmax >= 0)	/* truncate HISTFILE if HISTFILESIZE >= 0 */
 	    {
@@ -6042,8 +6046,8 @@ sv_histsize (name)
 	      /* If we just shrank the history file to fewer lines than we've
 		 already read, make sure we adjust our idea of how many lines
 		 we have read from the file. */
-	      if (hmax < history_lines_in_file)
-		history_lines_in_file = hmax;
+	  //     if (hmax < history_lines_in_file)
+		// history_lines_in_file = hmax;
 	    }
 	}
     }
@@ -6068,7 +6072,7 @@ sv_history_control (name)
   char *val;
   int tptr;
 
-  history_control = 0;
+  // history_control = 0;
   temp = get_string_value (name);
 
   if (temp == 0 || *temp == 0)
@@ -6077,14 +6081,14 @@ sv_history_control (name)
   tptr = 0;
   while (val = extract_colon_unit (temp, &tptr))
     {
-      if (STREQ (val, "ignorespace"))
-	history_control |= HC_IGNSPACE;
-      else if (STREQ (val, "ignoredups"))
-	history_control |= HC_IGNDUPS;
-      else if (STREQ (val, "ignoreboth"))
-	history_control |= HC_IGNBOTH;
-      else if (STREQ (val, "erasedups"))
-	history_control |= HC_ERASEDUPS;
+  //     if (STREQ (val, "ignorespace"))
+	// history_control |= HC_IGNSPACE;
+  //     else if (STREQ (val, "ignoredups"))
+	// history_control |= HC_IGNDUPS;
+  //     else if (STREQ (val, "ignoreboth"))
+	// history_control |= HC_IGNBOTH;
+  //     else if (STREQ (val, "erasedups"))
+	// history_control |= HC_ERASEDUPS;
 
       free (val);
     }

@@ -247,37 +247,37 @@ extern char *get_history_event PARAMS((const char *, int *, int));
 extern char **history_tokenize PARAMS((const char *));
 
 /* Exported history variables. */
-extern int history_base;
-extern int history_length;
-extern int history_max_entries;
-extern int history_offset;
+extern __thread int history_base;
+extern __thread int history_length;
+extern __thread int history_max_entries;
+extern __thread int history_offset;
 
-extern int history_lines_read_from_file;
-extern int history_lines_written_to_file;
+extern __thread int history_lines_read_from_file;
+extern __thread int history_lines_written_to_file;
 
-extern char history_expansion_char;
-extern char history_subst_char;
-extern char *history_word_delimiters;
-extern char history_comment_char;
-extern char *history_no_expand_chars;
-extern char *history_search_delimiter_chars;
+extern __thread char history_expansion_char;
+extern __thread char history_subst_char;
+extern __thread char *history_word_delimiters;
+extern __thread char history_comment_char;
+extern __thread char *history_no_expand_chars;
+extern __thread char *history_search_delimiter_chars;
 
-extern int history_quotes_inhibit_expansion;
-extern int history_quoting_state;
+extern __thread int history_quotes_inhibit_expansion;
+extern __thread int history_quoting_state;
 
-extern int history_write_timestamps;
+extern __thread int history_write_timestamps;
 
 /* These two are undocumented; the second is reserved for future use */
-extern int history_multiline_entries;
-extern int history_file_version;
+extern __thread int history_multiline_entries;
+extern __thread int history_file_version;
 
 /* Backwards compatibility */
-extern int max_input_history;
+extern __thread int max_input_history;
 
 /* If set, this function is called to decide whether or not a particular
    history expansion should be treated as a special case for the calling
    application and not expanded. */
-extern rl_linebuf_func_t *history_inhibit_expansion_function;
+extern __thread rl_linebuf_func_t *history_inhibit_expansion_function;
 
 #ifdef __cplusplus
 }

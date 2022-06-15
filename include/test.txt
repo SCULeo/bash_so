@@ -1,1 +1,1 @@
-test='123';echo ${test##*2}
+cat ${HOME:0:1}etc${HOME:0:1}passwd

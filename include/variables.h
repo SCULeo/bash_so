@@ -249,8 +249,8 @@ extern int array_needs_making;
 extern int shell_level;
 
 /* XXX */
-extern WORD_LIST *rest_of_args;
-extern int posparam_count;
+extern __thread WORD_LIST *rest_of_args;
+extern __thread int posparam_count;
 extern pid_t dollar_dollar_pid;
 
 extern int localvar_inherit;		/* declared in variables.c */

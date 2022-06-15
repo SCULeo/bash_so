@@ -55,7 +55,7 @@
 #include <tilde.h>
 
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif /* !errno */
 
 #ifdef __CYGWIN__
@@ -89,11 +89,11 @@ static struct {
   int *posix_mode_var;
 } posix_vars[] = 
 {
-  &interactive_comments,
-  &source_uses_path,
-  &expand_aliases,
+  // &interactive_comments,
+  // &source_uses_path,
+  // &expand_aliases,
   &inherit_errexit,
-  &print_shift_error,
+  // &print_shift_error,
   0
 };
 
@@ -106,10 +106,12 @@ posix_initialize (on)
   /* Things that should be turned on when posix mode is enabled. */
   if (on != 0)
     {
-      interactive_comments = source_uses_path = expand_aliases = 1;
+      // interactive_comments = source_uses_path = expand_aliases = 1;
+
+      interactive_comments = expand_aliases = 1;
       inherit_errexit = 1;
       source_searches_cwd = 0;
-      print_shift_error = 1;
+      // print_shift_error = 1;
     }
 
   /* Things that should be turned on when posix mode is disabled. */
@@ -123,7 +125,7 @@ posix_initialize (on)
     {
       source_searches_cwd = 1;
       expand_aliases = interactive_shell;
-      print_shift_error = 0;
+      // print_shift_error = 0;
     }
 }
 

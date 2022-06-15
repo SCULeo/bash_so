@@ -17,11 +17,11 @@
 #include <stdio.h>
 #include <errno.h>
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif /* !errno */
 
-#include <readline/readline.h>
-#include <readline/history.h>
+#include <readline.h>
+#include <history.h>
 
 #include "bashintl.h"
 
@@ -75,8 +75,8 @@ bind_builtin (list)
   initfile = map_name = fun_name = unbind_name = remove_seq = cmd_seq = (char *)NULL;
   return_code = EXECUTION_SUCCESS;
 
-  if (bash_readline_initialized == 0)
-    initialize_readline ();
+  // if (bash_readline_initialized == 0)
+  //   initialize_readline ();
 
   begin_unwind_frame ("bind_builtin");
   unwind_protect_var (rl_outstream);

@@ -47,10 +47,10 @@
 
 /* This variable means to not expand associative array subscripts more than
    once, when performing variable expansion. */
-int assoc_expand_once = 0;
+// int assoc_expand_once = 0;
 
 /* Ditto for indexed array subscripts -- currently unused */
-int array_expand_once = 0;
+// int array_expand_once = 0;
 
 static SHELL_VAR *bind_array_var_internal PARAMS((SHELL_VAR *, arrayind_t, char *, char *, int));
 static SHELL_VAR *assign_array_element_internal PARAMS((SHELL_VAR *, char *, char *, char *, int, char *, int));
@@ -1225,8 +1225,8 @@ array_expand_index (var, s, len, flags)
     {
       set_exit_status (EXECUTION_FAILURE);
 
-      if (no_longjmp_on_fatal_error)
-	return 0;
+  //     if (no_longjmp_on_fatal_error)
+	// return 0;
       top_level_cleanup ();      
       jump_to_top_level (DISCARD);
     }

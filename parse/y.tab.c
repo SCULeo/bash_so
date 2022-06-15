@@ -109,12 +109,12 @@
 
 #if defined (READLINE)
 #  include "bashline.h"
-#  include <readline/readline.h>
+#  include <readline.h>
 #endif /* READLINE */
 
 #if defined (HISTORY)
 #  include "bashhist.h"
-#  include <readline/history.h>
+#  include <history.h>
 #endif /* HISTORY */
 
 #if defined (JOB_CONTROL)
@@ -126,7 +126,7 @@ extern int cleanup_dead_jobs PARAMS((void));
 #if defined (ALIAS)
 #  include "alias.h"
 #else
-typedef void *alias_t;
+typedef __thread void *alias_t;
 #endif /* ALIAS */
 
 #if defined (PROMPT_STRING_DECODE)
@@ -153,20 +153,24 @@ typedef void *alias_t;
 #endif
 
 #if defined (HANDLE_MULTIBYTE)
-
+#  define last_shell_getc_is_singlebyte \
+	((shell_input_line_index > 1) \
+		? shell_input_line_property[shell_input_line_index - 1] \
+		: 1)
+#  define MBTEST(x)	((x) && last_shell_getc_is_singlebyte)
 #else
-
+#  define last_shell_getc_is_singlebyte	1
 #  define MBTEST(x)	((x))
 #endif
 
 #if defined (EXTENDED_GLOB)
-extern int extended_glob;
+extern __thread int extended_glob;
 #endif
 
-extern int dump_translatable_strings, dump_po_strings;
+extern __thread int dump_translatable_strings, dump_po_strings;
 
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif
 
 /* **************************************************************** */
@@ -253,6 +257,8 @@ static void print_prompt PARAMS((void));
 
 #if defined (HANDLE_MULTIBYTE)
 static void set_line_mbstate PARAMS((void));
+static char *shell_input_line_property = NULL;
+static size_t shell_input_line_propsize = 0;
 #else
 #  define set_line_mbstate()
 #endif
@@ -260,114 +266,113 @@ static void set_line_mbstate PARAMS((void));
 extern int yyerror PARAMS((const char *));
 
 #ifdef DEBUG
-extern int yydebug;
+extern __thread int yydebug;
 #endif
 
 /* Default prompt strings */
-char *primary_prompt = PPROMPT;
-char *secondary_prompt = SPROMPT;
+__thread char *primary_prompt = PPROMPT;
+__thread char *secondary_prompt = SPROMPT;
 
 /* PROMPT_STRING_POINTER points to one of these, never to an actual string. */
-char *ps1_prompt, *ps2_prompt;
+__thread char *ps1_prompt, *ps2_prompt;
 
 /* Displayed after reading a command but before executing it in an interactive shell */
-char *ps0_prompt;
+__thread char *ps0_prompt;
 
 /* Handle on the current prompt string.  Indirectly points through
    ps1_ or ps2_prompt. */
-char **prompt_string_pointer = (char **)NULL;
-char *current_prompt_string;
+__thread char **prompt_string_pointer = (char **)NULL;
+__thread char *current_prompt_string;
 
 /* Non-zero means we expand aliases in commands. */
-int expand_aliases = 0;
+__thread int expand_aliases = 0;
 
 /* If non-zero, the decoded prompt string undergoes parameter and
    variable substitution, command substitution, arithmetic substitution,
    string expansion, process substitution, and quote removal in
    decode_prompt_string. */
-int promptvars = 1;
+__thread int promptvars = 1;
 
 /* If non-zero, $'...' and $"..." are expanded when they appear within
    a ${...} expansion, even when the expansion appears within double
    quotes. */
-int extended_quote = 1;
+__thread int extended_quote = 1;
 
 /* The number of lines read from input while creating the current command. */
-int current_command_line_count;
+__thread int current_command_line_count;
 
 /* The number of lines in a command saved while we run parse_and_execute */
-int saved_command_line_count;
+__thread int saved_command_line_count;
 
 /* The token that currently denotes the end of parse. */
-int shell_eof_token;
+__thread int shell_eof_token;
 
 /* The token currently being read. */
-int current_token;
+__thread int current_token;
 
 /* The current parser state. */
-int parser_state;
+__thread int parser_state;
 
 /* Variables to manage the task of reading here documents, because we need to
    defer the reading until after a complete command has been collected. */
-static REDIRECT *redir_stack[HEREDOC_MAX];
-int need_here_doc;
+static __thread REDIRECT *redir_stack[HEREDOC_MAX];
+__thread int need_here_doc;
 
 /* Where shell input comes from.  History expansion is performed on each
    line when the shell is interactive. */
-static char *shell_input_line = (char *)NULL;
-static size_t shell_input_line_index;
-static size_t shell_input_line_size;	/* Amount allocated for shell_input_line. */
-static size_t shell_input_line_len;	/* strlen (shell_input_line) */
+static __thread char *shell_input_line = (char *)NULL;
+static __thread size_t shell_input_line_index;
+static __thread size_t shell_input_line_size;	/* Amount allocated for shell_input_line. */
+static __thread size_t shell_input_line_len;	/* strlen (shell_input_line) */
 
 /* Either zero or EOF. */
-static int shell_input_line_terminator;
+static __thread int shell_input_line_terminator;
 
 /* The line number in a script on which a function definition starts. */
-static int function_dstart;
+static __thread int function_dstart;
 
 /* The line number in a script on which a function body starts. */
-static int function_bstart;
+static __thread int function_bstart;
 
 /* The line number in a script at which an arithmetic for command starts. */
-static int arith_for_lineno;
+static __thread int arith_for_lineno;
 
 /* The decoded prompt string.  Used if READLINE is not defined or if
    editing is turned off.  Analogous to current_readline_prompt. */
-static char *current_decoded_prompt;
+static __thread char *current_decoded_prompt;
 
 /* The last read token, or NULL.  read_token () uses this for context
    checking. */
-static int last_read_token;
+static __thread int last_read_token;
 
 /* The token read prior to last_read_token. */
-static int token_before_that;
+static __thread int token_before_that;
 
 /* The token read prior to token_before_that. */
-static int two_tokens_ago;
+static __thread int two_tokens_ago;
 
-static int global_extglob;
+static __thread int global_extglob;
 
 /* The line number in a script where the word in a `case WORD', `select WORD'
    or `for WORD' begins.  This is a nested command maximum, since the array
    index is decremented after a case, select, or for command is parsed. */
 #define MAX_CASE_NEST	128
-static int word_lineno[MAX_CASE_NEST+1];
-static int word_top = -1;
+static __thread int word_lineno[MAX_CASE_NEST+1];
+static __thread int word_top = -1;
 
 /* If non-zero, it is the token that we want read_token to return
    regardless of what text is (or isn't) present to be read.  This
    is reset by read_token.  If token_to_read == WORD or
    ASSIGNMENT_WORD, yylval.word should be set to word_desc_to_read. */
-static int token_to_read;
-static WORD_DESC *word_desc_to_read;
+static __thread int token_to_read;
+static __thread WORD_DESC *word_desc_to_read;
 
-static REDIRECTEE source;
-static REDIRECTEE redir;
+static __thread REDIRECTEE source;
+static __thread REDIRECTEE redir;
 
-static FILE *yyoutstream;
-static FILE *yyerrstream;
 
-#line 371 "y.tab.c"
+
+#line 376 "y.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -517,7 +522,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 322 "parse.y"
+#line 327 "parse.y"
 
   WORD_DESC *word;		/* the word that we read. */
   int number;			/* the number that we read. */
@@ -527,7 +532,7 @@ union YYSTYPE
   ELEMENT element;
   PATTERN_LIST *pattern;
 
-#line 531 "y.tab.c"
+#line 536 "y.tab.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -907,24 +912,24 @@ static const yytype_int8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   375,   375,   386,   395,   410,   427,   437,   439,   443,
-     449,   455,   461,   467,   473,   479,   485,   491,   497,   503,
-     509,   515,   521,   527,   533,   540,   547,   554,   561,   568,
-     575,   581,   587,   593,   599,   605,   611,   617,   623,   629,
-     635,   641,   647,   653,   659,   665,   671,   677,   683,   689,
-     695,   701,   707,   715,   717,   719,   723,   727,   738,   740,
-     744,   746,   748,   764,   766,   770,   772,   774,   776,   778,
-     780,   782,   784,   786,   788,   790,   794,   799,   804,   809,
-     814,   819,   824,   829,   836,   842,   848,   854,   862,   867,
-     872,   877,   882,   887,   892,   897,   904,   909,   914,   921,
-     923,   925,   927,   931,   933,   964,   971,   976,   993,   998,
-    1015,  1022,  1024,  1026,  1031,  1035,  1039,  1043,  1045,  1047,
-    1051,  1052,  1056,  1058,  1060,  1062,  1066,  1068,  1070,  1072,
-    1074,  1076,  1080,  1082,  1091,  1099,  1100,  1106,  1107,  1114,
-    1121,  1125,  1127,  1129,  1136,  1143,  1145,  1147,  1151,  1152,
-    1155,  1157,  1159,  1163,  1164,  1173,  1186,  1202,  1218,  1233,
-    1235,  1237,  1244,  1251,  1254,  1258,  1260,  1266,  1272,  1292,
-    1315,  1317,  1340,  1344,  1346,  1348,  1350
+       0,   380,   380,   391,   400,   415,   432,   442,   444,   448,
+     454,   460,   466,   472,   478,   484,   490,   496,   502,   508,
+     514,   520,   526,   532,   538,   545,   552,   559,   566,   573,
+     580,   586,   592,   598,   604,   610,   616,   622,   628,   634,
+     640,   646,   652,   658,   664,   670,   676,   682,   688,   694,
+     700,   706,   712,   720,   722,   724,   728,   732,   743,   745,
+     749,   751,   753,   769,   771,   775,   777,   779,   781,   783,
+     785,   787,   789,   791,   793,   795,   799,   804,   809,   814,
+     819,   824,   829,   834,   841,   847,   853,   859,   867,   872,
+     877,   882,   887,   892,   897,   902,   909,   914,   919,   926,
+     928,   930,   932,   936,   938,   969,   976,   981,   998,  1003,
+    1020,  1027,  1029,  1031,  1036,  1040,  1044,  1048,  1050,  1052,
+    1056,  1057,  1061,  1063,  1065,  1067,  1071,  1073,  1075,  1077,
+    1079,  1081,  1085,  1087,  1096,  1104,  1105,  1111,  1112,  1119,
+    1126,  1130,  1132,  1134,  1141,  1148,  1150,  1152,  1156,  1157,
+    1160,  1162,  1164,  1168,  1169,  1178,  1191,  1207,  1223,  1238,
+    1240,  1242,  1249,  1256,  1259,  1263,  1265,  1271,  1277,  1297,
+    1320,  1322,  1345,  1349,  1351,  1353,  1355
 };
 #endif
 
@@ -2014,7 +2019,7 @@ yyreduce:
   switch (yyn)
     {
   case 2:
-#line 376 "parse.y"
+#line 381 "parse.y"
                         {
 			  /* Case of regular command.  Discard the error
 			     safety net,and return the command just parsed. */
@@ -2025,11 +2030,11 @@ yyreduce:
 			    parser_state |= PST_EOFTOKEN;
 			  YYACCEPT;
 			}
-#line 2029 "y.tab.c"
+#line 2034 "y.tab.c"
     break;
 
   case 3:
-#line 387 "parse.y"
+#line 392 "parse.y"
                         {
 			  /* Case of regular command, but not a very
 			     interesting one.  Return a NULL command. */
@@ -2038,11 +2043,11 @@ yyreduce:
 			    parser_state |= PST_EOFTOKEN;
 			  YYACCEPT;
 			}
-#line 2042 "y.tab.c"
+#line 2047 "y.tab.c"
     break;
 
   case 4:
-#line 396 "parse.y"
+#line 401 "parse.y"
                         {
 			  /* Error during parsing.  Return NULL command. */
 			  global_command = (COMMAND *)NULL;
@@ -2057,11 +2062,11 @@ yyreduce:
 			      YYABORT;
 			    }
 			}
-#line 2061 "y.tab.c"
+#line 2066 "y.tab.c"
     break;
 
   case 5:
-#line 411 "parse.y"
+#line 416 "parse.y"
                         {
 			  /* EOF after an error.  Do ignoreeof or not.  Really
 			     only interesting in non-interactive shells */
@@ -2078,11 +2083,11 @@ yyreduce:
 			      YYABORT;
 			    }
 			}
-#line 2082 "y.tab.c"
+#line 2087 "y.tab.c"
     break;
 
   case 6:
-#line 428 "parse.y"
+#line 433 "parse.y"
                         {
 			  /* Case of EOF seen by itself.  Do ignoreeof or
 			     not. */
@@ -2090,495 +2095,495 @@ yyreduce:
 			  handle_eof_input_unit ();
 			  YYACCEPT;
 			}
-#line 2094 "y.tab.c"
+#line 2099 "y.tab.c"
     break;
 
   case 7:
-#line 438 "parse.y"
+#line 443 "parse.y"
                         { (yyval.word_list) = make_word_list ((yyvsp[0].word), (WORD_LIST *)NULL); }
-#line 2100 "y.tab.c"
+#line 2105 "y.tab.c"
     break;
 
   case 8:
-#line 440 "parse.y"
+#line 445 "parse.y"
                         { (yyval.word_list) = make_word_list ((yyvsp[0].word), (yyvsp[-1].word_list)); }
-#line 2106 "y.tab.c"
+#line 2111 "y.tab.c"
     break;
 
   case 9:
-#line 444 "parse.y"
+#line 449 "parse.y"
                         {
 			  source.dest = 1;
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_output_direction, redir, 0);
 			}
-#line 2116 "y.tab.c"
+#line 2121 "y.tab.c"
     break;
 
   case 10:
-#line 450 "parse.y"
+#line 455 "parse.y"
                         {
 			  source.dest = 0;
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_input_direction, redir, 0);
 			}
-#line 2126 "y.tab.c"
+#line 2131 "y.tab.c"
     break;
 
   case 11:
-#line 456 "parse.y"
+#line 461 "parse.y"
                         {
 			  source.dest = (yyvsp[-2].number);
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_output_direction, redir, 0);
 			}
-#line 2136 "y.tab.c"
+#line 2141 "y.tab.c"
     break;
 
   case 12:
-#line 462 "parse.y"
+#line 467 "parse.y"
                         {
 			  source.dest = (yyvsp[-2].number);
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_input_direction, redir, 0);
 			}
-#line 2146 "y.tab.c"
+#line 2151 "y.tab.c"
     break;
 
   case 13:
-#line 468 "parse.y"
+#line 473 "parse.y"
                         {
 			  source.filename = (yyvsp[-2].word);
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_output_direction, redir, REDIR_VARASSIGN);
 			}
-#line 2156 "y.tab.c"
+#line 2161 "y.tab.c"
     break;
 
   case 14:
-#line 474 "parse.y"
+#line 479 "parse.y"
                         {
 			  source.filename = (yyvsp[-2].word);
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_input_direction, redir, REDIR_VARASSIGN);
 			}
-#line 2166 "y.tab.c"
+#line 2171 "y.tab.c"
     break;
 
   case 15:
-#line 480 "parse.y"
+#line 485 "parse.y"
                         {
 			  source.dest = 1;
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_appending_to, redir, 0);
 			}
-#line 2176 "y.tab.c"
+#line 2181 "y.tab.c"
     break;
 
   case 16:
-#line 486 "parse.y"
+#line 491 "parse.y"
                         {
 			  source.dest = (yyvsp[-2].number);
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_appending_to, redir, 0);
 			}
-#line 2186 "y.tab.c"
+#line 2191 "y.tab.c"
     break;
 
   case 17:
-#line 492 "parse.y"
+#line 497 "parse.y"
                         {
 			  source.filename = (yyvsp[-2].word);
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_appending_to, redir, REDIR_VARASSIGN);
 			}
-#line 2196 "y.tab.c"
+#line 2201 "y.tab.c"
     break;
 
   case 18:
-#line 498 "parse.y"
+#line 503 "parse.y"
                         {
 			  source.dest = 1;
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_output_force, redir, 0);
 			}
-#line 2206 "y.tab.c"
+#line 2211 "y.tab.c"
     break;
 
   case 19:
-#line 504 "parse.y"
+#line 509 "parse.y"
                         {
 			  source.dest = (yyvsp[-2].number);
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_output_force, redir, 0);
 			}
-#line 2216 "y.tab.c"
+#line 2221 "y.tab.c"
     break;
 
   case 20:
-#line 510 "parse.y"
+#line 515 "parse.y"
                         {
 			  source.filename = (yyvsp[-2].word);
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_output_force, redir, REDIR_VARASSIGN);
 			}
-#line 2226 "y.tab.c"
+#line 2231 "y.tab.c"
     break;
 
   case 21:
-#line 516 "parse.y"
+#line 521 "parse.y"
                         {
 			  source.dest = 0;
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_input_output, redir, 0);
 			}
-#line 2236 "y.tab.c"
+#line 2241 "y.tab.c"
     break;
 
   case 22:
-#line 522 "parse.y"
+#line 527 "parse.y"
                         {
 			  source.dest = (yyvsp[-2].number);
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_input_output, redir, 0);
 			}
-#line 2246 "y.tab.c"
+#line 2251 "y.tab.c"
     break;
 
   case 23:
-#line 528 "parse.y"
+#line 533 "parse.y"
                         {
 			  source.filename = (yyvsp[-2].word);
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_input_output, redir, REDIR_VARASSIGN);
 			}
-#line 2256 "y.tab.c"
+#line 2261 "y.tab.c"
     break;
 
   case 24:
-#line 534 "parse.y"
+#line 539 "parse.y"
                         {
 			  source.dest = 0;
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_reading_until, redir, 0);
 			  push_heredoc ((yyval.redirect));
 			}
-#line 2267 "y.tab.c"
+#line 2272 "y.tab.c"
     break;
 
   case 25:
-#line 541 "parse.y"
+#line 546 "parse.y"
                         {
 			  source.dest = (yyvsp[-2].number);
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_reading_until, redir, 0);
 			  push_heredoc ((yyval.redirect));
 			}
-#line 2278 "y.tab.c"
+#line 2283 "y.tab.c"
     break;
 
   case 26:
-#line 548 "parse.y"
+#line 553 "parse.y"
                         {
 			  source.filename = (yyvsp[-2].word);
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_reading_until, redir, REDIR_VARASSIGN);
 			  push_heredoc ((yyval.redirect));
 			}
-#line 2289 "y.tab.c"
+#line 2294 "y.tab.c"
     break;
 
   case 27:
-#line 555 "parse.y"
+#line 560 "parse.y"
                         {
 			  source.dest = 0;
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_deblank_reading_until, redir, 0);
 			  push_heredoc ((yyval.redirect));
 			}
-#line 2300 "y.tab.c"
+#line 2305 "y.tab.c"
     break;
 
   case 28:
-#line 562 "parse.y"
+#line 567 "parse.y"
                         {
 			  source.dest = (yyvsp[-2].number);
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_deblank_reading_until, redir, 0);
 			  push_heredoc ((yyval.redirect));
 			}
-#line 2311 "y.tab.c"
+#line 2316 "y.tab.c"
     break;
 
   case 29:
-#line 569 "parse.y"
+#line 574 "parse.y"
                         {
 			  source.filename = (yyvsp[-2].word);
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_deblank_reading_until, redir, REDIR_VARASSIGN);
 			  push_heredoc ((yyval.redirect));
 			}
-#line 2322 "y.tab.c"
+#line 2327 "y.tab.c"
     break;
 
   case 30:
-#line 576 "parse.y"
+#line 581 "parse.y"
                         {
 			  source.dest = 0;
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_reading_string, redir, 0);
 			}
-#line 2332 "y.tab.c"
+#line 2337 "y.tab.c"
     break;
 
   case 31:
-#line 582 "parse.y"
+#line 587 "parse.y"
                         {
 			  source.dest = (yyvsp[-2].number);
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_reading_string, redir, 0);
 			}
-#line 2342 "y.tab.c"
+#line 2347 "y.tab.c"
     break;
 
   case 32:
-#line 588 "parse.y"
+#line 593 "parse.y"
                         {
 			  source.filename = (yyvsp[-2].word);
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_reading_string, redir, REDIR_VARASSIGN);
 			}
-#line 2352 "y.tab.c"
+#line 2357 "y.tab.c"
     break;
 
   case 33:
-#line 594 "parse.y"
+#line 599 "parse.y"
                         {
 			  source.dest = 0;
 			  redir.dest = (yyvsp[0].number);
 			  (yyval.redirect) = make_redirection (source, r_duplicating_input, redir, 0);
 			}
-#line 2362 "y.tab.c"
+#line 2367 "y.tab.c"
     break;
 
   case 34:
-#line 600 "parse.y"
+#line 605 "parse.y"
                         {
 			  source.dest = (yyvsp[-2].number);
 			  redir.dest = (yyvsp[0].number);
 			  (yyval.redirect) = make_redirection (source, r_duplicating_input, redir, 0);
 			}
-#line 2372 "y.tab.c"
+#line 2377 "y.tab.c"
     break;
 
   case 35:
-#line 606 "parse.y"
+#line 611 "parse.y"
                         {
 			  source.filename = (yyvsp[-2].word);
 			  redir.dest = (yyvsp[0].number);
 			  (yyval.redirect) = make_redirection (source, r_duplicating_input, redir, REDIR_VARASSIGN);
 			}
-#line 2382 "y.tab.c"
+#line 2387 "y.tab.c"
     break;
 
   case 36:
-#line 612 "parse.y"
+#line 617 "parse.y"
                         {
 			  source.dest = 1;
 			  redir.dest = (yyvsp[0].number);
 			  (yyval.redirect) = make_redirection (source, r_duplicating_output, redir, 0);
 			}
-#line 2392 "y.tab.c"
+#line 2397 "y.tab.c"
     break;
 
   case 37:
-#line 618 "parse.y"
+#line 623 "parse.y"
                         {
 			  source.dest = (yyvsp[-2].number);
 			  redir.dest = (yyvsp[0].number);
 			  (yyval.redirect) = make_redirection (source, r_duplicating_output, redir, 0);
 			}
-#line 2402 "y.tab.c"
+#line 2407 "y.tab.c"
     break;
 
   case 38:
-#line 624 "parse.y"
+#line 629 "parse.y"
                         {
 			  source.filename = (yyvsp[-2].word);
 			  redir.dest = (yyvsp[0].number);
 			  (yyval.redirect) = make_redirection (source, r_duplicating_output, redir, REDIR_VARASSIGN);
 			}
-#line 2412 "y.tab.c"
+#line 2417 "y.tab.c"
     break;
 
   case 39:
-#line 630 "parse.y"
+#line 635 "parse.y"
                         {
 			  source.dest = 0;
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_duplicating_input_word, redir, 0);
 			}
-#line 2422 "y.tab.c"
+#line 2427 "y.tab.c"
     break;
 
   case 40:
-#line 636 "parse.y"
+#line 641 "parse.y"
                         {
 			  source.dest = (yyvsp[-2].number);
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_duplicating_input_word, redir, 0);
 			}
-#line 2432 "y.tab.c"
+#line 2437 "y.tab.c"
     break;
 
   case 41:
-#line 642 "parse.y"
+#line 647 "parse.y"
                         {
 			  source.filename = (yyvsp[-2].word);
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_duplicating_input_word, redir, REDIR_VARASSIGN);
 			}
-#line 2442 "y.tab.c"
+#line 2447 "y.tab.c"
     break;
 
   case 42:
-#line 648 "parse.y"
+#line 653 "parse.y"
                         {
 			  source.dest = 1;
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_duplicating_output_word, redir, 0);
 			}
-#line 2452 "y.tab.c"
+#line 2457 "y.tab.c"
     break;
 
   case 43:
-#line 654 "parse.y"
+#line 659 "parse.y"
                         {
 			  source.dest = (yyvsp[-2].number);
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_duplicating_output_word, redir, 0);
 			}
-#line 2462 "y.tab.c"
+#line 2467 "y.tab.c"
     break;
 
   case 44:
-#line 660 "parse.y"
+#line 665 "parse.y"
                         {
 			  source.filename = (yyvsp[-2].word);
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_duplicating_output_word, redir, REDIR_VARASSIGN);
 			}
-#line 2472 "y.tab.c"
+#line 2477 "y.tab.c"
     break;
 
   case 45:
-#line 666 "parse.y"
+#line 671 "parse.y"
                         {
 			  source.dest = 1;
 			  redir.dest = 0;
 			  (yyval.redirect) = make_redirection (source, r_close_this, redir, 0);
 			}
-#line 2482 "y.tab.c"
+#line 2487 "y.tab.c"
     break;
 
   case 46:
-#line 672 "parse.y"
+#line 677 "parse.y"
                         {
 			  source.dest = (yyvsp[-2].number);
 			  redir.dest = 0;
 			  (yyval.redirect) = make_redirection (source, r_close_this, redir, 0);
 			}
-#line 2492 "y.tab.c"
+#line 2497 "y.tab.c"
     break;
 
   case 47:
-#line 678 "parse.y"
+#line 683 "parse.y"
                         {
 			  source.filename = (yyvsp[-2].word);
 			  redir.dest = 0;
 			  (yyval.redirect) = make_redirection (source, r_close_this, redir, REDIR_VARASSIGN);
 			}
-#line 2502 "y.tab.c"
+#line 2507 "y.tab.c"
     break;
 
   case 48:
-#line 684 "parse.y"
+#line 689 "parse.y"
                         {
 			  source.dest = 0;
 			  redir.dest = 0;
 			  (yyval.redirect) = make_redirection (source, r_close_this, redir, 0);
 			}
-#line 2512 "y.tab.c"
+#line 2517 "y.tab.c"
     break;
 
   case 49:
-#line 690 "parse.y"
+#line 695 "parse.y"
                         {
 			  source.dest = (yyvsp[-2].number);
 			  redir.dest = 0;
 			  (yyval.redirect) = make_redirection (source, r_close_this, redir, 0);
 			}
-#line 2522 "y.tab.c"
+#line 2527 "y.tab.c"
     break;
 
   case 50:
-#line 696 "parse.y"
+#line 701 "parse.y"
                         {
 			  source.filename = (yyvsp[-2].word);
 			  redir.dest = 0;
 			  (yyval.redirect) = make_redirection (source, r_close_this, redir, REDIR_VARASSIGN);
 			}
-#line 2532 "y.tab.c"
+#line 2537 "y.tab.c"
     break;
 
   case 51:
-#line 702 "parse.y"
+#line 707 "parse.y"
                         {
 			  source.dest = 1;
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_err_and_out, redir, 0);
 			}
-#line 2542 "y.tab.c"
+#line 2547 "y.tab.c"
     break;
 
   case 52:
-#line 708 "parse.y"
+#line 713 "parse.y"
                         {
 			  source.dest = 1;
 			  redir.filename = (yyvsp[0].word);
 			  (yyval.redirect) = make_redirection (source, r_append_err_and_out, redir, 0);
 			}
-#line 2552 "y.tab.c"
+#line 2557 "y.tab.c"
     break;
 
   case 53:
-#line 716 "parse.y"
+#line 721 "parse.y"
                         { (yyval.element).word = (yyvsp[0].word); (yyval.element).redirect = 0; }
-#line 2558 "y.tab.c"
+#line 2563 "y.tab.c"
     break;
 
   case 54:
-#line 718 "parse.y"
+#line 723 "parse.y"
                         { (yyval.element).word = (yyvsp[0].word); (yyval.element).redirect = 0; }
-#line 2564 "y.tab.c"
+#line 2569 "y.tab.c"
     break;
 
   case 55:
-#line 720 "parse.y"
+#line 725 "parse.y"
                         { (yyval.element).redirect = (yyvsp[0].redirect); (yyval.element).word = 0; }
-#line 2570 "y.tab.c"
+#line 2575 "y.tab.c"
     break;
 
   case 56:
-#line 724 "parse.y"
+#line 729 "parse.y"
                         {
 			  (yyval.redirect) = (yyvsp[0].redirect);
 			}
-#line 2578 "y.tab.c"
+#line 2583 "y.tab.c"
     break;
 
   case 57:
-#line 728 "parse.y"
+#line 733 "parse.y"
                         {
 			  register REDIRECT *t;
 
@@ -2587,35 +2592,35 @@ yyreduce:
 			  t->next = (yyvsp[0].redirect);
 			  (yyval.redirect) = (yyvsp[-1].redirect);
 			}
-#line 2591 "y.tab.c"
+#line 2596 "y.tab.c"
     break;
 
   case 58:
-#line 739 "parse.y"
+#line 744 "parse.y"
                         { (yyval.command) = make_simple_command ((yyvsp[0].element), (COMMAND *)NULL); }
-#line 2597 "y.tab.c"
+#line 2602 "y.tab.c"
     break;
 
   case 59:
-#line 741 "parse.y"
+#line 746 "parse.y"
                         { (yyval.command) = make_simple_command ((yyvsp[0].element), (yyvsp[-1].command)); }
-#line 2603 "y.tab.c"
+#line 2608 "y.tab.c"
     break;
 
   case 60:
-#line 745 "parse.y"
+#line 750 "parse.y"
                         { (yyval.command) = clean_simple_command ((yyvsp[0].command)); }
-#line 2609 "y.tab.c"
+#line 2614 "y.tab.c"
     break;
 
   case 61:
-#line 747 "parse.y"
+#line 752 "parse.y"
                         { (yyval.command) = (yyvsp[0].command); }
-#line 2615 "y.tab.c"
+#line 2620 "y.tab.c"
     break;
 
   case 62:
-#line 749 "parse.y"
+#line 754 "parse.y"
                         {
 			  COMMAND *tc;
 
@@ -2631,330 +2636,330 @@ yyreduce:
 			    tc->redirects = (yyvsp[0].redirect);
 			  (yyval.command) = (yyvsp[-1].command);
 			}
-#line 2635 "y.tab.c"
+#line 2640 "y.tab.c"
     break;
 
   case 63:
-#line 765 "parse.y"
+#line 770 "parse.y"
                         { (yyval.command) = (yyvsp[0].command); }
-#line 2641 "y.tab.c"
+#line 2646 "y.tab.c"
     break;
 
   case 64:
-#line 767 "parse.y"
+#line 772 "parse.y"
                         { (yyval.command) = (yyvsp[0].command); }
-#line 2647 "y.tab.c"
+#line 2652 "y.tab.c"
     break;
 
   case 65:
-#line 771 "parse.y"
+#line 776 "parse.y"
                         { (yyval.command) = (yyvsp[0].command); }
-#line 2653 "y.tab.c"
+#line 2658 "y.tab.c"
     break;
 
   case 66:
-#line 773 "parse.y"
+#line 778 "parse.y"
                         { (yyval.command) = (yyvsp[0].command); }
-#line 2659 "y.tab.c"
+#line 2664 "y.tab.c"
     break;
 
   case 67:
-#line 775 "parse.y"
+#line 780 "parse.y"
                         { (yyval.command) = make_while_command ((yyvsp[-3].command), (yyvsp[-1].command)); }
-#line 2665 "y.tab.c"
+#line 2670 "y.tab.c"
     break;
 
   case 68:
-#line 777 "parse.y"
+#line 782 "parse.y"
                         { (yyval.command) = make_until_command ((yyvsp[-3].command), (yyvsp[-1].command)); }
-#line 2671 "y.tab.c"
+#line 2676 "y.tab.c"
     break;
 
   case 69:
-#line 779 "parse.y"
+#line 784 "parse.y"
                         { (yyval.command) = (yyvsp[0].command); }
-#line 2677 "y.tab.c"
+#line 2682 "y.tab.c"
     break;
 
   case 70:
-#line 781 "parse.y"
+#line 786 "parse.y"
                         { (yyval.command) = (yyvsp[0].command); }
-#line 2683 "y.tab.c"
+#line 2688 "y.tab.c"
     break;
 
   case 71:
-#line 783 "parse.y"
+#line 788 "parse.y"
                         { (yyval.command) = (yyvsp[0].command); }
-#line 2689 "y.tab.c"
+#line 2694 "y.tab.c"
     break;
 
   case 72:
-#line 785 "parse.y"
+#line 790 "parse.y"
                         { (yyval.command) = (yyvsp[0].command); }
-#line 2695 "y.tab.c"
+#line 2700 "y.tab.c"
     break;
 
   case 73:
-#line 787 "parse.y"
+#line 792 "parse.y"
                         { (yyval.command) = (yyvsp[0].command); }
-#line 2701 "y.tab.c"
+#line 2706 "y.tab.c"
     break;
 
   case 74:
-#line 789 "parse.y"
+#line 794 "parse.y"
                         { (yyval.command) = (yyvsp[0].command); }
-#line 2707 "y.tab.c"
+#line 2712 "y.tab.c"
     break;
 
   case 75:
-#line 791 "parse.y"
+#line 796 "parse.y"
                         { (yyval.command) = (yyvsp[0].command); }
-#line 2713 "y.tab.c"
+#line 2718 "y.tab.c"
     break;
 
   case 76:
-#line 795 "parse.y"
-                        {
-			  (yyval.command) = make_for_command ((yyvsp[-4].word), add_string_to_list ("\"$@\"", (WORD_LIST *)NULL), (yyvsp[-1].command), word_lineno[word_top]);
-			  if (word_top > 0) word_top--;
-			}
-#line 2722 "y.tab.c"
-    break;
-
-  case 77:
 #line 800 "parse.y"
                         {
 			  (yyval.command) = make_for_command ((yyvsp[-4].word), add_string_to_list ("\"$@\"", (WORD_LIST *)NULL), (yyvsp[-1].command), word_lineno[word_top]);
 			  if (word_top > 0) word_top--;
 			}
-#line 2731 "y.tab.c"
+#line 2727 "y.tab.c"
+    break;
+
+  case 77:
+#line 805 "parse.y"
+                        {
+			  (yyval.command) = make_for_command ((yyvsp[-4].word), add_string_to_list ("\"$@\"", (WORD_LIST *)NULL), (yyvsp[-1].command), word_lineno[word_top]);
+			  if (word_top > 0) word_top--;
+			}
+#line 2736 "y.tab.c"
     break;
 
   case 78:
-#line 805 "parse.y"
-                        {
-			  (yyval.command) = make_for_command ((yyvsp[-5].word), add_string_to_list ("\"$@\"", (WORD_LIST *)NULL), (yyvsp[-1].command), word_lineno[word_top]);
-			  if (word_top > 0) word_top--;
-			}
-#line 2740 "y.tab.c"
-    break;
-
-  case 79:
 #line 810 "parse.y"
                         {
 			  (yyval.command) = make_for_command ((yyvsp[-5].word), add_string_to_list ("\"$@\"", (WORD_LIST *)NULL), (yyvsp[-1].command), word_lineno[word_top]);
 			  if (word_top > 0) word_top--;
 			}
-#line 2749 "y.tab.c"
+#line 2745 "y.tab.c"
+    break;
+
+  case 79:
+#line 815 "parse.y"
+                        {
+			  (yyval.command) = make_for_command ((yyvsp[-5].word), add_string_to_list ("\"$@\"", (WORD_LIST *)NULL), (yyvsp[-1].command), word_lineno[word_top]);
+			  if (word_top > 0) word_top--;
+			}
+#line 2754 "y.tab.c"
     break;
 
   case 80:
-#line 815 "parse.y"
-                        {
-			  (yyval.command) = make_for_command ((yyvsp[-8].word), REVERSE_LIST ((yyvsp[-5].word_list), WORD_LIST *), (yyvsp[-1].command), word_lineno[word_top]);
-			  if (word_top > 0) word_top--;
-			}
-#line 2758 "y.tab.c"
-    break;
-
-  case 81:
 #line 820 "parse.y"
                         {
 			  (yyval.command) = make_for_command ((yyvsp[-8].word), REVERSE_LIST ((yyvsp[-5].word_list), WORD_LIST *), (yyvsp[-1].command), word_lineno[word_top]);
 			  if (word_top > 0) word_top--;
 			}
-#line 2767 "y.tab.c"
+#line 2763 "y.tab.c"
+    break;
+
+  case 81:
+#line 825 "parse.y"
+                        {
+			  (yyval.command) = make_for_command ((yyvsp[-8].word), REVERSE_LIST ((yyvsp[-5].word_list), WORD_LIST *), (yyvsp[-1].command), word_lineno[word_top]);
+			  if (word_top > 0) word_top--;
+			}
+#line 2772 "y.tab.c"
     break;
 
   case 82:
-#line 825 "parse.y"
-                        {
-			  (yyval.command) = make_for_command ((yyvsp[-7].word), (WORD_LIST *)NULL, (yyvsp[-1].command), word_lineno[word_top]);
-			  if (word_top > 0) word_top--;
-			}
-#line 2776 "y.tab.c"
-    break;
-
-  case 83:
 #line 830 "parse.y"
                         {
 			  (yyval.command) = make_for_command ((yyvsp[-7].word), (WORD_LIST *)NULL, (yyvsp[-1].command), word_lineno[word_top]);
 			  if (word_top > 0) word_top--;
 			}
-#line 2785 "y.tab.c"
+#line 2781 "y.tab.c"
+    break;
+
+  case 83:
+#line 835 "parse.y"
+                        {
+			  (yyval.command) = make_for_command ((yyvsp[-7].word), (WORD_LIST *)NULL, (yyvsp[-1].command), word_lineno[word_top]);
+			  if (word_top > 0) word_top--;
+			}
+#line 2790 "y.tab.c"
     break;
 
   case 84:
-#line 837 "parse.y"
+#line 842 "parse.y"
                                 {
 				  (yyval.command) = make_arith_for_command ((yyvsp[-5].word_list), (yyvsp[-1].command), arith_for_lineno);
 				  if ((yyval.command) == 0) YYERROR;
 				  if (word_top > 0) word_top--;
 				}
-#line 2795 "y.tab.c"
+#line 2800 "y.tab.c"
     break;
 
   case 85:
-#line 843 "parse.y"
+#line 848 "parse.y"
                                 {
 				  (yyval.command) = make_arith_for_command ((yyvsp[-5].word_list), (yyvsp[-1].command), arith_for_lineno);
 				  if ((yyval.command) == 0) YYERROR;
 				  if (word_top > 0) word_top--;
 				}
-#line 2805 "y.tab.c"
+#line 2810 "y.tab.c"
     break;
 
   case 86:
-#line 849 "parse.y"
+#line 854 "parse.y"
                                 {
 				  (yyval.command) = make_arith_for_command ((yyvsp[-3].word_list), (yyvsp[-1].command), arith_for_lineno);
 				  if ((yyval.command) == 0) YYERROR;
 				  if (word_top > 0) word_top--;
 				}
-#line 2815 "y.tab.c"
+#line 2820 "y.tab.c"
     break;
 
   case 87:
-#line 855 "parse.y"
+#line 860 "parse.y"
                                 {
 				  (yyval.command) = make_arith_for_command ((yyvsp[-3].word_list), (yyvsp[-1].command), arith_for_lineno);
 				  if ((yyval.command) == 0) YYERROR;
 				  if (word_top > 0) word_top--;
 				}
-#line 2825 "y.tab.c"
+#line 2830 "y.tab.c"
     break;
 
   case 88:
-#line 863 "parse.y"
-                        {
-			  (yyval.command) = make_select_command ((yyvsp[-4].word), add_string_to_list ("\"$@\"", (WORD_LIST *)NULL), (yyvsp[-1].command), word_lineno[word_top]);
-			  if (word_top > 0) word_top--;
-			}
-#line 2834 "y.tab.c"
-    break;
-
-  case 89:
 #line 868 "parse.y"
                         {
 			  (yyval.command) = make_select_command ((yyvsp[-4].word), add_string_to_list ("\"$@\"", (WORD_LIST *)NULL), (yyvsp[-1].command), word_lineno[word_top]);
 			  if (word_top > 0) word_top--;
 			}
-#line 2843 "y.tab.c"
+#line 2839 "y.tab.c"
+    break;
+
+  case 89:
+#line 873 "parse.y"
+                        {
+			  (yyval.command) = make_select_command ((yyvsp[-4].word), add_string_to_list ("\"$@\"", (WORD_LIST *)NULL), (yyvsp[-1].command), word_lineno[word_top]);
+			  if (word_top > 0) word_top--;
+			}
+#line 2848 "y.tab.c"
     break;
 
   case 90:
-#line 873 "parse.y"
-                        {
-			  (yyval.command) = make_select_command ((yyvsp[-5].word), add_string_to_list ("\"$@\"", (WORD_LIST *)NULL), (yyvsp[-1].command), word_lineno[word_top]);
-			  if (word_top > 0) word_top--;
-			}
-#line 2852 "y.tab.c"
-    break;
-
-  case 91:
 #line 878 "parse.y"
                         {
 			  (yyval.command) = make_select_command ((yyvsp[-5].word), add_string_to_list ("\"$@\"", (WORD_LIST *)NULL), (yyvsp[-1].command), word_lineno[word_top]);
 			  if (word_top > 0) word_top--;
 			}
-#line 2861 "y.tab.c"
+#line 2857 "y.tab.c"
+    break;
+
+  case 91:
+#line 883 "parse.y"
+                        {
+			  (yyval.command) = make_select_command ((yyvsp[-5].word), add_string_to_list ("\"$@\"", (WORD_LIST *)NULL), (yyvsp[-1].command), word_lineno[word_top]);
+			  if (word_top > 0) word_top--;
+			}
+#line 2866 "y.tab.c"
     break;
 
   case 92:
-#line 883 "parse.y"
-                        {
-			  (yyval.command) = make_select_command ((yyvsp[-8].word), REVERSE_LIST ((yyvsp[-5].word_list), WORD_LIST *), (yyvsp[-1].command), word_lineno[word_top]);
-			  if (word_top > 0) word_top--;
-			}
-#line 2870 "y.tab.c"
-    break;
-
-  case 93:
 #line 888 "parse.y"
                         {
 			  (yyval.command) = make_select_command ((yyvsp[-8].word), REVERSE_LIST ((yyvsp[-5].word_list), WORD_LIST *), (yyvsp[-1].command), word_lineno[word_top]);
 			  if (word_top > 0) word_top--;
 			}
-#line 2879 "y.tab.c"
+#line 2875 "y.tab.c"
+    break;
+
+  case 93:
+#line 893 "parse.y"
+                        {
+			  (yyval.command) = make_select_command ((yyvsp[-8].word), REVERSE_LIST ((yyvsp[-5].word_list), WORD_LIST *), (yyvsp[-1].command), word_lineno[word_top]);
+			  if (word_top > 0) word_top--;
+			}
+#line 2884 "y.tab.c"
     break;
 
   case 94:
-#line 893 "parse.y"
-                        {
-			  (yyval.command) = make_select_command ((yyvsp[-7].word), (WORD_LIST *)NULL, (yyvsp[-1].command), word_lineno[word_top]);
-			  if (word_top > 0) word_top--;
-			}
-#line 2888 "y.tab.c"
-    break;
-
-  case 95:
 #line 898 "parse.y"
                         {
 			  (yyval.command) = make_select_command ((yyvsp[-7].word), (WORD_LIST *)NULL, (yyvsp[-1].command), word_lineno[word_top]);
 			  if (word_top > 0) word_top--;
 			}
-#line 2897 "y.tab.c"
+#line 2893 "y.tab.c"
+    break;
+
+  case 95:
+#line 903 "parse.y"
+                        {
+			  (yyval.command) = make_select_command ((yyvsp[-7].word), (WORD_LIST *)NULL, (yyvsp[-1].command), word_lineno[word_top]);
+			  if (word_top > 0) word_top--;
+			}
+#line 2902 "y.tab.c"
     break;
 
   case 96:
-#line 905 "parse.y"
+#line 910 "parse.y"
                         {
 			  (yyval.command) = make_case_command ((yyvsp[-4].word), (PATTERN_LIST *)NULL, word_lineno[word_top]);
 			  if (word_top > 0) word_top--;
 			}
-#line 2906 "y.tab.c"
+#line 2911 "y.tab.c"
     break;
 
   case 97:
-#line 910 "parse.y"
+#line 915 "parse.y"
                         {
 			  (yyval.command) = make_case_command ((yyvsp[-5].word), (yyvsp[-2].pattern), word_lineno[word_top]);
 			  if (word_top > 0) word_top--;
 			}
-#line 2915 "y.tab.c"
+#line 2920 "y.tab.c"
     break;
 
   case 98:
-#line 915 "parse.y"
+#line 920 "parse.y"
                         {
 			  (yyval.command) = make_case_command ((yyvsp[-4].word), (yyvsp[-1].pattern), word_lineno[word_top]);
 			  if (word_top > 0) word_top--;
 			}
-#line 2924 "y.tab.c"
+#line 2929 "y.tab.c"
     break;
 
   case 99:
-#line 922 "parse.y"
+#line 927 "parse.y"
                         { (yyval.command) = make_function_def ((yyvsp[-4].word), (yyvsp[0].command), function_dstart, function_bstart); }
-#line 2930 "y.tab.c"
+#line 2935 "y.tab.c"
     break;
 
   case 100:
-#line 924 "parse.y"
+#line 929 "parse.y"
                         { (yyval.command) = make_function_def ((yyvsp[-4].word), (yyvsp[0].command), function_dstart, function_bstart); }
-#line 2936 "y.tab.c"
+#line 2941 "y.tab.c"
     break;
 
   case 101:
-#line 926 "parse.y"
+#line 931 "parse.y"
                         { (yyval.command) = make_function_def ((yyvsp[-1].word), (yyvsp[0].command), function_dstart, function_bstart); }
-#line 2942 "y.tab.c"
+#line 2947 "y.tab.c"
     break;
 
   case 102:
-#line 928 "parse.y"
+#line 933 "parse.y"
                         { (yyval.command) = make_function_def ((yyvsp[-3].word), (yyvsp[0].command), function_dstart, function_bstart); }
-#line 2948 "y.tab.c"
+#line 2953 "y.tab.c"
     break;
 
   case 103:
-#line 932 "parse.y"
+#line 937 "parse.y"
                         { (yyval.command) = (yyvsp[0].command); }
-#line 2954 "y.tab.c"
+#line 2959 "y.tab.c"
     break;
 
   case 104:
-#line 934 "parse.y"
+#line 939 "parse.y"
                         {
 			  COMMAND *tc;
 
@@ -2983,29 +2988,29 @@ yyreduce:
 			    tc->redirects = (yyvsp[0].redirect);
 			  (yyval.command) = (yyvsp[-1].command);
 			}
-#line 2987 "y.tab.c"
+#line 2992 "y.tab.c"
     break;
 
   case 105:
-#line 965 "parse.y"
+#line 970 "parse.y"
                         {
 			  (yyval.command) = make_subshell_command ((yyvsp[-1].command));
 			  (yyval.command)->flags |= CMD_WANT_SUBSHELL;
 			}
-#line 2996 "y.tab.c"
+#line 3001 "y.tab.c"
     break;
 
   case 106:
-#line 972 "parse.y"
+#line 977 "parse.y"
                         {
 			  (yyval.command) = make_coproc_command ("COPROC", (yyvsp[0].command));
 			  (yyval.command)->flags |= CMD_WANT_SUBSHELL|CMD_COPROC_SUBSHELL;
 			}
-#line 3005 "y.tab.c"
+#line 3010 "y.tab.c"
     break;
 
   case 107:
-#line 977 "parse.y"
+#line 982 "parse.y"
                         {
 			  COMMAND *tc;
 
@@ -3022,20 +3027,20 @@ yyreduce:
 			  (yyval.command) = make_coproc_command ("COPROC", (yyvsp[-1].command));
 			  (yyval.command)->flags |= CMD_WANT_SUBSHELL|CMD_COPROC_SUBSHELL;
 			}
-#line 3026 "y.tab.c"
+#line 3031 "y.tab.c"
     break;
 
   case 108:
-#line 994 "parse.y"
+#line 999 "parse.y"
                         {
 			  (yyval.command) = make_coproc_command ((yyvsp[-1].word)->word, (yyvsp[0].command));
 			  (yyval.command)->flags |= CMD_WANT_SUBSHELL|CMD_COPROC_SUBSHELL;
 			}
-#line 3035 "y.tab.c"
+#line 3040 "y.tab.c"
     break;
 
   case 109:
-#line 999 "parse.y"
+#line 1004 "parse.y"
                         {
 			  COMMAND *tc;
 
@@ -3052,262 +3057,262 @@ yyreduce:
 			  (yyval.command) = make_coproc_command ((yyvsp[-2].word)->word, (yyvsp[-1].command));
 			  (yyval.command)->flags |= CMD_WANT_SUBSHELL|CMD_COPROC_SUBSHELL;
 			}
-#line 3056 "y.tab.c"
+#line 3061 "y.tab.c"
     break;
 
   case 110:
-#line 1016 "parse.y"
+#line 1021 "parse.y"
                         {
 			  (yyval.command) = make_coproc_command ("COPROC", clean_simple_command ((yyvsp[0].command)));
 			  (yyval.command)->flags |= CMD_WANT_SUBSHELL|CMD_COPROC_SUBSHELL;
 			}
-#line 3065 "y.tab.c"
+#line 3070 "y.tab.c"
     break;
 
   case 111:
-#line 1023 "parse.y"
+#line 1028 "parse.y"
                         { (yyval.command) = make_if_command ((yyvsp[-3].command), (yyvsp[-1].command), (COMMAND *)NULL); }
-#line 3071 "y.tab.c"
+#line 3076 "y.tab.c"
     break;
 
   case 112:
-#line 1025 "parse.y"
+#line 1030 "parse.y"
                         { (yyval.command) = make_if_command ((yyvsp[-5].command), (yyvsp[-3].command), (yyvsp[-1].command)); }
-#line 3077 "y.tab.c"
+#line 3082 "y.tab.c"
     break;
 
   case 113:
-#line 1027 "parse.y"
+#line 1032 "parse.y"
                         { (yyval.command) = make_if_command ((yyvsp[-4].command), (yyvsp[-2].command), (yyvsp[-1].command)); }
-#line 3083 "y.tab.c"
+#line 3088 "y.tab.c"
     break;
 
   case 114:
-#line 1032 "parse.y"
+#line 1037 "parse.y"
                         { (yyval.command) = make_group_command ((yyvsp[-1].command)); }
-#line 3089 "y.tab.c"
+#line 3094 "y.tab.c"
     break;
 
   case 115:
-#line 1036 "parse.y"
+#line 1041 "parse.y"
                         { (yyval.command) = make_arith_command ((yyvsp[0].word_list)); }
-#line 3095 "y.tab.c"
+#line 3100 "y.tab.c"
     break;
 
   case 116:
-#line 1040 "parse.y"
+#line 1045 "parse.y"
                         { (yyval.command) = (yyvsp[-1].command); }
-#line 3101 "y.tab.c"
+#line 3106 "y.tab.c"
     break;
 
   case 117:
-#line 1044 "parse.y"
+#line 1049 "parse.y"
                         { (yyval.command) = make_if_command ((yyvsp[-2].command), (yyvsp[0].command), (COMMAND *)NULL); }
-#line 3107 "y.tab.c"
+#line 3112 "y.tab.c"
     break;
 
   case 118:
-#line 1046 "parse.y"
+#line 1051 "parse.y"
                         { (yyval.command) = make_if_command ((yyvsp[-4].command), (yyvsp[-2].command), (yyvsp[0].command)); }
-#line 3113 "y.tab.c"
+#line 3118 "y.tab.c"
     break;
 
   case 119:
-#line 1048 "parse.y"
+#line 1053 "parse.y"
                         { (yyval.command) = make_if_command ((yyvsp[-3].command), (yyvsp[-1].command), (yyvsp[0].command)); }
-#line 3119 "y.tab.c"
+#line 3124 "y.tab.c"
     break;
 
   case 121:
-#line 1053 "parse.y"
+#line 1058 "parse.y"
                         { (yyvsp[0].pattern)->next = (yyvsp[-1].pattern); (yyval.pattern) = (yyvsp[0].pattern); }
-#line 3125 "y.tab.c"
+#line 3130 "y.tab.c"
     break;
 
   case 122:
-#line 1057 "parse.y"
+#line 1062 "parse.y"
                         { (yyval.pattern) = make_pattern_list ((yyvsp[-2].word_list), (yyvsp[0].command)); }
-#line 3131 "y.tab.c"
+#line 3136 "y.tab.c"
     break;
 
   case 123:
-#line 1059 "parse.y"
+#line 1064 "parse.y"
                         { (yyval.pattern) = make_pattern_list ((yyvsp[-2].word_list), (COMMAND *)NULL); }
-#line 3137 "y.tab.c"
+#line 3142 "y.tab.c"
     break;
 
   case 124:
-#line 1061 "parse.y"
+#line 1066 "parse.y"
                         { (yyval.pattern) = make_pattern_list ((yyvsp[-2].word_list), (yyvsp[0].command)); }
-#line 3143 "y.tab.c"
+#line 3148 "y.tab.c"
     break;
 
   case 125:
-#line 1063 "parse.y"
+#line 1068 "parse.y"
                         { (yyval.pattern) = make_pattern_list ((yyvsp[-2].word_list), (COMMAND *)NULL); }
-#line 3149 "y.tab.c"
+#line 3154 "y.tab.c"
     break;
 
   case 126:
-#line 1067 "parse.y"
+#line 1072 "parse.y"
                         { (yyval.pattern) = (yyvsp[-1].pattern); }
-#line 3155 "y.tab.c"
+#line 3160 "y.tab.c"
     break;
 
   case 127:
-#line 1069 "parse.y"
+#line 1074 "parse.y"
                         { (yyvsp[-1].pattern)->next = (yyvsp[-2].pattern); (yyval.pattern) = (yyvsp[-1].pattern); }
-#line 3161 "y.tab.c"
+#line 3166 "y.tab.c"
     break;
 
   case 128:
-#line 1071 "parse.y"
+#line 1076 "parse.y"
                         { (yyvsp[-1].pattern)->flags |= CASEPAT_FALLTHROUGH; (yyval.pattern) = (yyvsp[-1].pattern); }
-#line 3167 "y.tab.c"
+#line 3172 "y.tab.c"
     break;
 
   case 129:
-#line 1073 "parse.y"
+#line 1078 "parse.y"
                         { (yyvsp[-1].pattern)->flags |= CASEPAT_FALLTHROUGH; (yyvsp[-1].pattern)->next = (yyvsp[-2].pattern); (yyval.pattern) = (yyvsp[-1].pattern); }
-#line 3173 "y.tab.c"
+#line 3178 "y.tab.c"
     break;
 
   case 130:
-#line 1075 "parse.y"
+#line 1080 "parse.y"
                         { (yyvsp[-1].pattern)->flags |= CASEPAT_TESTNEXT; (yyval.pattern) = (yyvsp[-1].pattern); }
-#line 3179 "y.tab.c"
+#line 3184 "y.tab.c"
     break;
 
   case 131:
-#line 1077 "parse.y"
+#line 1082 "parse.y"
                         { (yyvsp[-1].pattern)->flags |= CASEPAT_TESTNEXT; (yyvsp[-1].pattern)->next = (yyvsp[-2].pattern); (yyval.pattern) = (yyvsp[-1].pattern); }
-#line 3185 "y.tab.c"
+#line 3190 "y.tab.c"
     break;
 
   case 132:
-#line 1081 "parse.y"
+#line 1086 "parse.y"
                         { (yyval.word_list) = make_word_list ((yyvsp[0].word), (WORD_LIST *)NULL); }
-#line 3191 "y.tab.c"
+#line 3196 "y.tab.c"
     break;
 
   case 133:
-#line 1083 "parse.y"
+#line 1088 "parse.y"
                         { (yyval.word_list) = make_word_list ((yyvsp[0].word), (yyvsp[-2].word_list)); }
-#line 3197 "y.tab.c"
+#line 3202 "y.tab.c"
     break;
 
   case 134:
-#line 1092 "parse.y"
+#line 1097 "parse.y"
                         {
 			  (yyval.command) = (yyvsp[0].command);
 			  if (need_here_doc)
 			    gather_here_documents ();
 			 }
-#line 3207 "y.tab.c"
+#line 3212 "y.tab.c"
     break;
 
   case 136:
-#line 1101 "parse.y"
+#line 1106 "parse.y"
                         {
 			  (yyval.command) = (yyvsp[0].command);
 			}
-#line 3215 "y.tab.c"
+#line 3220 "y.tab.c"
     break;
 
   case 138:
-#line 1108 "parse.y"
+#line 1113 "parse.y"
                         {
 			  if ((yyvsp[-2].command)->type == cm_connection)
 			    (yyval.command) = connect_async_list ((yyvsp[-2].command), (COMMAND *)NULL, '&');
 			  else
 			    (yyval.command) = command_connect ((yyvsp[-2].command), (COMMAND *)NULL, '&');
 			}
-#line 3226 "y.tab.c"
+#line 3231 "y.tab.c"
     break;
 
   case 139:
-#line 1115 "parse.y"
+#line 1120 "parse.y"
                         {
 			  if ((yyvsp[-2].command)->type == cm_connection)
 			    (yyval.command) = connect_async_list ((yyvsp[-2].command), (COMMAND *)NULL, '=');
 			  else
 			    (yyval.command) = command_connect ((yyvsp[-2].command), (COMMAND *)NULL, '=');
 			}
-#line 3237 "y.tab.c"
+#line 3242 "y.tab.c"
     break;
 
   case 141:
-#line 1126 "parse.y"
+#line 1131 "parse.y"
                         { (yyval.command) = command_connect ((yyvsp[-3].command), (yyvsp[0].command), AND_AND); }
-#line 3243 "y.tab.c"
+#line 3248 "y.tab.c"
     break;
 
   case 142:
-#line 1128 "parse.y"
+#line 1133 "parse.y"
                         { (yyval.command) = command_connect ((yyvsp[-3].command), (yyvsp[0].command), OR_OR); }
-#line 3249 "y.tab.c"
+#line 3254 "y.tab.c"
     break;
 
   case 143:
-#line 1130 "parse.y"
+#line 1135 "parse.y"
                         {
 			  if ((yyvsp[-3].command)->type == cm_connection)
 			    (yyval.command) = connect_async_list ((yyvsp[-3].command), (yyvsp[0].command), '&');
 			  else
 			    (yyval.command) = command_connect ((yyvsp[-3].command), (yyvsp[0].command), '&');
 			}
-#line 3260 "y.tab.c"
+#line 3265 "y.tab.c"
     break;
 
   case 144:
-#line 1137 "parse.y"
+#line 1142 "parse.y"
                         {
 			  if ((yyvsp[-3].command)->type == cm_connection)
 			    (yyval.command) = connect_async_list ((yyvsp[-3].command), (yyvsp[0].command), '=');
 			  else
 			    (yyval.command) = command_connect ((yyvsp[-3].command), (yyvsp[0].command), '=');
 			}
-#line 3271 "y.tab.c"
+#line 3276 "y.tab.c"
     break;
 
   case 145:
-#line 1144 "parse.y"
+#line 1149 "parse.y"
                         { (yyval.command) = command_connect ((yyvsp[-3].command), (yyvsp[0].command), ';'); }
-#line 3277 "y.tab.c"
+#line 3282 "y.tab.c"
     break;
 
   case 146:
-#line 1146 "parse.y"
+#line 1151 "parse.y"
                         { (yyval.command) = command_connect ((yyvsp[-3].command), (yyvsp[0].command), ';'); }
-#line 3283 "y.tab.c"
+#line 3288 "y.tab.c"
     break;
 
   case 147:
-#line 1148 "parse.y"
+#line 1153 "parse.y"
                         { (yyval.command) = (yyvsp[0].command); }
-#line 3289 "y.tab.c"
+#line 3294 "y.tab.c"
     break;
 
   case 150:
-#line 1156 "parse.y"
+#line 1161 "parse.y"
                 { (yyval.number) = '\n'; }
-#line 3295 "y.tab.c"
+#line 3300 "y.tab.c"
     break;
 
   case 151:
-#line 1158 "parse.y"
+#line 1163 "parse.y"
                 { (yyval.number) = ';'; }
-#line 3301 "y.tab.c"
+#line 3306 "y.tab.c"
     break;
 
   case 152:
-#line 1160 "parse.y"
+#line 1165 "parse.y"
                 { (yyval.number) = yacc_EOF; }
-#line 3307 "y.tab.c"
+#line 3312 "y.tab.c"
     break;
 
   case 155:
-#line 1174 "parse.y"
+#line 1179 "parse.y"
                         {
 			  (yyval.command) = (yyvsp[0].command);
 			  if (need_here_doc)
@@ -3320,11 +3325,11 @@ yyreduce:
 			      YYACCEPT;
 			    }
 			}
-#line 3324 "y.tab.c"
+#line 3329 "y.tab.c"
     break;
 
   case 156:
-#line 1187 "parse.y"
+#line 1192 "parse.y"
                         {
 			  if ((yyvsp[-1].command)->type == cm_connection)
 			    (yyval.command) = connect_async_list ((yyvsp[-1].command), (COMMAND *)NULL, '&');
@@ -3340,11 +3345,11 @@ yyreduce:
 			      YYACCEPT;
 			    }
 			}
-#line 3344 "y.tab.c"
+#line 3349 "y.tab.c"
     break;
 
   case 157:
-#line 1203 "parse.y"
+#line 1208 "parse.y"
                         {
 			  if ((yyvsp[-1].command)->type == cm_connection)
 			    (yyval.command) = connect_async_list ((yyvsp[-1].command), (COMMAND *)NULL, '=');
@@ -3360,11 +3365,11 @@ yyreduce:
 			      YYACCEPT;
 			    }
 			}
-#line 3364 "y.tab.c"
+#line 3369 "y.tab.c"
     break;
 
   case 158:
-#line 1219 "parse.y"
+#line 1224 "parse.y"
                         {
 			  (yyval.command) = (yyvsp[-1].command);
 			  if (need_here_doc)
@@ -3377,83 +3382,83 @@ yyreduce:
 			      YYACCEPT;
 			    }
 			}
-#line 3381 "y.tab.c"
+#line 3386 "y.tab.c"
     break;
 
   case 159:
-#line 1234 "parse.y"
+#line 1239 "parse.y"
                         { (yyval.command) = command_connect ((yyvsp[-3].command), (yyvsp[0].command), AND_AND); }
-#line 3387 "y.tab.c"
+#line 3392 "y.tab.c"
     break;
 
   case 160:
-#line 1236 "parse.y"
+#line 1241 "parse.y"
                         { (yyval.command) = command_connect ((yyvsp[-3].command), (yyvsp[0].command), OR_OR); }
-#line 3393 "y.tab.c"
+#line 3398 "y.tab.c"
     break;
 
   case 161:
-#line 1238 "parse.y"
+#line 1243 "parse.y"
                         {
 			  if ((yyvsp[-2].command)->type == cm_connection)
 			    (yyval.command) = connect_async_list ((yyvsp[-2].command), (yyvsp[0].command), '&');
 			  else
 			    (yyval.command) = command_connect ((yyvsp[-2].command), (yyvsp[0].command), '&');
 			}
-#line 3404 "y.tab.c"
+#line 3409 "y.tab.c"
     break;
 
   case 162:
-#line 1245 "parse.y"
+#line 1250 "parse.y"
                         {
 			  if ((yyvsp[-2].command)->type == cm_connection)
 			    (yyval.command) = connect_async_list ((yyvsp[-2].command), (yyvsp[0].command), '=');
 			  else
 			    (yyval.command) = command_connect ((yyvsp[-2].command), (yyvsp[0].command), '=');
 			}
-#line 3415 "y.tab.c"
+#line 3420 "y.tab.c"
     break;
 
   case 163:
-#line 1252 "parse.y"
+#line 1257 "parse.y"
                         { (yyval.command) = command_connect ((yyvsp[-2].command), (yyvsp[0].command), ';'); }
-#line 3421 "y.tab.c"
+#line 3426 "y.tab.c"
     break;
 
   case 164:
-#line 1255 "parse.y"
+#line 1260 "parse.y"
                         { (yyval.command) = (yyvsp[0].command); }
-#line 3427 "y.tab.c"
+#line 3432 "y.tab.c"
     break;
 
   case 165:
-#line 1259 "parse.y"
+#line 1264 "parse.y"
                         { (yyval.command) = (yyvsp[0].command); }
-#line 3433 "y.tab.c"
+#line 3438 "y.tab.c"
     break;
 
   case 166:
-#line 1261 "parse.y"
+#line 1266 "parse.y"
                         {
 			  if ((yyvsp[0].command))
 			    (yyvsp[0].command)->flags ^= CMD_INVERT_RETURN;	/* toggle */
 			  (yyval.command) = (yyvsp[0].command);
 			}
-#line 3443 "y.tab.c"
+#line 3448 "y.tab.c"
     break;
 
   case 167:
-#line 1267 "parse.y"
+#line 1272 "parse.y"
                         {
 			  if ((yyvsp[0].command))
 			    (yyvsp[0].command)->flags |= (yyvsp[-1].number);
 			  (yyval.command) = (yyvsp[0].command);
 			}
-#line 3453 "y.tab.c"
+#line 3458 "y.tab.c"
     break;
 
   case 168:
-#line 1273 "parse.y"
+#line 1278 "parse.y"
                         {
 			  ELEMENT x;
 
@@ -3473,11 +3478,11 @@ yyreduce:
 			    token_to_read = ';';
 			  parser_state &= ~PST_REDIRLIST;	/* make_simple_command sets this */
 			}
-#line 3477 "y.tab.c"
+#line 3482 "y.tab.c"
     break;
 
   case 169:
-#line 1293 "parse.y"
+#line 1298 "parse.y"
                         {
 			  ELEMENT x;
 
@@ -3498,17 +3503,17 @@ yyreduce:
 			    token_to_read = ';';
 			  parser_state &= ~PST_REDIRLIST;	/* make_simple_command sets this */
 			}
-#line 3502 "y.tab.c"
+#line 3507 "y.tab.c"
     break;
 
   case 170:
-#line 1316 "parse.y"
+#line 1321 "parse.y"
                         { (yyval.command) = command_connect ((yyvsp[-3].command), (yyvsp[0].command), '|'); }
-#line 3508 "y.tab.c"
+#line 3513 "y.tab.c"
     break;
 
   case 171:
-#line 1318 "parse.y"
+#line 1323 "parse.y"
                         {
 			  /* Make cmd1 |& cmd2 equivalent to cmd1 2>&1 | cmd2 */
 			  COMMAND *tc;
@@ -3531,41 +3536,41 @@ yyreduce:
 
 			  (yyval.command) = command_connect ((yyvsp[-3].command), (yyvsp[0].command), '|');
 			}
-#line 3535 "y.tab.c"
+#line 3540 "y.tab.c"
     break;
 
   case 172:
-#line 1341 "parse.y"
+#line 1346 "parse.y"
                         { (yyval.command) = (yyvsp[0].command); }
-#line 3541 "y.tab.c"
+#line 3546 "y.tab.c"
     break;
 
   case 173:
-#line 1345 "parse.y"
+#line 1350 "parse.y"
                         { (yyval.number) = CMD_TIME_PIPELINE; }
-#line 3547 "y.tab.c"
+#line 3552 "y.tab.c"
     break;
 
   case 174:
-#line 1347 "parse.y"
+#line 1352 "parse.y"
                         { (yyval.number) = CMD_TIME_PIPELINE|CMD_TIME_POSIX; }
-#line 3553 "y.tab.c"
+#line 3558 "y.tab.c"
     break;
 
   case 175:
-#line 1349 "parse.y"
+#line 1354 "parse.y"
                         { (yyval.number) = CMD_TIME_PIPELINE|CMD_TIME_POSIX; }
-#line 3559 "y.tab.c"
+#line 3564 "y.tab.c"
     break;
 
   case 176:
-#line 1351 "parse.y"
+#line 1356 "parse.y"
                         { (yyval.number) = CMD_TIME_PIPELINE|CMD_TIME_POSIX; }
-#line 3565 "y.tab.c"
+#line 3570 "y.tab.c"
     break;
 
 
-#line 3569 "y.tab.c"
+#line 3574 "y.tab.c"
 
       default: break;
     }
@@ -3797,7 +3802,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 1353 "parse.y"
+#line 1358 "parse.y"
 
 
 /* Initial size to allocate for tokens, and the
@@ -3816,7 +3821,7 @@ yyreturn:
 #endif
 
 /* Global var is non-zero when end of file has been reached. */
-int EOF_Reached = 0;
+__thread int EOF_Reached = 0;
 
 #ifdef DEBUG
 static void
@@ -3825,8 +3830,7 @@ debug_parser (i)
 {
 #if YYDEBUG != 0
   yydebug = i;
-  yyoutstream = stdout;
-  yyerrstream = stderr;
+
 #endif
 }
 #endif
@@ -3848,7 +3852,7 @@ return_EOF ()
 
 /* Variable containing the current get and unget functions.
    See ./input.h for a clearer description. */
-BASH_INPUT bash_input;
+__thread BASH_INPUT bash_input;
 
 /* Set all of the fields in BASH_INPUT to NULL.  Free bash_input.name if it
    is non-null, avoiding a memory leak. */
@@ -3936,9 +3940,9 @@ input_file_descriptor ()
 /* **************************************************************** */
 
 #if defined (READLINE)
-char *current_readline_prompt = (char *)NULL;
-char *current_readline_line = (char *)NULL;
-int current_readline_line_index = 0;
+__thread char *current_readline_prompt = (char *)NULL;
+__thread char *current_readline_line = (char *)NULL;
+__thread int current_readline_line_index = 0;
 
 static int
 yy_readline_get ()
@@ -3949,8 +3953,8 @@ yy_readline_get ()
 
   if (current_readline_line == 0)
     {
-      if (bash_readline_initialized == 0)
-	initialize_readline ();
+    //   if (bash_readline_initialized == 0)
+	// initialize_readline ();
 
 #if defined (JOB_CONTROL)
       if (job_control)
@@ -4170,17 +4174,17 @@ typedef struct stream_saver {
 } STREAM_SAVER;
 
 /* The globally known line number. */
-int line_number = 0;
+__thread int line_number = 0;
 
 /* The line number offset set by assigning to LINENO.  Not currently used. */
-int line_number_base = 0;
+__thread int line_number_base = 0;
 
 #if defined (COND_COMMAND)
-static int cond_lineno;
-static int cond_token;
+static __thread int cond_lineno;
+static __thread int cond_token;
 #endif
 
-STREAM_SAVER *stream_list = (STREAM_SAVER *)NULL;
+__thread STREAM_SAVER *stream_list = (STREAM_SAVER *)NULL;
 
 void
 push_stream (reset_lineno)
@@ -4332,7 +4336,7 @@ typedef struct string_saver {
   int flags;
 } STRING_SAVER;
 
-STRING_SAVER *pushed_string_list = (STRING_SAVER *)NULL;
+__thread STRING_SAVER *pushed_string_list = (STRING_SAVER *)NULL;
 
 /*
  * Push the current shell_input_line onto a stack of such lines and make S
@@ -4608,17 +4612,17 @@ read_secondary_line (remove_quoted_newline)
     prompt_again ();
   ret = read_a_line (remove_quoted_newline);
 #if defined (HISTORY)
-  if (ret && remember_on_history && (parser_state & PST_HEREDOC))
-    {
-      /* To make adding the here-document body right, we need to rely on
-	 history_delimiting_chars() returning \n for the first line of the
-	 here-document body and the null string for the second and subsequent
-	 lines, so we avoid double newlines.
-	 current_command_line_count == 2 for the first line of the body. */
+//   if (ret && remember_on_history && (parser_state & PST_HEREDOC))
+//     {
+//       /* To make adding the here-document body right, we need to rely on
+// 	 history_delimiting_chars() returning \n for the first line of the
+// 	 here-document body and the null string for the second and subsequent
+// 	 lines, so we avoid double newlines.
+// 	 current_command_line_count == 2 for the first line of the body. */
 
-      current_command_line_count++;
-      maybe_add_history (ret);
-    }
+//       current_command_line_count++;
+//       maybe_add_history (ret);
+//     }
 #endif /* HISTORY */
   return ret;
 }
@@ -4716,12 +4720,12 @@ STRING_INT_ALIST other_token_alist[] = {
    can use them to decide when to add otherwise blank lines to the history. */
 
 /* The primary delimiter stack. */
-struct dstack dstack = {  (char *)NULL, 0, 0 };
+__thread struct dstack dstack = {  (char *)NULL, 0, 0 };
 
 /* A temporary delimiter stack to be used when decoding prompt strings.
    This is needed because command substitutions in prompt strings (e.g., PS2)
    can screw up the parser's quoting state. */
-static struct dstack temp_dstack = { (char *)NULL, 0, 0 };
+static __thread struct dstack temp_dstack = { (char *)NULL, 0, 0 };
 
 /* Macro for accessing the top delimiter on the stack.  Returns the
    delimiter or zero if none. */
@@ -4749,9 +4753,9 @@ static struct dstack temp_dstack = { (char *)NULL, 0, 0 };
 /* This implements one-character lookahead/lookbehind across physical input
    lines, to avoid something being lost because it's pushed back with
    shell_ungetc when we're at the start of a line. */
-static int eol_ungetc_lookahead = 0;
+static __thread int eol_ungetc_lookahead = 0;
 
-static int unquoted_backslash = 0;
+static __thread int unquoted_backslash = 0;
 
 static int
 shell_getc (remove_quoted_newline)
@@ -4913,65 +4917,65 @@ shell_getc (remove_quoted_newline)
 
       set_line_mbstate ();
 
-#if defined (HISTORY)
-      if (remember_on_history && shell_input_line && shell_input_line[0])
-	{
-	  char *expansions;
-#  if defined (BANG_HISTORY)
-	  /* If the current delimiter is a single quote, we should not be
-	     performing history expansion, even if we're on a different
-	     line from the original single quote. */
-	  if (current_delimiter (dstack) == '\'')
-	    history_quoting_state = '\'';
-	  else if (current_delimiter (dstack) == '"')
-	    history_quoting_state = '"';
-	  else
-	    history_quoting_state = 0;
-#  endif
-	  /* Calling with a third argument of 1 allows remember_on_history to
-	     determine whether or not the line is saved to the history list */
-	  expansions = pre_process_line (shell_input_line, 1, 1);
-#  if defined (BANG_HISTORY)
-	  history_quoting_state = 0;
-#  endif
-	  if (expansions != shell_input_line)
-	    {
-	      free (shell_input_line);
-	      shell_input_line = expansions;
-	      shell_input_line_len = shell_input_line ?
-					strlen (shell_input_line) : 0;
-	      if (shell_input_line_len == 0)
-		current_command_line_count--;
+// #if defined (HISTORY)
+//       if (remember_on_history && shell_input_line && shell_input_line[0])
+// 	{
+// 	  char *expansions;
+// #  if defined (BANG_HISTORY)
+// 	  /* If the current delimiter is a single quote, we should not be
+// 	     performing history expansion, even if we're on a different
+// 	     line from the original single quote. */
+// 	  if (current_delimiter (dstack) == '\'')
+// 	    history_quoting_state = '\'';
+// 	  else if (current_delimiter (dstack) == '"')
+// 	    history_quoting_state = '"';
+// 	  else
+// 	    history_quoting_state = 0;
+// #  endif
+// 	  /* Calling with a third argument of 1 allows remember_on_history to
+// 	     determine whether or not the line is saved to the history list */
+// 	  expansions = pre_process_line (shell_input_line, 1, 1);
+// #  if defined (BANG_HISTORY)
+// 	  history_quoting_state = 0;
+// #  endif
+// 	  if (expansions != shell_input_line)
+// 	    {
+// 	      free (shell_input_line);
+// 	      shell_input_line = expansions;
+// 	      shell_input_line_len = shell_input_line ?
+// 					strlen (shell_input_line) : 0;
+// 	      if (shell_input_line_len == 0)
+// 		current_command_line_count--;
 
-	      /* We have to force the xrealloc below because we don't know
-		 the true allocated size of shell_input_line anymore. */
-	      shell_input_line_size = shell_input_line_len;
+// 	      /* We have to force the xrealloc below because we don't know
+// 		 the true allocated size of shell_input_line anymore. */
+// 	      shell_input_line_size = shell_input_line_len;
 
-	      set_line_mbstate ();
-	    }
-	}
-      /* Try to do something intelligent with blank lines encountered while
-	 entering multi-line commands.  XXX - this is grotesque */
-      else if (remember_on_history && shell_input_line &&
-	       shell_input_line[0] == '\0' &&
-	       current_command_line_count > 1)
-	{
-	  if (current_delimiter (dstack))
-	    /* We know shell_input_line[0] == 0 and we're reading some sort of
-	       quoted string.  This means we've got a line consisting of only
-	       a newline in a quoted string.  We want to make sure this line
-	       gets added to the history. */
-	    maybe_add_history (shell_input_line);
-	  else
-	    {
-	      char *hdcs;
-	      hdcs = history_delimiting_chars (shell_input_line);
-	      if (hdcs && hdcs[0] == ';')
-		maybe_add_history (shell_input_line);
-	    }
-	}
+// 	      set_line_mbstate ();
+// 	    }
+// 	}
+//       /* Try to do something intelligent with blank lines encountered while
+// 	 entering multi-line commands.  XXX - this is grotesque */
+//       else if (remember_on_history && shell_input_line &&
+// 	       shell_input_line[0] == '\0' &&
+// 	       current_command_line_count > 1)
+// 	{
+// 	  if (current_delimiter (dstack))
+// 	    /* We know shell_input_line[0] == 0 and we're reading some sort of
+// 	       quoted string.  This means we've got a line consisting of only
+// 	       a newline in a quoted string.  We want to make sure this line
+// 	       gets added to the history. */
+// 	    maybe_add_history (shell_input_line);
+// 	  else
+// 	    {
+// 	      char *hdcs;
+// 	      hdcs = history_delimiting_chars (shell_input_line);
+// 	      if (hdcs && hdcs[0] == ';')
+// 		maybe_add_history (shell_input_line);
+// 	    }
+// 	}
 
-#endif /* HISTORY */
+// #endif /* HISTORY */
 
       if (shell_input_line)
 	{
@@ -5020,7 +5024,13 @@ shell_getc (remove_quoted_newline)
 	  /* This is kind of an abstraction violation, but there's no need to
 	     go through the entire shell_input_line again with a call to
 	     set_line_mbstate(). */
-	  
+	  if (shell_input_line_len + 2 > shell_input_line_propsize)
+	    {
+	      shell_input_line_propsize = shell_input_line_len + 2;
+	      shell_input_line_property = (char *)xrealloc (shell_input_line_property,
+							    shell_input_line_propsize);
+	    }
+	  shell_input_line_property[shell_input_line_len] = 1;
 #  endif
 #endif
 	}
@@ -5231,7 +5241,7 @@ push_token (x)
 
 /* Place to remember the token.  We try to keep the buffer
    at a reasonable size, but it can grow. */
-static char *token = (char *)NULL;
+static __thread char *token = (char *)NULL;
 
 /* Current size of the token buffer. */
 static int token_buffer_size;
@@ -6055,7 +6065,7 @@ parse_matched_pair (qc, open, close, lenp, flags)
       if (ch == EOF)
 	{
 	  free (ret);
-	  parser_error (start_lineno, _("unexpected EOF while looking for matching `%c'"), close);
+	   parser_error (start_lineno, _("unexpected EOF while looking for matching `%c'"), close);
 	  EOF_Reached = 1;	/* XXX */
 	  return (&matched_pair_error);
 	}
@@ -6194,7 +6204,7 @@ parse_matched_pair (qc, open, close, lenp, flags)
 	      else
 		nestret = parse_matched_pair (ch, ch, ch, &nestlen, rflags);
 	      pop_delimiter (dstack);
-	      CHECK_NESTRET_ERROR ();
+	       CHECK_NESTRET_ERROR ();
 
 	      if MBTEST((tflags & LEX_WASDOL) && ch == '\'' && (extended_quote || (rflags & P_DQUOTE) == 0))
 		{
@@ -6257,7 +6267,7 @@ parse_matched_pair (qc, open, close, lenp, flags)
 	{
 	  nestret = parse_matched_pair (0, '`', '`', &nestlen, rflags);
 
-	  CHECK_NESTRET_ERROR ();
+	   CHECK_NESTRET_ERROR ();
 	  APPEND_NESTRET ();
 
 	  FREE (nestret);
@@ -6398,7 +6408,7 @@ parse_comsub (qc, open, close, lenp, flags)
   count = 1;
   tflags = LEX_RESWDOK;
 #if defined (BANG_HISTORY)
-  orig_histexp = history_expansion_inhibited;
+//   orig_histexp = history_expansion_inhibited;
 #endif
 
   if ((flags & P_COMMAND) && qc != '\'' && qc != '"' && (flags & P_DQUOTE) == 0)
@@ -6427,7 +6437,7 @@ comsub_readchar:
 	{
 eof_error:
 #if defined (BANG_HISTORY)
-	  history_expansion_inhibited = orig_histexp;
+	//   history_expansion_inhibited = orig_histexp;
 #endif
 	  free (ret);
 	  FREE (heredelim);
@@ -6448,7 +6458,7 @@ eof_error:
 	      tflags &= ~LEX_HEREDELIM;
 	      tflags |= LEX_INHEREDOC;
 #if defined (BANG_HISTORY)
-	      history_expansion_inhibited = 1;
+	    //   history_expansion_inhibited = 1;
 #endif
 	      lex_firstind = retind + 1;
 	    }
@@ -6466,7 +6476,7 @@ eof_error:
 		  heredelim = 0;
 		  lex_firstind = -1;
 #if defined (BANG_HISTORY)
-		  history_expansion_inhibited = orig_histexp;
+		//   history_expansion_inhibited = orig_histexp;
 #endif
 		}
 	      else
@@ -6503,7 +6513,7 @@ eof_error:
 	      heredelim = 0;
 	      lex_firstind = -1;
 #if defined (BANG_HISTORY)
-	      history_expansion_inhibited = orig_histexp;
+	    //   history_expansion_inhibited = orig_histexp;
 #endif
 	    }
 	}
@@ -6616,7 +6626,7 @@ eof_error:
 	      tflags &= ~LEX_HEREDELIM;
 	      lex_firstind = retind + 1;
 #if defined (BANG_HISTORY)
-	      history_expansion_inhibited = 1;
+	    //   history_expansion_inhibited = 1;
 #endif
 	    }
 #endif
@@ -6638,7 +6648,7 @@ eof_error:
 		  tflags &= ~LEX_HEREDELIM;
 		  lex_firstind = retind + 1;
 #if defined (BANG_HISTORY)
-		  history_expansion_inhibited = 1;
+		//   history_expansion_inhibited = 1;
 #endif
 		}
 	      else
@@ -6911,7 +6921,7 @@ eof_error:
     }
 
 #if defined (BANG_HISTORY)
-  history_expansion_inhibited = orig_histexp;
+//   history_expansion_inhibited = orig_histexp;
 #endif
   FREE (heredelim);
   ret[retind] = '\0';
@@ -7487,8 +7497,7 @@ read_token_word (character)
   /*self_flag*/
   /* variable_substitution becomes non-zero if we see a ${}. */
   int  variable_substitution=0;
-  /* separator becomes non-zero if we see a $IFS. */
-  int  separator=0;
+
   /* command_substitution becomes non-zero if we see a $(). */
   int command_substitution = 0;
 
@@ -7634,25 +7643,23 @@ read_token_word (character)
 		  peek_char_3 = shell_getc(1);
 		  if (peek_char=='I'&&peek_char_2=='F'&&peek_char_3=='S')
 		  {
-			if (token_index>0){
-				 shell_ungetc (peek_char_3);
-				 shell_ungetc (peek_char_2);
-				 shell_ungetc (peek_char);
-				 shell_ungetc (character);
-			  	 
-				 
-			    
-				 goto got_token;
+			if (token_index>0)
+			{
+				shell_ungetc (peek_char_3);
+			  shell_ungetc (peek_char_2);
+			  shell_ungetc (peek_char);
+			  shell_ungetc (character);
+			  goto got_token;
 			}
 			token[token_index++]=character;
 			token[token_index++]=peek_char;
 			token[token_index++]=peek_char_2;
 	  		token[token_index++]=peek_char_3;
-			separator=1;
 			goto got_token;
 		  }else{
-			  shell_ungetc (peek_char_2);
 			  shell_ungetc (peek_char_3);
+			  shell_ungetc (peek_char_2);
+			  
 		  }
 	  }
 	  /* $(...), <(...), >(...), $((...)), ${...}, and $[...] constructs */
@@ -7980,8 +7987,6 @@ got_token:
 	the_word->self_flags = W_ARITHMETIC_SUBSTITUTION;
   if(command_substitution)
 	the_word->self_flags = W_COMMAND_SUBSTITUTION;
-  if(separator)
-	the_word->self_flags = W_SEPARATOR;
   if(variable_substitution)
 	the_word->self_flags = W_VARIABLE_SUBSTITUTION;
   if (quoted)
@@ -8348,10 +8353,10 @@ prompt_history_number (pmt)
 
   if (pmt == ps1_prompt)	/* are we expanding $PS1? */
     return ret;
-  else if (pmt == ps2_prompt && command_oriented_history == 0)
-    return ret;			/* not command oriented history */
-  else if (pmt == ps2_prompt && command_oriented_history && current_command_first_line_saved)
-    return ret - 1;
+//   else if (pmt == ps2_prompt && command_oriented_history == 0)
+//     return ret;			/* not command oriented history */
+//   else if (pmt == ps2_prompt && command_oriented_history && current_command_first_line_saved)
+//     return ret - 1;
   else
     return ret - 1;		/* PS0, PS4, ${var@P}, PS2 other cases */
 }
@@ -8806,8 +8811,8 @@ int
 yyerror (msg)
      const char *msg;
 {
-  report_syntax_error ((char *)NULL);
-  reset_parser ();
+   report_syntax_error ((char *)NULL);
+   reset_parser ();
   return (0);
 }
 
@@ -8981,16 +8986,7 @@ report_syntax_error (message)
   set_pipestatus_from_exit (last_command_exit_value);
 }
 
-/* ??? Needed function. ??? We have to be able to discard the constructs
-   created during parsing.  In the case of error, we want to return
-   allocated objects to the memory pool.  In the case of no error, we want
-   to throw away the information about where the allocated objects live.
-   (dispose_command () will actually free the command.) */
-static void
-discard_parser_constructs (error_p)
-     int error_p;
-{
-}
+
 
 /************************************************
  *						*
@@ -9001,15 +8997,15 @@ discard_parser_constructs (error_p)
 /* Do that silly `type "bye" to exit' stuff.  You know, "ignoreeof". */
 
 /* A flag denoting whether or not ignoreeof is set. */
-int ignoreeof = 0;
+__thread int ignoreeof = 0;
 
 /* The number of times that we have encountered an EOF character without
    another character intervening.  When this gets above the limit, the
    shell terminates. */
-int eof_encountered = 0;
+__thread int eof_encountered = 0;
 
 /* The limit for eof_encountered. */
-int eof_encountered_limit = 10;
+__thread int eof_encountered_limit = 10;
 
 /* If we have EOF as the only input unit, this user wants to leave
    the shell.  If the shell is not interactive, then just leave.
@@ -9066,7 +9062,7 @@ handle_eof_input_unit ()
 /* It's very important that these two functions treat the characters
    between ( and ) identically. */
 
-static WORD_LIST parse_string_error;
+static __thread WORD_LIST parse_string_error;
 
 /* Take a string and run it through the shell parser, returning the
    resultant word list.  Used by compound array assignment. */
@@ -9084,13 +9080,13 @@ parse_string_to_word_list (s, flags, whom)
   int old_remember_on_history, old_history_expansion_inhibited;
 #endif
 
-#if defined (HISTORY)
-  old_remember_on_history = remember_on_history;
-#  if defined (BANG_HISTORY)
-  old_history_expansion_inhibited = history_expansion_inhibited;
-#  endif
-  bash_history_disable ();
-#endif
+// #if defined (HISTORY)
+//   old_remember_on_history = remember_on_history;
+// #  if defined (BANG_HISTORY)
+//   old_history_expansion_inhibited = history_expansion_inhibited;
+// #  endif
+//   bash_history_disable ();
+// #endif
 
   orig_line_number = line_number;
   orig_line_count = current_command_line_count;
@@ -9138,12 +9134,12 @@ parse_string_to_word_list (s, flags, whom)
   if (ea)
     parser_restore_alias ();
 
-#if defined (HISTORY)
-  remember_on_history = old_remember_on_history;
-#  if defined (BANG_HISTORY)
-  history_expansion_inhibited = old_history_expansion_inhibited;
-#  endif /* BANG_HISTORY */
-#endif /* HISTORY */
+// #if defined (HISTORY)
+//   remember_on_history = old_remember_on_history;
+// #  if defined (BANG_HISTORY)
+//   history_expansion_inhibited = old_history_expansion_inhibited;
+// #  endif /* BANG_HISTORY */
+// #endif /* HISTORY */
 
   echo_input_at_read = old_echo_input;
   expand_aliases = old_expand_aliases;
@@ -9273,12 +9269,12 @@ save_parser_state (ps)
 
   ps->current_command_line_count = current_command_line_count;
 
-#if defined (HISTORY)
-  ps->remember_on_history = remember_on_history;
-#  if defined (BANG_HISTORY)
-  ps->history_expansion_inhibited = history_expansion_inhibited;
-#  endif
-#endif
+// #if defined (HISTORY)
+//   ps->remember_on_history = remember_on_history;
+// #  if defined (BANG_HISTORY)
+//   ps->history_expansion_inhibited = history_expansion_inhibited;
+// #  endif
+// #endif
 
   ps->last_command_exit_value = last_command_exit_value;
 #if defined (ARRAY_VARS)
@@ -9311,7 +9307,6 @@ void
 restore_parser_state (ps)
      sh_parser_state_t *ps;
 {
-  int i;
 
   if (ps == 0)
     return;
@@ -9330,12 +9325,12 @@ restore_parser_state (ps)
 
   current_command_line_count = ps->current_command_line_count;
 
-#if defined (HISTORY)
-  remember_on_history = ps->remember_on_history;
-#  if defined (BANG_HISTORY)
-  history_expansion_inhibited = ps->history_expansion_inhibited;
-#  endif
-#endif
+// #if defined (HISTORY)
+//   remember_on_history = ps->remember_on_history;
+// #  if defined (BANG_HISTORY)
+//   history_expansion_inhibited = ps->history_expansion_inhibited;
+// #  endif
+// #endif
 
   last_command_exit_value = ps->last_command_exit_value;
 #if defined (ARRAY_VARS)
@@ -9379,13 +9374,19 @@ save_input_line_state (ls)
   ls->input_line_len = shell_input_line_len;
   ls->input_line_index = shell_input_line_index;
 
-
+#if defined (HANDLE_MULTIBYTE)
+  ls->input_property = shell_input_line_property;
+  ls->input_propsize = shell_input_line_propsize;
+#endif
 
   /* force reallocation */
   shell_input_line = 0;
   shell_input_line_size = shell_input_line_len = shell_input_line_index = 0;
 
-
+#if defined (HANDLE_MULTIBYTE)
+  shell_input_line_property = 0;
+  shell_input_line_propsize = 0;
+#endif
 
   return ls;
 }
@@ -9400,7 +9401,11 @@ restore_input_line_state (ls)
   shell_input_line_len = ls->input_line_len;
   shell_input_line_index = ls->input_line_index;
 
-
+#if defined (HANDLE_MULTIBYTE)
+  FREE (shell_input_line_property);
+  shell_input_line_property = ls->input_property;
+  shell_input_line_propsize = ls->input_propsize;
+#endif
 
 #if 0
   set_line_mbstate ();
@@ -9432,8 +9437,23 @@ set_line_mbstate ()
   len = STRLEN (shell_input_line);	/* XXX - shell_input_line_len ? */
   if (len == 0)
     return;
- 
- 
+  if (shell_input_line_propsize >= MAX_PROPSIZE && len < MAX_PROPSIZE>>1)
+    {
+      free (shell_input_line_property);
+      shell_input_line_property = 0;
+      shell_input_line_propsize = 0;
+    }
+  if (len+1 > shell_input_line_propsize)
+    {
+      shell_input_line_propsize = len + 1;
+      shell_input_line_property = (char *)xrealloc (shell_input_line_property, shell_input_line_propsize);
+    }
+
+  if (locale_mb_cur_max == 1)
+    {
+      memset (shell_input_line_property, 1, len);
+      return;
+    }
 
   /* XXX - use whether or not we are in a UTF-8 locale to avoid calls to
      mbrlen */
@@ -9445,7 +9465,14 @@ set_line_mbstate ()
       if (locale_utf8locale == 0)
 	mbs = prevs;
 
- 
+      c = shell_input_line[i];
+      if (c == EOF)
+	{
+	  size_t j;
+	  for (j = i; j < len; j++)
+	    shell_input_line_property[j] = 1;
+	  break;
+	}
 
       if (locale_utf8locale)
 	{
@@ -9477,10 +9504,13 @@ set_line_mbstate ()
 	}
       else
 	{
-	  
+	  size_t j;
+	  for (j = i; j < len; j++)
+	    shell_input_line_property[j] = 1;
+	  break;
 	}
 
-      
+      shell_input_line_property[i] = mbclen;
     }
 }
 #endif /* HANDLE_MULTIBYTE */

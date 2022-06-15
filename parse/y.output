@@ -1,0 +1,5049 @@
+终端机在文法中未使用
+
+    COND_ERROR
+
+
+语法
+
+    0 $accept: inputunit $end
+
+    1 inputunit: simple_list simple_list_terminator
+    2          | '\n'
+    3          | error '\n'
+    4          | error yacc_EOF
+    5          | yacc_EOF
+
+    6 word_list: WORD
+    7          | word_list WORD
+
+    8 redirection: '>' WORD
+    9            | '<' WORD
+   10            | NUMBER '>' WORD
+   11            | NUMBER '<' WORD
+   12            | REDIR_WORD '>' WORD
+   13            | REDIR_WORD '<' WORD
+   14            | GREATER_GREATER WORD
+   15            | NUMBER GREATER_GREATER WORD
+   16            | REDIR_WORD GREATER_GREATER WORD
+   17            | GREATER_BAR WORD
+   18            | NUMBER GREATER_BAR WORD
+   19            | REDIR_WORD GREATER_BAR WORD
+   20            | LESS_GREATER WORD
+   21            | NUMBER LESS_GREATER WORD
+   22            | REDIR_WORD LESS_GREATER WORD
+   23            | LESS_LESS WORD
+   24            | NUMBER LESS_LESS WORD
+   25            | REDIR_WORD LESS_LESS WORD
+   26            | LESS_LESS_MINUS WORD
+   27            | NUMBER LESS_LESS_MINUS WORD
+   28            | REDIR_WORD LESS_LESS_MINUS WORD
+   29            | LESS_LESS_LESS WORD
+   30            | NUMBER LESS_LESS_LESS WORD
+   31            | REDIR_WORD LESS_LESS_LESS WORD
+   32            | LESS_AND NUMBER
+   33            | NUMBER LESS_AND NUMBER
+   34            | REDIR_WORD LESS_AND NUMBER
+   35            | GREATER_AND NUMBER
+   36            | NUMBER GREATER_AND NUMBER
+   37            | REDIR_WORD GREATER_AND NUMBER
+   38            | LESS_AND WORD
+   39            | NUMBER LESS_AND WORD
+   40            | REDIR_WORD LESS_AND WORD
+   41            | GREATER_AND WORD
+   42            | NUMBER GREATER_AND WORD
+   43            | REDIR_WORD GREATER_AND WORD
+   44            | GREATER_AND '-'
+   45            | NUMBER GREATER_AND '-'
+   46            | REDIR_WORD GREATER_AND '-'
+   47            | LESS_AND '-'
+   48            | NUMBER LESS_AND '-'
+   49            | REDIR_WORD LESS_AND '-'
+   50            | AND_GREATER WORD
+   51            | AND_GREATER_GREATER WORD
+
+   52 simple_command_element: WORD
+   53                       | ASSIGNMENT_WORD
+   54                       | redirection
+
+   55 redirection_list: redirection
+   56                 | redirection_list redirection
+
+   57 simple_command: simple_command_element
+   58               | simple_command simple_command_element
+
+   59 command: simple_command
+   60        | shell_command
+   61        | shell_command redirection_list
+   62        | function_def
+   63        | coproc
+
+   64 shell_command: for_command
+   65              | case_command
+   66              | WHILE compound_list DO compound_list DONE
+   67              | UNTIL compound_list DO compound_list DONE
+   68              | select_command
+   69              | if_command
+   70              | subshell
+   71              | group_command
+   72              | arith_command
+   73              | cond_command
+   74              | arith_for_command
+
+   75 for_command: FOR WORD newline_list DO compound_list DONE
+   76            | FOR WORD newline_list '{' compound_list '}'
+   77            | FOR WORD ';' newline_list DO compound_list DONE
+   78            | FOR WORD ';' newline_list '{' compound_list '}'
+   79            | FOR WORD newline_list IN word_list list_terminator newline_list DO compound_list DONE
+   80            | FOR WORD newline_list IN word_list list_terminator newline_list '{' compound_list '}'
+   81            | FOR WORD newline_list IN list_terminator newline_list DO compound_list DONE
+   82            | FOR WORD newline_list IN list_terminator newline_list '{' compound_list '}'
+
+   83 arith_for_command: FOR ARITH_FOR_EXPRS list_terminator newline_list DO compound_list DONE
+   84                  | FOR ARITH_FOR_EXPRS list_terminator newline_list '{' compound_list '}'
+   85                  | FOR ARITH_FOR_EXPRS DO compound_list DONE
+   86                  | FOR ARITH_FOR_EXPRS '{' compound_list '}'
+
+   87 select_command: SELECT WORD newline_list DO list DONE
+   88               | SELECT WORD newline_list '{' list '}'
+   89               | SELECT WORD ';' newline_list DO list DONE
+   90               | SELECT WORD ';' newline_list '{' list '}'
+   91               | SELECT WORD newline_list IN word_list list_terminator newline_list DO list DONE
+   92               | SELECT WORD newline_list IN word_list list_terminator newline_list '{' list '}'
+   93               | SELECT WORD newline_list IN list_terminator newline_list DO compound_list DONE
+   94               | SELECT WORD newline_list IN list_terminator newline_list '{' compound_list '}'
+
+   95 case_command: CASE WORD newline_list IN newline_list ESAC
+   96             | CASE WORD newline_list IN case_clause_sequence newline_list ESAC
+   97             | CASE WORD newline_list IN case_clause ESAC
+
+   98 function_def: WORD '(' ')' newline_list function_body
+   99             | FUNCTION WORD '(' ')' newline_list function_body
+  100             | FUNCTION WORD function_body
+  101             | FUNCTION WORD '\n' newline_list function_body
+
+  102 function_body: shell_command
+  103              | shell_command redirection_list
+
+  104 subshell: '(' compound_list ')'
+
+  105 coproc: COPROC shell_command
+  106       | COPROC shell_command redirection_list
+  107       | COPROC WORD shell_command
+  108       | COPROC WORD shell_command redirection_list
+  109       | COPROC simple_command
+
+  110 if_command: IF compound_list THEN compound_list FI
+  111           | IF compound_list THEN compound_list ELSE compound_list FI
+  112           | IF compound_list THEN compound_list elif_clause FI
+
+  113 group_command: '{' compound_list '}'
+
+  114 arith_command: ARITH_CMD
+
+  115 cond_command: COND_START COND_CMD COND_END
+
+  116 elif_clause: ELIF compound_list THEN compound_list
+  117            | ELIF compound_list THEN compound_list ELSE compound_list
+  118            | ELIF compound_list THEN compound_list elif_clause
+
+  119 case_clause: pattern_list
+  120            | case_clause_sequence pattern_list
+
+  121 pattern_list: newline_list pattern ')' compound_list
+  122             | newline_list pattern ')' newline_list
+  123             | newline_list '(' pattern ')' compound_list
+  124             | newline_list '(' pattern ')' newline_list
+
+  125 case_clause_sequence: pattern_list SEMI_SEMI
+  126                     | case_clause_sequence pattern_list SEMI_SEMI
+  127                     | pattern_list SEMI_AND
+  128                     | case_clause_sequence pattern_list SEMI_AND
+  129                     | pattern_list SEMI_SEMI_AND
+  130                     | case_clause_sequence pattern_list SEMI_SEMI_AND
+
+  131 pattern: WORD
+  132        | pattern '|' WORD
+
+  133 list: newline_list list0
+
+  134 compound_list: list
+  135              | newline_list list1
+
+  136 list0: list1 '\n' newline_list
+  137      | list1 '&' newline_list
+  138      | list1 '=' newline_list
+  139      | list1 ';' newline_list
+
+  140 list1: list1 AND_AND newline_list list1
+  141      | list1 OR_OR newline_list list1
+  142      | list1 '&' newline_list list1
+  143      | list1 '=' newline_list list1
+  144      | list1 ';' newline_list list1
+  145      | list1 '\n' newline_list list1
+  146      | pipeline_command
+
+  147 simple_list_terminator: '\n'
+  148                       | yacc_EOF
+
+  149 list_terminator: '\n'
+  150                | ';'
+  151                | yacc_EOF
+
+  152 newline_list: %empty
+  153             | newline_list '\n'
+
+  154 simple_list: simple_list1
+  155            | simple_list1 '&'
+  156            | simple_list1 '='
+  157            | simple_list1 ';'
+
+  158 simple_list1: simple_list1 AND_AND newline_list simple_list1
+  159             | simple_list1 OR_OR newline_list simple_list1
+  160             | simple_list1 '&' simple_list1
+  161             | simple_list1 '=' simple_list1
+  162             | simple_list1 ';' simple_list1
+  163             | pipeline_command
+
+  164 pipeline_command: pipeline
+  165                 | BANG pipeline_command
+  166                 | timespec pipeline_command
+  167                 | timespec list_terminator
+  168                 | BANG list_terminator
+
+  169 pipeline: pipeline '|' newline_list pipeline
+  170         | pipeline BAR_AND newline_list pipeline
+  171         | command
+
+  172 timespec: TIME
+  173         | TIME TIMEOPT
+  174         | TIME TIMEIGN
+  175         | TIME TIMEOPT TIMEIGN
+
+
+终结语词，附有它们出现处的规则
+
+    $end (0) 0
+    '\n' (10) 2 3 101 136 145 147 149 153
+    '&' (38) 137 142 155 160
+    '(' (40) 98 99 104 123 124
+    ')' (41) 98 99 104 121 122 123 124
+    '-' (45) 44 45 46 47 48 49
+    ';' (59) 77 78 89 90 139 144 150 157 162
+    '<' (60) 9 11 13
+    '=' (61) 138 143 156 161
+    '>' (62) 8 10 12
+    '{' (123) 76 78 80 82 84 86 88 90 92 94 113
+    '|' (124) 132 169
+    '}' (125) 76 78 80 82 84 86 88 90 92 94 113
+    error (256) 3 4
+    IF (258) 110 111 112
+    THEN (259) 110 111 112 116 117 118
+    ELSE (260) 111 117
+    ELIF (261) 116 117 118
+    FI (262) 110 111 112
+    CASE (263) 95 96 97
+    ESAC (264) 95 96 97
+    FOR (265) 75 76 77 78 79 80 81 82 83 84 85 86
+    SELECT (266) 87 88 89 90 91 92 93 94
+    WHILE (267) 66
+    UNTIL (268) 67
+    DO (269) 66 67 75 77 79 81 83 85 87 89 91 93
+    DONE (270) 66 67 75 77 79 81 83 85 87 89 91 93
+    FUNCTION (271) 99 100 101
+    COPROC (272) 105 106 107 108 109
+    COND_START (273) 115
+    COND_END (274) 115
+    COND_ERROR (275)
+    IN (276) 79 80 81 82 91 92 93 94 95 96 97
+    BANG (277) 165 168
+    TIME (278) 172 173 174 175
+    TIMEOPT (279) 173 175
+    TIMEIGN (280) 174 175
+    WORD <word> (281) 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 38 39 40 41 42 43 50 51 52 75 76 77 78 79 80 81 82 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 107 108 131 132
+    ASSIGNMENT_WORD <word> (282) 53
+    REDIR_WORD <word> (283) 12 13 16 19 22 25 28 31 34 37 40 43 46 49
+    NUMBER <number> (284) 10 11 15 18 21 24 27 30 32 33 34 35 36 37 39 42 45 48
+    ARITH_CMD <word_list> (285) 114
+    ARITH_FOR_EXPRS <word_list> (286) 83 84 85 86
+    COND_CMD <command> (287) 115
+    AND_AND (288) 140 158
+    OR_OR (289) 141 159
+    GREATER_GREATER (290) 14 15 16
+    LESS_LESS (291) 23 24 25
+    LESS_AND (292) 32 33 34 38 39 40 47 48 49
+    LESS_LESS_LESS (293) 29 30 31
+    GREATER_AND (294) 35 36 37 41 42 43 44 45 46
+    SEMI_SEMI (295) 125 126
+    SEMI_AND (296) 127 128
+    SEMI_SEMI_AND (297) 129 130
+    LESS_LESS_MINUS (298) 26 27 28
+    AND_GREATER (299) 50
+    AND_GREATER_GREATER (300) 51
+    LESS_GREATER (301) 20 21 22
+    GREATER_BAR (302) 17 18 19
+    BAR_AND (303) 170
+    yacc_EOF (304) 4 5 148 151
+
+
+非终结语词，附有它们出现处的规则
+
+    $accept (62)
+        on left: 0
+    inputunit <command> (63)
+        on left: 1 2 3 4 5
+        on right: 0
+    word_list <word_list> (64)
+        on left: 6 7
+        on right: 7 79 80 91 92
+    redirection <redirect> (65)
+        on left: 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51
+        on right: 54 55 56
+    simple_command_element <element> (66)
+        on left: 52 53 54
+        on right: 57 58
+    redirection_list <redirect> (67)
+        on left: 55 56
+        on right: 56 61 103 106 108
+    simple_command <command> (68)
+        on left: 57 58
+        on right: 58 59 109
+    command <command> (69)
+        on left: 59 60 61 62 63
+        on right: 171
+    shell_command <command> (70)
+        on left: 64 65 66 67 68 69 70 71 72 73 74
+        on right: 60 61 102 103 105 106 107 108
+    for_command <command> (71)
+        on left: 75 76 77 78 79 80 81 82
+        on right: 64
+    arith_for_command <command> (72)
+        on left: 83 84 85 86
+        on right: 74
+    select_command <command> (73)
+        on left: 87 88 89 90 91 92 93 94
+        on right: 68
+    case_command <command> (74)
+        on left: 95 96 97
+        on right: 65
+    function_def <command> (75)
+        on left: 98 99 100 101
+        on right: 62
+    function_body <command> (76)
+        on left: 102 103
+        on right: 98 99 100 101
+    subshell <command> (77)
+        on left: 104
+        on right: 70
+    coproc <command> (78)
+        on left: 105 106 107 108 109
+        on right: 63
+    if_command <command> (79)
+        on left: 110 111 112
+        on right: 69
+    group_command <command> (80)
+        on left: 113
+        on right: 71
+    arith_command <command> (81)
+        on left: 114
+        on right: 72
+    cond_command <command> (82)
+        on left: 115
+        on right: 73
+    elif_clause <command> (83)
+        on left: 116 117 118
+        on right: 112 118
+    case_clause <pattern> (84)
+        on left: 119 120
+        on right: 97
+    pattern_list <pattern> (85)
+        on left: 121 122 123 124
+        on right: 119 120 125 126 127 128 129 130
+    case_clause_sequence <pattern> (86)
+        on left: 125 126 127 128 129 130
+        on right: 96 120 126 128 130
+    pattern <word_list> (87)
+        on left: 131 132
+        on right: 121 122 123 124 132
+    list <command> (88)
+        on left: 133
+        on right: 87 88 89 90 91 92 134
+    compound_list <command> (89)
+        on left: 134 135
+        on right: 66 67 75 76 77 78 79 80 81 82 83 84 85 86 93 94 104 110 111 112 113 116 117 118 121 123
+    list0 <command> (90)
+        on left: 136 137 138 139
+        on right: 133
+    list1 <command> (91)
+        on left: 140 141 142 143 144 145 146
+        on right: 135 136 137 138 139 140 141 142 143 144 145
+    simple_list_terminator (92)
+        on left: 147 148
+        on right: 1
+    list_terminator <number> (93)
+        on left: 149 150 151
+        on right: 79 80 81 82 83 84 91 92 93 94 167 168
+    newline_list (94)
+        on left: 152 153
+        on right: 75 76 77 78 79 80 81 82 83 84 87 88 89 90 91 92 93 94 95 96 97 98 99 101 121 122 123 124 133 135 136 137 138 139 140 141 142 143 144 145 153 158 159 169 170
+    simple_list <command> (95)
+        on left: 154 155 156 157
+        on right: 1
+    simple_list1 <command> (96)
+        on left: 158 159 160 161 162 163
+        on right: 154 155 156 157 158 159 160 161 162
+    pipeline_command <command> (97)
+        on left: 164 165 166 167 168
+        on right: 146 163 165 166
+    pipeline <command> (98)
+        on left: 169 170 171
+        on right: 164 169 170
+    timespec <number> (99)
+        on left: 172 173 174 175
+        on right: 166 167
+
+
+状态 0
+
+    0 $accept: . inputunit $end
+
+    error                偏移，并进入状态 1
+    IF                   偏移，并进入状态 2
+    CASE                 偏移，并进入状态 3
+    FOR                  偏移，并进入状态 4
+    SELECT               偏移，并进入状态 5
+    WHILE                偏移，并进入状态 6
+    UNTIL                偏移，并进入状态 7
+    FUNCTION             偏移，并进入状态 8
+    COPROC               偏移，并进入状态 9
+    COND_START           偏移，并进入状态 10
+    BANG                 偏移，并进入状态 11
+    TIME                 偏移，并进入状态 12
+    WORD                 偏移，并进入状态 13
+    ASSIGNMENT_WORD      偏移，并进入状态 14
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    ARITH_CMD            偏移，并进入状态 17
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '\n'                 偏移，并进入状态 28
+    yacc_EOF             偏移，并进入状态 29
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+    '{'                  偏移，并进入状态 32
+    '('                  偏移，并进入状态 33
+
+    inputunit               转到状态 34
+    redirection             转到状态 35
+    simple_command_element  转到状态 36
+    simple_command          转到状态 37
+    command                 转到状态 38
+    shell_command           转到状态 39
+    for_command             转到状态 40
+    arith_for_command       转到状态 41
+    select_command          转到状态 42
+    case_command            转到状态 43
+    function_def            转到状态 44
+    subshell                转到状态 45
+    coproc                  转到状态 46
+    if_command              转到状态 47
+    group_command           转到状态 48
+    arith_command           转到状态 49
+    cond_command            转到状态 50
+    simple_list             转到状态 51
+    simple_list1            转到状态 52
+    pipeline_command        转到状态 53
+    pipeline                转到状态 54
+    timespec                转到状态 55
+
+
+状态 1
+
+    3 inputunit: error . '\n'
+    4          | error . yacc_EOF
+
+    '\n'      偏移，并进入状态 56
+    yacc_EOF  偏移，并进入状态 57
+
+
+状态 2
+
+  110 if_command: IF . compound_list THEN compound_list FI
+  111           | IF . compound_list THEN compound_list ELSE compound_list FI
+  112           | IF . compound_list THEN compound_list elif_clause FI
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 59
+    newline_list   转到状态 60
+
+
+状态 3
+
+   95 case_command: CASE . WORD newline_list IN newline_list ESAC
+   96             | CASE . WORD newline_list IN case_clause_sequence newline_list ESAC
+   97             | CASE . WORD newline_list IN case_clause ESAC
+
+    WORD  偏移，并进入状态 61
+
+
+状态 4
+
+   75 for_command: FOR . WORD newline_list DO compound_list DONE
+   76            | FOR . WORD newline_list '{' compound_list '}'
+   77            | FOR . WORD ';' newline_list DO compound_list DONE
+   78            | FOR . WORD ';' newline_list '{' compound_list '}'
+   79            | FOR . WORD newline_list IN word_list list_terminator newline_list DO compound_list DONE
+   80            | FOR . WORD newline_list IN word_list list_terminator newline_list '{' compound_list '}'
+   81            | FOR . WORD newline_list IN list_terminator newline_list DO compound_list DONE
+   82            | FOR . WORD newline_list IN list_terminator newline_list '{' compound_list '}'
+   83 arith_for_command: FOR . ARITH_FOR_EXPRS list_terminator newline_list DO compound_list DONE
+   84                  | FOR . ARITH_FOR_EXPRS list_terminator newline_list '{' compound_list '}'
+   85                  | FOR . ARITH_FOR_EXPRS DO compound_list DONE
+   86                  | FOR . ARITH_FOR_EXPRS '{' compound_list '}'
+
+    WORD             偏移，并进入状态 62
+    ARITH_FOR_EXPRS  偏移，并进入状态 63
+
+
+状态 5
+
+   87 select_command: SELECT . WORD newline_list DO list DONE
+   88               | SELECT . WORD newline_list '{' list '}'
+   89               | SELECT . WORD ';' newline_list DO list DONE
+   90               | SELECT . WORD ';' newline_list '{' list '}'
+   91               | SELECT . WORD newline_list IN word_list list_terminator newline_list DO list DONE
+   92               | SELECT . WORD newline_list IN word_list list_terminator newline_list '{' list '}'
+   93               | SELECT . WORD newline_list IN list_terminator newline_list DO compound_list DONE
+   94               | SELECT . WORD newline_list IN list_terminator newline_list '{' compound_list '}'
+
+    WORD  偏移，并进入状态 64
+
+
+状态 6
+
+   66 shell_command: WHILE . compound_list DO compound_list DONE
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 65
+    newline_list   转到状态 60
+
+
+状态 7
+
+   67 shell_command: UNTIL . compound_list DO compound_list DONE
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 66
+    newline_list   转到状态 60
+
+
+状态 8
+
+   99 function_def: FUNCTION . WORD '(' ')' newline_list function_body
+  100             | FUNCTION . WORD function_body
+  101             | FUNCTION . WORD '\n' newline_list function_body
+
+    WORD  偏移，并进入状态 67
+
+
+状态 9
+
+  105 coproc: COPROC . shell_command
+  106       | COPROC . shell_command redirection_list
+  107       | COPROC . WORD shell_command
+  108       | COPROC . WORD shell_command redirection_list
+  109       | COPROC . simple_command
+
+    IF                   偏移，并进入状态 2
+    CASE                 偏移，并进入状态 3
+    FOR                  偏移，并进入状态 4
+    SELECT               偏移，并进入状态 5
+    WHILE                偏移，并进入状态 6
+    UNTIL                偏移，并进入状态 7
+    COND_START           偏移，并进入状态 10
+    WORD                 偏移，并进入状态 68
+    ASSIGNMENT_WORD      偏移，并进入状态 14
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    ARITH_CMD            偏移，并进入状态 17
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+    '{'                  偏移，并进入状态 32
+    '('                  偏移，并进入状态 33
+
+    redirection             转到状态 35
+    simple_command_element  转到状态 36
+    simple_command          转到状态 69
+    shell_command           转到状态 70
+    for_command             转到状态 40
+    arith_for_command       转到状态 41
+    select_command          转到状态 42
+    case_command            转到状态 43
+    subshell                转到状态 45
+    if_command              转到状态 47
+    group_command           转到状态 48
+    arith_command           转到状态 49
+    cond_command            转到状态 50
+
+
+状态 10
+
+  115 cond_command: COND_START . COND_CMD COND_END
+
+    COND_CMD  偏移，并进入状态 71
+
+
+状态 11
+
+  165 pipeline_command: BANG . pipeline_command
+  168                 | BANG . list_terminator
+
+    IF                   偏移，并进入状态 2
+    CASE                 偏移，并进入状态 3
+    FOR                  偏移，并进入状态 4
+    SELECT               偏移，并进入状态 5
+    WHILE                偏移，并进入状态 6
+    UNTIL                偏移，并进入状态 7
+    FUNCTION             偏移，并进入状态 8
+    COPROC               偏移，并进入状态 9
+    COND_START           偏移，并进入状态 10
+    BANG                 偏移，并进入状态 11
+    TIME                 偏移，并进入状态 12
+    WORD                 偏移，并进入状态 13
+    ASSIGNMENT_WORD      偏移，并进入状态 14
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    ARITH_CMD            偏移，并进入状态 17
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    ';'                  偏移，并进入状态 72
+    '\n'                 偏移，并进入状态 73
+    yacc_EOF             偏移，并进入状态 74
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+    '{'                  偏移，并进入状态 32
+    '('                  偏移，并进入状态 33
+
+    redirection             转到状态 35
+    simple_command_element  转到状态 36
+    simple_command          转到状态 37
+    command                 转到状态 38
+    shell_command           转到状态 39
+    for_command             转到状态 40
+    arith_for_command       转到状态 41
+    select_command          转到状态 42
+    case_command            转到状态 43
+    function_def            转到状态 44
+    subshell                转到状态 45
+    coproc                  转到状态 46
+    if_command              转到状态 47
+    group_command           转到状态 48
+    arith_command           转到状态 49
+    cond_command            转到状态 50
+    list_terminator         转到状态 75
+    pipeline_command        转到状态 76
+    pipeline                转到状态 54
+    timespec                转到状态 55
+
+
+状态 12
+
+  172 timespec: TIME .
+  173         | TIME . TIMEOPT
+  174         | TIME . TIMEIGN
+  175         | TIME . TIMEOPT TIMEIGN
+
+    TIMEOPT  偏移，并进入状态 77
+    TIMEIGN  偏移，并进入状态 78
+
+    $default  使用规则 172 以归约 (timespec)
+
+
+状态 13
+
+   52 simple_command_element: WORD .
+   98 function_def: WORD . '(' ')' newline_list function_body
+
+    '('  偏移，并进入状态 79
+
+    $default  使用规则 52 以归约 (simple_command_element)
+
+
+状态 14
+
+   53 simple_command_element: ASSIGNMENT_WORD .
+
+    $default  使用规则 53 以归约 (simple_command_element)
+
+
+状态 15
+
+   12 redirection: REDIR_WORD . '>' WORD
+   13            | REDIR_WORD . '<' WORD
+   16            | REDIR_WORD . GREATER_GREATER WORD
+   19            | REDIR_WORD . GREATER_BAR WORD
+   22            | REDIR_WORD . LESS_GREATER WORD
+   25            | REDIR_WORD . LESS_LESS WORD
+   28            | REDIR_WORD . LESS_LESS_MINUS WORD
+   31            | REDIR_WORD . LESS_LESS_LESS WORD
+   34            | REDIR_WORD . LESS_AND NUMBER
+   37            | REDIR_WORD . GREATER_AND NUMBER
+   40            | REDIR_WORD . LESS_AND WORD
+   43            | REDIR_WORD . GREATER_AND WORD
+   46            | REDIR_WORD . GREATER_AND '-'
+   49            | REDIR_WORD . LESS_AND '-'
+
+    GREATER_GREATER  偏移，并进入状态 80
+    LESS_LESS        偏移，并进入状态 81
+    LESS_AND         偏移，并进入状态 82
+    LESS_LESS_LESS   偏移，并进入状态 83
+    GREATER_AND      偏移，并进入状态 84
+    LESS_LESS_MINUS  偏移，并进入状态 85
+    LESS_GREATER     偏移，并进入状态 86
+    GREATER_BAR      偏移，并进入状态 87
+    '>'              偏移，并进入状态 88
+    '<'              偏移，并进入状态 89
+
+
+状态 16
+
+   10 redirection: NUMBER . '>' WORD
+   11            | NUMBER . '<' WORD
+   15            | NUMBER . GREATER_GREATER WORD
+   18            | NUMBER . GREATER_BAR WORD
+   21            | NUMBER . LESS_GREATER WORD
+   24            | NUMBER . LESS_LESS WORD
+   27            | NUMBER . LESS_LESS_MINUS WORD
+   30            | NUMBER . LESS_LESS_LESS WORD
+   33            | NUMBER . LESS_AND NUMBER
+   36            | NUMBER . GREATER_AND NUMBER
+   39            | NUMBER . LESS_AND WORD
+   42            | NUMBER . GREATER_AND WORD
+   45            | NUMBER . GREATER_AND '-'
+   48            | NUMBER . LESS_AND '-'
+
+    GREATER_GREATER  偏移，并进入状态 90
+    LESS_LESS        偏移，并进入状态 91
+    LESS_AND         偏移，并进入状态 92
+    LESS_LESS_LESS   偏移，并进入状态 93
+    GREATER_AND      偏移，并进入状态 94
+    LESS_LESS_MINUS  偏移，并进入状态 95
+    LESS_GREATER     偏移，并进入状态 96
+    GREATER_BAR      偏移，并进入状态 97
+    '>'              偏移，并进入状态 98
+    '<'              偏移，并进入状态 99
+
+
+状态 17
+
+  114 arith_command: ARITH_CMD .
+
+    $default  使用规则 114 以归约 (arith_command)
+
+
+状态 18
+
+   14 redirection: GREATER_GREATER . WORD
+
+    WORD  偏移，并进入状态 100
+
+
+状态 19
+
+   23 redirection: LESS_LESS . WORD
+
+    WORD  偏移，并进入状态 101
+
+
+状态 20
+
+   32 redirection: LESS_AND . NUMBER
+   38            | LESS_AND . WORD
+   47            | LESS_AND . '-'
+
+    WORD    偏移，并进入状态 102
+    NUMBER  偏移，并进入状态 103
+    '-'     偏移，并进入状态 104
+
+
+状态 21
+
+   29 redirection: LESS_LESS_LESS . WORD
+
+    WORD  偏移，并进入状态 105
+
+
+状态 22
+
+   35 redirection: GREATER_AND . NUMBER
+   41            | GREATER_AND . WORD
+   44            | GREATER_AND . '-'
+
+    WORD    偏移，并进入状态 106
+    NUMBER  偏移，并进入状态 107
+    '-'     偏移，并进入状态 108
+
+
+状态 23
+
+   26 redirection: LESS_LESS_MINUS . WORD
+
+    WORD  偏移，并进入状态 109
+
+
+状态 24
+
+   50 redirection: AND_GREATER . WORD
+
+    WORD  偏移，并进入状态 110
+
+
+状态 25
+
+   51 redirection: AND_GREATER_GREATER . WORD
+
+    WORD  偏移，并进入状态 111
+
+
+状态 26
+
+   20 redirection: LESS_GREATER . WORD
+
+    WORD  偏移，并进入状态 112
+
+
+状态 27
+
+   17 redirection: GREATER_BAR . WORD
+
+    WORD  偏移，并进入状态 113
+
+
+状态 28
+
+    2 inputunit: '\n' .
+
+    $default  使用规则 2 以归约 (inputunit)
+
+
+状态 29
+
+    5 inputunit: yacc_EOF .
+
+    $default  使用规则 5 以归约 (inputunit)
+
+
+状态 30
+
+    8 redirection: '>' . WORD
+
+    WORD  偏移，并进入状态 114
+
+
+状态 31
+
+    9 redirection: '<' . WORD
+
+    WORD  偏移，并进入状态 115
+
+
+状态 32
+
+  113 group_command: '{' . compound_list '}'
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 116
+    newline_list   转到状态 60
+
+
+状态 33
+
+  104 subshell: '(' . compound_list ')'
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 117
+    newline_list   转到状态 60
+
+
+状态 34
+
+    0 $accept: inputunit . $end
+
+    $end  偏移，并进入状态 118
+
+
+状态 35
+
+   54 simple_command_element: redirection .
+
+    $default  使用规则 54 以归约 (simple_command_element)
+
+
+状态 36
+
+   57 simple_command: simple_command_element .
+
+    $default  使用规则 57 以归约 (simple_command)
+
+
+状态 37
+
+   58 simple_command: simple_command . simple_command_element
+   59 command: simple_command .
+
+    WORD                 偏移，并进入状态 119
+    ASSIGNMENT_WORD      偏移，并进入状态 14
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+
+    $default  使用规则 59 以归约 (command)
+
+    redirection             转到状态 35
+    simple_command_element  转到状态 120
+
+
+状态 38
+
+  171 pipeline: command .
+
+    $default  使用规则 171 以归约 (pipeline)
+
+
+状态 39
+
+   60 command: shell_command .
+   61        | shell_command . redirection_list
+
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+
+    $default  使用规则 60 以归约 (command)
+
+    redirection       转到状态 121
+    redirection_list  转到状态 122
+
+
+状态 40
+
+   64 shell_command: for_command .
+
+    $default  使用规则 64 以归约 (shell_command)
+
+
+状态 41
+
+   74 shell_command: arith_for_command .
+
+    $default  使用规则 74 以归约 (shell_command)
+
+
+状态 42
+
+   68 shell_command: select_command .
+
+    $default  使用规则 68 以归约 (shell_command)
+
+
+状态 43
+
+   65 shell_command: case_command .
+
+    $default  使用规则 65 以归约 (shell_command)
+
+
+状态 44
+
+   62 command: function_def .
+
+    $default  使用规则 62 以归约 (command)
+
+
+状态 45
+
+   70 shell_command: subshell .
+
+    $default  使用规则 70 以归约 (shell_command)
+
+
+状态 46
+
+   63 command: coproc .
+
+    $default  使用规则 63 以归约 (command)
+
+
+状态 47
+
+   69 shell_command: if_command .
+
+    $default  使用规则 69 以归约 (shell_command)
+
+
+状态 48
+
+   71 shell_command: group_command .
+
+    $default  使用规则 71 以归约 (shell_command)
+
+
+状态 49
+
+   72 shell_command: arith_command .
+
+    $default  使用规则 72 以归约 (shell_command)
+
+
+状态 50
+
+   73 shell_command: cond_command .
+
+    $default  使用规则 73 以归约 (shell_command)
+
+
+状态 51
+
+    1 inputunit: simple_list . simple_list_terminator
+
+    '\n'      偏移，并进入状态 123
+    yacc_EOF  偏移，并进入状态 124
+
+    simple_list_terminator  转到状态 125
+
+
+状态 52
+
+  154 simple_list: simple_list1 .
+  155            | simple_list1 . '&'
+  156            | simple_list1 . '='
+  157            | simple_list1 . ';'
+  158 simple_list1: simple_list1 . AND_AND newline_list simple_list1
+  159             | simple_list1 . OR_OR newline_list simple_list1
+  160             | simple_list1 . '&' simple_list1
+  161             | simple_list1 . '=' simple_list1
+  162             | simple_list1 . ';' simple_list1
+
+    AND_AND  偏移，并进入状态 126
+    OR_OR    偏移，并进入状态 127
+    '&'      偏移，并进入状态 128
+    ';'      偏移，并进入状态 129
+    '='      偏移，并进入状态 130
+
+    $default  使用规则 154 以归约 (simple_list)
+
+
+状态 53
+
+  163 simple_list1: pipeline_command .
+
+    $default  使用规则 163 以归约 (simple_list1)
+
+
+状态 54
+
+  164 pipeline_command: pipeline .
+  169 pipeline: pipeline . '|' newline_list pipeline
+  170         | pipeline . BAR_AND newline_list pipeline
+
+    BAR_AND  偏移，并进入状态 131
+    '|'      偏移，并进入状态 132
+
+    $default  使用规则 164 以归约 (pipeline_command)
+
+
+状态 55
+
+  166 pipeline_command: timespec . pipeline_command
+  167                 | timespec . list_terminator
+
+    IF                   偏移，并进入状态 2
+    CASE                 偏移，并进入状态 3
+    FOR                  偏移，并进入状态 4
+    SELECT               偏移，并进入状态 5
+    WHILE                偏移，并进入状态 6
+    UNTIL                偏移，并进入状态 7
+    FUNCTION             偏移，并进入状态 8
+    COPROC               偏移，并进入状态 9
+    COND_START           偏移，并进入状态 10
+    BANG                 偏移，并进入状态 11
+    TIME                 偏移，并进入状态 12
+    WORD                 偏移，并进入状态 13
+    ASSIGNMENT_WORD      偏移，并进入状态 14
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    ARITH_CMD            偏移，并进入状态 17
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    ';'                  偏移，并进入状态 72
+    '\n'                 偏移，并进入状态 73
+    yacc_EOF             偏移，并进入状态 74
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+    '{'                  偏移，并进入状态 32
+    '('                  偏移，并进入状态 33
+
+    redirection             转到状态 35
+    simple_command_element  转到状态 36
+    simple_command          转到状态 37
+    command                 转到状态 38
+    shell_command           转到状态 39
+    for_command             转到状态 40
+    arith_for_command       转到状态 41
+    select_command          转到状态 42
+    case_command            转到状态 43
+    function_def            转到状态 44
+    subshell                转到状态 45
+    coproc                  转到状态 46
+    if_command              转到状态 47
+    group_command           转到状态 48
+    arith_command           转到状态 49
+    cond_command            转到状态 50
+    list_terminator         转到状态 133
+    pipeline_command        转到状态 134
+    pipeline                转到状态 54
+    timespec                转到状态 55
+
+
+状态 56
+
+    3 inputunit: error '\n' .
+
+    $default  使用规则 3 以归约 (inputunit)
+
+
+状态 57
+
+    4 inputunit: error yacc_EOF .
+
+    $default  使用规则 4 以归约 (inputunit)
+
+
+状态 58
+
+  134 compound_list: list .
+
+    $default  使用规则 134 以归约 (compound_list)
+
+
+状态 59
+
+  110 if_command: IF compound_list . THEN compound_list FI
+  111           | IF compound_list . THEN compound_list ELSE compound_list FI
+  112           | IF compound_list . THEN compound_list elif_clause FI
+
+    THEN  偏移，并进入状态 135
+
+
+状态 60
+
+  133 list: newline_list . list0
+  135 compound_list: newline_list . list1
+  153 newline_list: newline_list . '\n'
+
+    IF                   偏移，并进入状态 2
+    CASE                 偏移，并进入状态 3
+    FOR                  偏移，并进入状态 4
+    SELECT               偏移，并进入状态 5
+    WHILE                偏移，并进入状态 6
+    UNTIL                偏移，并进入状态 7
+    FUNCTION             偏移，并进入状态 8
+    COPROC               偏移，并进入状态 9
+    COND_START           偏移，并进入状态 10
+    BANG                 偏移，并进入状态 11
+    TIME                 偏移，并进入状态 12
+    WORD                 偏移，并进入状态 13
+    ASSIGNMENT_WORD      偏移，并进入状态 14
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    ARITH_CMD            偏移，并进入状态 17
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '\n'                 偏移，并进入状态 136
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+    '{'                  偏移，并进入状态 32
+    '('                  偏移，并进入状态 33
+
+    redirection             转到状态 35
+    simple_command_element  转到状态 36
+    simple_command          转到状态 37
+    command                 转到状态 38
+    shell_command           转到状态 39
+    for_command             转到状态 40
+    arith_for_command       转到状态 41
+    select_command          转到状态 42
+    case_command            转到状态 43
+    function_def            转到状态 44
+    subshell                转到状态 45
+    coproc                  转到状态 46
+    if_command              转到状态 47
+    group_command           转到状态 48
+    arith_command           转到状态 49
+    cond_command            转到状态 50
+    list0                   转到状态 137
+    list1                   转到状态 138
+    pipeline_command        转到状态 139
+    pipeline                转到状态 54
+    timespec                转到状态 55
+
+
+状态 61
+
+   95 case_command: CASE WORD . newline_list IN newline_list ESAC
+   96             | CASE WORD . newline_list IN case_clause_sequence newline_list ESAC
+   97             | CASE WORD . newline_list IN case_clause ESAC
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    newline_list  转到状态 140
+
+
+状态 62
+
+   75 for_command: FOR WORD . newline_list DO compound_list DONE
+   76            | FOR WORD . newline_list '{' compound_list '}'
+   77            | FOR WORD . ';' newline_list DO compound_list DONE
+   78            | FOR WORD . ';' newline_list '{' compound_list '}'
+   79            | FOR WORD . newline_list IN word_list list_terminator newline_list DO compound_list DONE
+   80            | FOR WORD . newline_list IN word_list list_terminator newline_list '{' compound_list '}'
+   81            | FOR WORD . newline_list IN list_terminator newline_list DO compound_list DONE
+   82            | FOR WORD . newline_list IN list_terminator newline_list '{' compound_list '}'
+
+    ';'  偏移，并进入状态 141
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    newline_list  转到状态 142
+
+
+状态 63
+
+   83 arith_for_command: FOR ARITH_FOR_EXPRS . list_terminator newline_list DO compound_list DONE
+   84                  | FOR ARITH_FOR_EXPRS . list_terminator newline_list '{' compound_list '}'
+   85                  | FOR ARITH_FOR_EXPRS . DO compound_list DONE
+   86                  | FOR ARITH_FOR_EXPRS . '{' compound_list '}'
+
+    DO        偏移，并进入状态 143
+    ';'       偏移，并进入状态 72
+    '\n'      偏移，并进入状态 73
+    yacc_EOF  偏移，并进入状态 74
+    '{'       偏移，并进入状态 144
+
+    list_terminator  转到状态 145
+
+
+状态 64
+
+   87 select_command: SELECT WORD . newline_list DO list DONE
+   88               | SELECT WORD . newline_list '{' list '}'
+   89               | SELECT WORD . ';' newline_list DO list DONE
+   90               | SELECT WORD . ';' newline_list '{' list '}'
+   91               | SELECT WORD . newline_list IN word_list list_terminator newline_list DO list DONE
+   92               | SELECT WORD . newline_list IN word_list list_terminator newline_list '{' list '}'
+   93               | SELECT WORD . newline_list IN list_terminator newline_list DO compound_list DONE
+   94               | SELECT WORD . newline_list IN list_terminator newline_list '{' compound_list '}'
+
+    ';'  偏移，并进入状态 146
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    newline_list  转到状态 147
+
+
+状态 65
+
+   66 shell_command: WHILE compound_list . DO compound_list DONE
+
+    DO  偏移，并进入状态 148
+
+
+状态 66
+
+   67 shell_command: UNTIL compound_list . DO compound_list DONE
+
+    DO  偏移，并进入状态 149
+
+
+状态 67
+
+   99 function_def: FUNCTION WORD . '(' ')' newline_list function_body
+  100             | FUNCTION WORD . function_body
+  101             | FUNCTION WORD . '\n' newline_list function_body
+
+    IF          偏移，并进入状态 2
+    CASE        偏移，并进入状态 3
+    FOR         偏移，并进入状态 4
+    SELECT      偏移，并进入状态 5
+    WHILE       偏移，并进入状态 6
+    UNTIL       偏移，并进入状态 7
+    COND_START  偏移，并进入状态 10
+    ARITH_CMD   偏移，并进入状态 17
+    '\n'        偏移，并进入状态 150
+    '{'         偏移，并进入状态 32
+    '('         偏移，并进入状态 151
+
+    shell_command      转到状态 152
+    for_command        转到状态 40
+    arith_for_command  转到状态 41
+    select_command     转到状态 42
+    case_command       转到状态 43
+    function_body      转到状态 153
+    subshell           转到状态 45
+    if_command         转到状态 47
+    group_command      转到状态 48
+    arith_command      转到状态 49
+    cond_command       转到状态 50
+
+
+状态 68
+
+   52 simple_command_element: WORD .
+  107 coproc: COPROC WORD . shell_command
+  108       | COPROC WORD . shell_command redirection_list
+
+    IF          偏移，并进入状态 2
+    CASE        偏移，并进入状态 3
+    FOR         偏移，并进入状态 4
+    SELECT      偏移，并进入状态 5
+    WHILE       偏移，并进入状态 6
+    UNTIL       偏移，并进入状态 7
+    COND_START  偏移，并进入状态 10
+    ARITH_CMD   偏移，并进入状态 17
+    '{'         偏移，并进入状态 32
+    '('         偏移，并进入状态 33
+
+    $default  使用规则 52 以归约 (simple_command_element)
+
+    shell_command      转到状态 154
+    for_command        转到状态 40
+    arith_for_command  转到状态 41
+    select_command     转到状态 42
+    case_command       转到状态 43
+    subshell           转到状态 45
+    if_command         转到状态 47
+    group_command      转到状态 48
+    arith_command      转到状态 49
+    cond_command       转到状态 50
+
+
+状态 69
+
+   58 simple_command: simple_command . simple_command_element
+  109 coproc: COPROC simple_command .
+
+    WORD                 偏移，并进入状态 119
+    ASSIGNMENT_WORD      偏移，并进入状态 14
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+
+    $default  使用规则 109 以归约 (coproc)
+
+    redirection             转到状态 35
+    simple_command_element  转到状态 120
+
+
+状态 70
+
+  105 coproc: COPROC shell_command .
+  106       | COPROC shell_command . redirection_list
+
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+
+    $default  使用规则 105 以归约 (coproc)
+
+    redirection       转到状态 121
+    redirection_list  转到状态 155
+
+
+状态 71
+
+  115 cond_command: COND_START COND_CMD . COND_END
+
+    COND_END  偏移，并进入状态 156
+
+
+状态 72
+
+  150 list_terminator: ';' .
+
+    $default  使用规则 150 以归约 (list_terminator)
+
+
+状态 73
+
+  149 list_terminator: '\n' .
+
+    $default  使用规则 149 以归约 (list_terminator)
+
+
+状态 74
+
+  151 list_terminator: yacc_EOF .
+
+    $default  使用规则 151 以归约 (list_terminator)
+
+
+状态 75
+
+  168 pipeline_command: BANG list_terminator .
+
+    $default  使用规则 168 以归约 (pipeline_command)
+
+
+状态 76
+
+  165 pipeline_command: BANG pipeline_command .
+
+    $default  使用规则 165 以归约 (pipeline_command)
+
+
+状态 77
+
+  173 timespec: TIME TIMEOPT .
+  175         | TIME TIMEOPT . TIMEIGN
+
+    TIMEIGN  偏移，并进入状态 157
+
+    $default  使用规则 173 以归约 (timespec)
+
+
+状态 78
+
+  174 timespec: TIME TIMEIGN .
+
+    $default  使用规则 174 以归约 (timespec)
+
+
+状态 79
+
+   98 function_def: WORD '(' . ')' newline_list function_body
+
+    ')'  偏移，并进入状态 158
+
+
+状态 80
+
+   16 redirection: REDIR_WORD GREATER_GREATER . WORD
+
+    WORD  偏移，并进入状态 159
+
+
+状态 81
+
+   25 redirection: REDIR_WORD LESS_LESS . WORD
+
+    WORD  偏移，并进入状态 160
+
+
+状态 82
+
+   34 redirection: REDIR_WORD LESS_AND . NUMBER
+   40            | REDIR_WORD LESS_AND . WORD
+   49            | REDIR_WORD LESS_AND . '-'
+
+    WORD    偏移，并进入状态 161
+    NUMBER  偏移，并进入状态 162
+    '-'     偏移，并进入状态 163
+
+
+状态 83
+
+   31 redirection: REDIR_WORD LESS_LESS_LESS . WORD
+
+    WORD  偏移，并进入状态 164
+
+
+状态 84
+
+   37 redirection: REDIR_WORD GREATER_AND . NUMBER
+   43            | REDIR_WORD GREATER_AND . WORD
+   46            | REDIR_WORD GREATER_AND . '-'
+
+    WORD    偏移，并进入状态 165
+    NUMBER  偏移，并进入状态 166
+    '-'     偏移，并进入状态 167
+
+
+状态 85
+
+   28 redirection: REDIR_WORD LESS_LESS_MINUS . WORD
+
+    WORD  偏移，并进入状态 168
+
+
+状态 86
+
+   22 redirection: REDIR_WORD LESS_GREATER . WORD
+
+    WORD  偏移，并进入状态 169
+
+
+状态 87
+
+   19 redirection: REDIR_WORD GREATER_BAR . WORD
+
+    WORD  偏移，并进入状态 170
+
+
+状态 88
+
+   12 redirection: REDIR_WORD '>' . WORD
+
+    WORD  偏移，并进入状态 171
+
+
+状态 89
+
+   13 redirection: REDIR_WORD '<' . WORD
+
+    WORD  偏移，并进入状态 172
+
+
+状态 90
+
+   15 redirection: NUMBER GREATER_GREATER . WORD
+
+    WORD  偏移，并进入状态 173
+
+
+状态 91
+
+   24 redirection: NUMBER LESS_LESS . WORD
+
+    WORD  偏移，并进入状态 174
+
+
+状态 92
+
+   33 redirection: NUMBER LESS_AND . NUMBER
+   39            | NUMBER LESS_AND . WORD
+   48            | NUMBER LESS_AND . '-'
+
+    WORD    偏移，并进入状态 175
+    NUMBER  偏移，并进入状态 176
+    '-'     偏移，并进入状态 177
+
+
+状态 93
+
+   30 redirection: NUMBER LESS_LESS_LESS . WORD
+
+    WORD  偏移，并进入状态 178
+
+
+状态 94
+
+   36 redirection: NUMBER GREATER_AND . NUMBER
+   42            | NUMBER GREATER_AND . WORD
+   45            | NUMBER GREATER_AND . '-'
+
+    WORD    偏移，并进入状态 179
+    NUMBER  偏移，并进入状态 180
+    '-'     偏移，并进入状态 181
+
+
+状态 95
+
+   27 redirection: NUMBER LESS_LESS_MINUS . WORD
+
+    WORD  偏移，并进入状态 182
+
+
+状态 96
+
+   21 redirection: NUMBER LESS_GREATER . WORD
+
+    WORD  偏移，并进入状态 183
+
+
+状态 97
+
+   18 redirection: NUMBER GREATER_BAR . WORD
+
+    WORD  偏移，并进入状态 184
+
+
+状态 98
+
+   10 redirection: NUMBER '>' . WORD
+
+    WORD  偏移，并进入状态 185
+
+
+状态 99
+
+   11 redirection: NUMBER '<' . WORD
+
+    WORD  偏移，并进入状态 186
+
+
+状态 100
+
+   14 redirection: GREATER_GREATER WORD .
+
+    $default  使用规则 14 以归约 (redirection)
+
+
+状态 101
+
+   23 redirection: LESS_LESS WORD .
+
+    $default  使用规则 23 以归约 (redirection)
+
+
+状态 102
+
+   38 redirection: LESS_AND WORD .
+
+    $default  使用规则 38 以归约 (redirection)
+
+
+状态 103
+
+   32 redirection: LESS_AND NUMBER .
+
+    $default  使用规则 32 以归约 (redirection)
+
+
+状态 104
+
+   47 redirection: LESS_AND '-' .
+
+    $default  使用规则 47 以归约 (redirection)
+
+
+状态 105
+
+   29 redirection: LESS_LESS_LESS WORD .
+
+    $default  使用规则 29 以归约 (redirection)
+
+
+状态 106
+
+   41 redirection: GREATER_AND WORD .
+
+    $default  使用规则 41 以归约 (redirection)
+
+
+状态 107
+
+   35 redirection: GREATER_AND NUMBER .
+
+    $default  使用规则 35 以归约 (redirection)
+
+
+状态 108
+
+   44 redirection: GREATER_AND '-' .
+
+    $default  使用规则 44 以归约 (redirection)
+
+
+状态 109
+
+   26 redirection: LESS_LESS_MINUS WORD .
+
+    $default  使用规则 26 以归约 (redirection)
+
+
+状态 110
+
+   50 redirection: AND_GREATER WORD .
+
+    $default  使用规则 50 以归约 (redirection)
+
+
+状态 111
+
+   51 redirection: AND_GREATER_GREATER WORD .
+
+    $default  使用规则 51 以归约 (redirection)
+
+
+状态 112
+
+   20 redirection: LESS_GREATER WORD .
+
+    $default  使用规则 20 以归约 (redirection)
+
+
+状态 113
+
+   17 redirection: GREATER_BAR WORD .
+
+    $default  使用规则 17 以归约 (redirection)
+
+
+状态 114
+
+    8 redirection: '>' WORD .
+
+    $default  使用规则 8 以归约 (redirection)
+
+
+状态 115
+
+    9 redirection: '<' WORD .
+
+    $default  使用规则 9 以归约 (redirection)
+
+
+状态 116
+
+  113 group_command: '{' compound_list . '}'
+
+    '}'  偏移，并进入状态 187
+
+
+状态 117
+
+  104 subshell: '(' compound_list . ')'
+
+    ')'  偏移，并进入状态 188
+
+
+状态 118
+
+    0 $accept: inputunit $end .
+
+    $default  接受
+
+
+状态 119
+
+   52 simple_command_element: WORD .
+
+    $default  使用规则 52 以归约 (simple_command_element)
+
+
+状态 120
+
+   58 simple_command: simple_command simple_command_element .
+
+    $default  使用规则 58 以归约 (simple_command)
+
+
+状态 121
+
+   55 redirection_list: redirection .
+
+    $default  使用规则 55 以归约 (redirection_list)
+
+
+状态 122
+
+   56 redirection_list: redirection_list . redirection
+   61 command: shell_command redirection_list .
+
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+
+    $default  使用规则 61 以归约 (command)
+
+    redirection  转到状态 189
+
+
+状态 123
+
+  147 simple_list_terminator: '\n' .
+
+    $default  使用规则 147 以归约 (simple_list_terminator)
+
+
+状态 124
+
+  148 simple_list_terminator: yacc_EOF .
+
+    $default  使用规则 148 以归约 (simple_list_terminator)
+
+
+状态 125
+
+    1 inputunit: simple_list simple_list_terminator .
+
+    $default  使用规则 1 以归约 (inputunit)
+
+
+状态 126
+
+  158 simple_list1: simple_list1 AND_AND . newline_list simple_list1
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    newline_list  转到状态 190
+
+
+状态 127
+
+  159 simple_list1: simple_list1 OR_OR . newline_list simple_list1
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    newline_list  转到状态 191
+
+
+状态 128
+
+  155 simple_list: simple_list1 '&' .
+  160 simple_list1: simple_list1 '&' . simple_list1
+
+    IF                   偏移，并进入状态 2
+    CASE                 偏移，并进入状态 3
+    FOR                  偏移，并进入状态 4
+    SELECT               偏移，并进入状态 5
+    WHILE                偏移，并进入状态 6
+    UNTIL                偏移，并进入状态 7
+    FUNCTION             偏移，并进入状态 8
+    COPROC               偏移，并进入状态 9
+    COND_START           偏移，并进入状态 10
+    BANG                 偏移，并进入状态 11
+    TIME                 偏移，并进入状态 12
+    WORD                 偏移，并进入状态 13
+    ASSIGNMENT_WORD      偏移，并进入状态 14
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    ARITH_CMD            偏移，并进入状态 17
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+    '{'                  偏移，并进入状态 32
+    '('                  偏移，并进入状态 33
+
+    $default  使用规则 155 以归约 (simple_list)
+
+    redirection             转到状态 35
+    simple_command_element  转到状态 36
+    simple_command          转到状态 37
+    command                 转到状态 38
+    shell_command           转到状态 39
+    for_command             转到状态 40
+    arith_for_command       转到状态 41
+    select_command          转到状态 42
+    case_command            转到状态 43
+    function_def            转到状态 44
+    subshell                转到状态 45
+    coproc                  转到状态 46
+    if_command              转到状态 47
+    group_command           转到状态 48
+    arith_command           转到状态 49
+    cond_command            转到状态 50
+    simple_list1            转到状态 192
+    pipeline_command        转到状态 53
+    pipeline                转到状态 54
+    timespec                转到状态 55
+
+
+状态 129
+
+  157 simple_list: simple_list1 ';' .
+  162 simple_list1: simple_list1 ';' . simple_list1
+
+    IF                   偏移，并进入状态 2
+    CASE                 偏移，并进入状态 3
+    FOR                  偏移，并进入状态 4
+    SELECT               偏移，并进入状态 5
+    WHILE                偏移，并进入状态 6
+    UNTIL                偏移，并进入状态 7
+    FUNCTION             偏移，并进入状态 8
+    COPROC               偏移，并进入状态 9
+    COND_START           偏移，并进入状态 10
+    BANG                 偏移，并进入状态 11
+    TIME                 偏移，并进入状态 12
+    WORD                 偏移，并进入状态 13
+    ASSIGNMENT_WORD      偏移，并进入状态 14
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    ARITH_CMD            偏移，并进入状态 17
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+    '{'                  偏移，并进入状态 32
+    '('                  偏移，并进入状态 33
+
+    $default  使用规则 157 以归约 (simple_list)
+
+    redirection             转到状态 35
+    simple_command_element  转到状态 36
+    simple_command          转到状态 37
+    command                 转到状态 38
+    shell_command           转到状态 39
+    for_command             转到状态 40
+    arith_for_command       转到状态 41
+    select_command          转到状态 42
+    case_command            转到状态 43
+    function_def            转到状态 44
+    subshell                转到状态 45
+    coproc                  转到状态 46
+    if_command              转到状态 47
+    group_command           转到状态 48
+    arith_command           转到状态 49
+    cond_command            转到状态 50
+    simple_list1            转到状态 193
+    pipeline_command        转到状态 53
+    pipeline                转到状态 54
+    timespec                转到状态 55
+
+
+状态 130
+
+  156 simple_list: simple_list1 '=' .
+  161 simple_list1: simple_list1 '=' . simple_list1
+
+    IF                   偏移，并进入状态 2
+    CASE                 偏移，并进入状态 3
+    FOR                  偏移，并进入状态 4
+    SELECT               偏移，并进入状态 5
+    WHILE                偏移，并进入状态 6
+    UNTIL                偏移，并进入状态 7
+    FUNCTION             偏移，并进入状态 8
+    COPROC               偏移，并进入状态 9
+    COND_START           偏移，并进入状态 10
+    BANG                 偏移，并进入状态 11
+    TIME                 偏移，并进入状态 12
+    WORD                 偏移，并进入状态 13
+    ASSIGNMENT_WORD      偏移，并进入状态 14
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    ARITH_CMD            偏移，并进入状态 17
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+    '{'                  偏移，并进入状态 32
+    '('                  偏移，并进入状态 33
+
+    $default  使用规则 156 以归约 (simple_list)
+
+    redirection             转到状态 35
+    simple_command_element  转到状态 36
+    simple_command          转到状态 37
+    command                 转到状态 38
+    shell_command           转到状态 39
+    for_command             转到状态 40
+    arith_for_command       转到状态 41
+    select_command          转到状态 42
+    case_command            转到状态 43
+    function_def            转到状态 44
+    subshell                转到状态 45
+    coproc                  转到状态 46
+    if_command              转到状态 47
+    group_command           转到状态 48
+    arith_command           转到状态 49
+    cond_command            转到状态 50
+    simple_list1            转到状态 194
+    pipeline_command        转到状态 53
+    pipeline                转到状态 54
+    timespec                转到状态 55
+
+
+状态 131
+
+  170 pipeline: pipeline BAR_AND . newline_list pipeline
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    newline_list  转到状态 195
+
+
+状态 132
+
+  169 pipeline: pipeline '|' . newline_list pipeline
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    newline_list  转到状态 196
+
+
+状态 133
+
+  167 pipeline_command: timespec list_terminator .
+
+    $default  使用规则 167 以归约 (pipeline_command)
+
+
+状态 134
+
+  166 pipeline_command: timespec pipeline_command .
+
+    $default  使用规则 166 以归约 (pipeline_command)
+
+
+状态 135
+
+  110 if_command: IF compound_list THEN . compound_list FI
+  111           | IF compound_list THEN . compound_list ELSE compound_list FI
+  112           | IF compound_list THEN . compound_list elif_clause FI
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 197
+    newline_list   转到状态 60
+
+
+状态 136
+
+  153 newline_list: newline_list '\n' .
+
+    $default  使用规则 153 以归约 (newline_list)
+
+
+状态 137
+
+  133 list: newline_list list0 .
+
+    $default  使用规则 133 以归约 (list)
+
+
+状态 138
+
+  135 compound_list: newline_list list1 .
+  136 list0: list1 . '\n' newline_list
+  137      | list1 . '&' newline_list
+  138      | list1 . '=' newline_list
+  139      | list1 . ';' newline_list
+  140 list1: list1 . AND_AND newline_list list1
+  141      | list1 . OR_OR newline_list list1
+  142      | list1 . '&' newline_list list1
+  143      | list1 . '=' newline_list list1
+  144      | list1 . ';' newline_list list1
+  145      | list1 . '\n' newline_list list1
+
+    AND_AND  偏移，并进入状态 198
+    OR_OR    偏移，并进入状态 199
+    '&'      偏移，并进入状态 200
+    ';'      偏移，并进入状态 201
+    '\n'     偏移，并进入状态 202
+    '='      偏移，并进入状态 203
+
+    $default  使用规则 135 以归约 (compound_list)
+
+
+状态 139
+
+  146 list1: pipeline_command .
+
+    $default  使用规则 146 以归约 (list1)
+
+
+状态 140
+
+   95 case_command: CASE WORD newline_list . IN newline_list ESAC
+   96             | CASE WORD newline_list . IN case_clause_sequence newline_list ESAC
+   97             | CASE WORD newline_list . IN case_clause ESAC
+  153 newline_list: newline_list . '\n'
+
+    IN    偏移，并进入状态 204
+    '\n'  偏移，并进入状态 136
+
+
+状态 141
+
+   77 for_command: FOR WORD ';' . newline_list DO compound_list DONE
+   78            | FOR WORD ';' . newline_list '{' compound_list '}'
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    newline_list  转到状态 205
+
+
+状态 142
+
+   75 for_command: FOR WORD newline_list . DO compound_list DONE
+   76            | FOR WORD newline_list . '{' compound_list '}'
+   79            | FOR WORD newline_list . IN word_list list_terminator newline_list DO compound_list DONE
+   80            | FOR WORD newline_list . IN word_list list_terminator newline_list '{' compound_list '}'
+   81            | FOR WORD newline_list . IN list_terminator newline_list DO compound_list DONE
+   82            | FOR WORD newline_list . IN list_terminator newline_list '{' compound_list '}'
+  153 newline_list: newline_list . '\n'
+
+    DO    偏移，并进入状态 206
+    IN    偏移，并进入状态 207
+    '\n'  偏移，并进入状态 136
+    '{'   偏移，并进入状态 208
+
+
+状态 143
+
+   85 arith_for_command: FOR ARITH_FOR_EXPRS DO . compound_list DONE
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 209
+    newline_list   转到状态 60
+
+
+状态 144
+
+   86 arith_for_command: FOR ARITH_FOR_EXPRS '{' . compound_list '}'
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 210
+    newline_list   转到状态 60
+
+
+状态 145
+
+   83 arith_for_command: FOR ARITH_FOR_EXPRS list_terminator . newline_list DO compound_list DONE
+   84                  | FOR ARITH_FOR_EXPRS list_terminator . newline_list '{' compound_list '}'
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    newline_list  转到状态 211
+
+
+状态 146
+
+   89 select_command: SELECT WORD ';' . newline_list DO list DONE
+   90               | SELECT WORD ';' . newline_list '{' list '}'
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    newline_list  转到状态 212
+
+
+状态 147
+
+   87 select_command: SELECT WORD newline_list . DO list DONE
+   88               | SELECT WORD newline_list . '{' list '}'
+   91               | SELECT WORD newline_list . IN word_list list_terminator newline_list DO list DONE
+   92               | SELECT WORD newline_list . IN word_list list_terminator newline_list '{' list '}'
+   93               | SELECT WORD newline_list . IN list_terminator newline_list DO compound_list DONE
+   94               | SELECT WORD newline_list . IN list_terminator newline_list '{' compound_list '}'
+  153 newline_list: newline_list . '\n'
+
+    DO    偏移，并进入状态 213
+    IN    偏移，并进入状态 214
+    '\n'  偏移，并进入状态 136
+    '{'   偏移，并进入状态 215
+
+
+状态 148
+
+   66 shell_command: WHILE compound_list DO . compound_list DONE
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 216
+    newline_list   转到状态 60
+
+
+状态 149
+
+   67 shell_command: UNTIL compound_list DO . compound_list DONE
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 217
+    newline_list   转到状态 60
+
+
+状态 150
+
+  101 function_def: FUNCTION WORD '\n' . newline_list function_body
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    newline_list  转到状态 218
+
+
+状态 151
+
+   99 function_def: FUNCTION WORD '(' . ')' newline_list function_body
+  104 subshell: '(' . compound_list ')'
+
+    ')'  偏移，并进入状态 219
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 117
+    newline_list   转到状态 60
+
+
+状态 152
+
+  102 function_body: shell_command .
+  103              | shell_command . redirection_list
+
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+
+    $default  使用规则 102 以归约 (function_body)
+
+    redirection       转到状态 121
+    redirection_list  转到状态 220
+
+
+状态 153
+
+  100 function_def: FUNCTION WORD function_body .
+
+    $default  使用规则 100 以归约 (function_def)
+
+
+状态 154
+
+  107 coproc: COPROC WORD shell_command .
+  108       | COPROC WORD shell_command . redirection_list
+
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+
+    $default  使用规则 107 以归约 (coproc)
+
+    redirection       转到状态 121
+    redirection_list  转到状态 221
+
+
+状态 155
+
+   56 redirection_list: redirection_list . redirection
+  106 coproc: COPROC shell_command redirection_list .
+
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+
+    $default  使用规则 106 以归约 (coproc)
+
+    redirection  转到状态 189
+
+
+状态 156
+
+  115 cond_command: COND_START COND_CMD COND_END .
+
+    $default  使用规则 115 以归约 (cond_command)
+
+
+状态 157
+
+  175 timespec: TIME TIMEOPT TIMEIGN .
+
+    $default  使用规则 175 以归约 (timespec)
+
+
+状态 158
+
+   98 function_def: WORD '(' ')' . newline_list function_body
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    newline_list  转到状态 222
+
+
+状态 159
+
+   16 redirection: REDIR_WORD GREATER_GREATER WORD .
+
+    $default  使用规则 16 以归约 (redirection)
+
+
+状态 160
+
+   25 redirection: REDIR_WORD LESS_LESS WORD .
+
+    $default  使用规则 25 以归约 (redirection)
+
+
+状态 161
+
+   40 redirection: REDIR_WORD LESS_AND WORD .
+
+    $default  使用规则 40 以归约 (redirection)
+
+
+状态 162
+
+   34 redirection: REDIR_WORD LESS_AND NUMBER .
+
+    $default  使用规则 34 以归约 (redirection)
+
+
+状态 163
+
+   49 redirection: REDIR_WORD LESS_AND '-' .
+
+    $default  使用规则 49 以归约 (redirection)
+
+
+状态 164
+
+   31 redirection: REDIR_WORD LESS_LESS_LESS WORD .
+
+    $default  使用规则 31 以归约 (redirection)
+
+
+状态 165
+
+   43 redirection: REDIR_WORD GREATER_AND WORD .
+
+    $default  使用规则 43 以归约 (redirection)
+
+
+状态 166
+
+   37 redirection: REDIR_WORD GREATER_AND NUMBER .
+
+    $default  使用规则 37 以归约 (redirection)
+
+
+状态 167
+
+   46 redirection: REDIR_WORD GREATER_AND '-' .
+
+    $default  使用规则 46 以归约 (redirection)
+
+
+状态 168
+
+   28 redirection: REDIR_WORD LESS_LESS_MINUS WORD .
+
+    $default  使用规则 28 以归约 (redirection)
+
+
+状态 169
+
+   22 redirection: REDIR_WORD LESS_GREATER WORD .
+
+    $default  使用规则 22 以归约 (redirection)
+
+
+状态 170
+
+   19 redirection: REDIR_WORD GREATER_BAR WORD .
+
+    $default  使用规则 19 以归约 (redirection)
+
+
+状态 171
+
+   12 redirection: REDIR_WORD '>' WORD .
+
+    $default  使用规则 12 以归约 (redirection)
+
+
+状态 172
+
+   13 redirection: REDIR_WORD '<' WORD .
+
+    $default  使用规则 13 以归约 (redirection)
+
+
+状态 173
+
+   15 redirection: NUMBER GREATER_GREATER WORD .
+
+    $default  使用规则 15 以归约 (redirection)
+
+
+状态 174
+
+   24 redirection: NUMBER LESS_LESS WORD .
+
+    $default  使用规则 24 以归约 (redirection)
+
+
+状态 175
+
+   39 redirection: NUMBER LESS_AND WORD .
+
+    $default  使用规则 39 以归约 (redirection)
+
+
+状态 176
+
+   33 redirection: NUMBER LESS_AND NUMBER .
+
+    $default  使用规则 33 以归约 (redirection)
+
+
+状态 177
+
+   48 redirection: NUMBER LESS_AND '-' .
+
+    $default  使用规则 48 以归约 (redirection)
+
+
+状态 178
+
+   30 redirection: NUMBER LESS_LESS_LESS WORD .
+
+    $default  使用规则 30 以归约 (redirection)
+
+
+状态 179
+
+   42 redirection: NUMBER GREATER_AND WORD .
+
+    $default  使用规则 42 以归约 (redirection)
+
+
+状态 180
+
+   36 redirection: NUMBER GREATER_AND NUMBER .
+
+    $default  使用规则 36 以归约 (redirection)
+
+
+状态 181
+
+   45 redirection: NUMBER GREATER_AND '-' .
+
+    $default  使用规则 45 以归约 (redirection)
+
+
+状态 182
+
+   27 redirection: NUMBER LESS_LESS_MINUS WORD .
+
+    $default  使用规则 27 以归约 (redirection)
+
+
+状态 183
+
+   21 redirection: NUMBER LESS_GREATER WORD .
+
+    $default  使用规则 21 以归约 (redirection)
+
+
+状态 184
+
+   18 redirection: NUMBER GREATER_BAR WORD .
+
+    $default  使用规则 18 以归约 (redirection)
+
+
+状态 185
+
+   10 redirection: NUMBER '>' WORD .
+
+    $default  使用规则 10 以归约 (redirection)
+
+
+状态 186
+
+   11 redirection: NUMBER '<' WORD .
+
+    $default  使用规则 11 以归约 (redirection)
+
+
+状态 187
+
+  113 group_command: '{' compound_list '}' .
+
+    $default  使用规则 113 以归约 (group_command)
+
+
+状态 188
+
+  104 subshell: '(' compound_list ')' .
+
+    $default  使用规则 104 以归约 (subshell)
+
+
+状态 189
+
+   56 redirection_list: redirection_list redirection .
+
+    $default  使用规则 56 以归约 (redirection_list)
+
+
+状态 190
+
+  153 newline_list: newline_list . '\n'
+  158 simple_list1: simple_list1 AND_AND newline_list . simple_list1
+
+    IF                   偏移，并进入状态 2
+    CASE                 偏移，并进入状态 3
+    FOR                  偏移，并进入状态 4
+    SELECT               偏移，并进入状态 5
+    WHILE                偏移，并进入状态 6
+    UNTIL                偏移，并进入状态 7
+    FUNCTION             偏移，并进入状态 8
+    COPROC               偏移，并进入状态 9
+    COND_START           偏移，并进入状态 10
+    BANG                 偏移，并进入状态 11
+    TIME                 偏移，并进入状态 12
+    WORD                 偏移，并进入状态 13
+    ASSIGNMENT_WORD      偏移，并进入状态 14
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    ARITH_CMD            偏移，并进入状态 17
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '\n'                 偏移，并进入状态 136
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+    '{'                  偏移，并进入状态 32
+    '('                  偏移，并进入状态 33
+
+    redirection             转到状态 35
+    simple_command_element  转到状态 36
+    simple_command          转到状态 37
+    command                 转到状态 38
+    shell_command           转到状态 39
+    for_command             转到状态 40
+    arith_for_command       转到状态 41
+    select_command          转到状态 42
+    case_command            转到状态 43
+    function_def            转到状态 44
+    subshell                转到状态 45
+    coproc                  转到状态 46
+    if_command              转到状态 47
+    group_command           转到状态 48
+    arith_command           转到状态 49
+    cond_command            转到状态 50
+    simple_list1            转到状态 223
+    pipeline_command        转到状态 53
+    pipeline                转到状态 54
+    timespec                转到状态 55
+
+
+状态 191
+
+  153 newline_list: newline_list . '\n'
+  159 simple_list1: simple_list1 OR_OR newline_list . simple_list1
+
+    IF                   偏移，并进入状态 2
+    CASE                 偏移，并进入状态 3
+    FOR                  偏移，并进入状态 4
+    SELECT               偏移，并进入状态 5
+    WHILE                偏移，并进入状态 6
+    UNTIL                偏移，并进入状态 7
+    FUNCTION             偏移，并进入状态 8
+    COPROC               偏移，并进入状态 9
+    COND_START           偏移，并进入状态 10
+    BANG                 偏移，并进入状态 11
+    TIME                 偏移，并进入状态 12
+    WORD                 偏移，并进入状态 13
+    ASSIGNMENT_WORD      偏移，并进入状态 14
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    ARITH_CMD            偏移，并进入状态 17
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '\n'                 偏移，并进入状态 136
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+    '{'                  偏移，并进入状态 32
+    '('                  偏移，并进入状态 33
+
+    redirection             转到状态 35
+    simple_command_element  转到状态 36
+    simple_command          转到状态 37
+    command                 转到状态 38
+    shell_command           转到状态 39
+    for_command             转到状态 40
+    arith_for_command       转到状态 41
+    select_command          转到状态 42
+    case_command            转到状态 43
+    function_def            转到状态 44
+    subshell                转到状态 45
+    coproc                  转到状态 46
+    if_command              转到状态 47
+    group_command           转到状态 48
+    arith_command           转到状态 49
+    cond_command            转到状态 50
+    simple_list1            转到状态 224
+    pipeline_command        转到状态 53
+    pipeline                转到状态 54
+    timespec                转到状态 55
+
+
+状态 192
+
+  158 simple_list1: simple_list1 . AND_AND newline_list simple_list1
+  159             | simple_list1 . OR_OR newline_list simple_list1
+  160             | simple_list1 . '&' simple_list1
+  160             | simple_list1 '&' simple_list1 .
+  161             | simple_list1 . '=' simple_list1
+  162             | simple_list1 . ';' simple_list1
+
+    AND_AND  偏移，并进入状态 126
+    OR_OR    偏移，并进入状态 127
+    '='      偏移，并进入状态 225
+
+    $default  使用规则 160 以归约 (simple_list1)
+
+
+状态 193
+
+  158 simple_list1: simple_list1 . AND_AND newline_list simple_list1
+  159             | simple_list1 . OR_OR newline_list simple_list1
+  160             | simple_list1 . '&' simple_list1
+  161             | simple_list1 . '=' simple_list1
+  162             | simple_list1 . ';' simple_list1
+  162             | simple_list1 ';' simple_list1 .
+
+    AND_AND  偏移，并进入状态 126
+    OR_OR    偏移，并进入状态 127
+    '='      偏移，并进入状态 225
+
+    $default  使用规则 162 以归约 (simple_list1)
+
+
+状态 194
+
+  158 simple_list1: simple_list1 . AND_AND newline_list simple_list1
+  159             | simple_list1 . OR_OR newline_list simple_list1
+  160             | simple_list1 . '&' simple_list1
+  161             | simple_list1 . '=' simple_list1
+  161             | simple_list1 '=' simple_list1 .
+  162             | simple_list1 . ';' simple_list1
+
+    '='  偏移，并进入状态 225
+
+    $default  使用规则 161 以归约 (simple_list1)
+
+
+状态 195
+
+  153 newline_list: newline_list . '\n'
+  170 pipeline: pipeline BAR_AND newline_list . pipeline
+
+    IF                   偏移，并进入状态 2
+    CASE                 偏移，并进入状态 3
+    FOR                  偏移，并进入状态 4
+    SELECT               偏移，并进入状态 5
+    WHILE                偏移，并进入状态 6
+    UNTIL                偏移，并进入状态 7
+    FUNCTION             偏移，并进入状态 8
+    COPROC               偏移，并进入状态 9
+    COND_START           偏移，并进入状态 10
+    WORD                 偏移，并进入状态 13
+    ASSIGNMENT_WORD      偏移，并进入状态 14
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    ARITH_CMD            偏移，并进入状态 17
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '\n'                 偏移，并进入状态 136
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+    '{'                  偏移，并进入状态 32
+    '('                  偏移，并进入状态 33
+
+    redirection             转到状态 35
+    simple_command_element  转到状态 36
+    simple_command          转到状态 37
+    command                 转到状态 38
+    shell_command           转到状态 39
+    for_command             转到状态 40
+    arith_for_command       转到状态 41
+    select_command          转到状态 42
+    case_command            转到状态 43
+    function_def            转到状态 44
+    subshell                转到状态 45
+    coproc                  转到状态 46
+    if_command              转到状态 47
+    group_command           转到状态 48
+    arith_command           转到状态 49
+    cond_command            转到状态 50
+    pipeline                转到状态 226
+
+
+状态 196
+
+  153 newline_list: newline_list . '\n'
+  169 pipeline: pipeline '|' newline_list . pipeline
+
+    IF                   偏移，并进入状态 2
+    CASE                 偏移，并进入状态 3
+    FOR                  偏移，并进入状态 4
+    SELECT               偏移，并进入状态 5
+    WHILE                偏移，并进入状态 6
+    UNTIL                偏移，并进入状态 7
+    FUNCTION             偏移，并进入状态 8
+    COPROC               偏移，并进入状态 9
+    COND_START           偏移，并进入状态 10
+    WORD                 偏移，并进入状态 13
+    ASSIGNMENT_WORD      偏移，并进入状态 14
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    ARITH_CMD            偏移，并进入状态 17
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '\n'                 偏移，并进入状态 136
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+    '{'                  偏移，并进入状态 32
+    '('                  偏移，并进入状态 33
+
+    redirection             转到状态 35
+    simple_command_element  转到状态 36
+    simple_command          转到状态 37
+    command                 转到状态 38
+    shell_command           转到状态 39
+    for_command             转到状态 40
+    arith_for_command       转到状态 41
+    select_command          转到状态 42
+    case_command            转到状态 43
+    function_def            转到状态 44
+    subshell                转到状态 45
+    coproc                  转到状态 46
+    if_command              转到状态 47
+    group_command           转到状态 48
+    arith_command           转到状态 49
+    cond_command            转到状态 50
+    pipeline                转到状态 227
+
+
+状态 197
+
+  110 if_command: IF compound_list THEN compound_list . FI
+  111           | IF compound_list THEN compound_list . ELSE compound_list FI
+  112           | IF compound_list THEN compound_list . elif_clause FI
+
+    ELSE  偏移，并进入状态 228
+    ELIF  偏移，并进入状态 229
+    FI    偏移，并进入状态 230
+
+    elif_clause  转到状态 231
+
+
+状态 198
+
+  140 list1: list1 AND_AND . newline_list list1
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    newline_list  转到状态 232
+
+
+状态 199
+
+  141 list1: list1 OR_OR . newline_list list1
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    newline_list  转到状态 233
+
+
+状态 200
+
+  137 list0: list1 '&' . newline_list
+  142 list1: list1 '&' . newline_list list1
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    newline_list  转到状态 234
+
+
+状态 201
+
+  139 list0: list1 ';' . newline_list
+  144 list1: list1 ';' . newline_list list1
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    newline_list  转到状态 235
+
+
+状态 202
+
+  136 list0: list1 '\n' . newline_list
+  145 list1: list1 '\n' . newline_list list1
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    newline_list  转到状态 236
+
+
+状态 203
+
+  138 list0: list1 '=' . newline_list
+  143 list1: list1 '=' . newline_list list1
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    newline_list  转到状态 237
+
+
+状态 204
+
+   95 case_command: CASE WORD newline_list IN . newline_list ESAC
+   96             | CASE WORD newline_list IN . case_clause_sequence newline_list ESAC
+   97             | CASE WORD newline_list IN . case_clause ESAC
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    case_clause           转到状态 238
+    pattern_list          转到状态 239
+    case_clause_sequence  转到状态 240
+    newline_list          转到状态 241
+
+
+状态 205
+
+   77 for_command: FOR WORD ';' newline_list . DO compound_list DONE
+   78            | FOR WORD ';' newline_list . '{' compound_list '}'
+  153 newline_list: newline_list . '\n'
+
+    DO    偏移，并进入状态 242
+    '\n'  偏移，并进入状态 136
+    '{'   偏移，并进入状态 243
+
+
+状态 206
+
+   75 for_command: FOR WORD newline_list DO . compound_list DONE
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 244
+    newline_list   转到状态 60
+
+
+状态 207
+
+   79 for_command: FOR WORD newline_list IN . word_list list_terminator newline_list DO compound_list DONE
+   80            | FOR WORD newline_list IN . word_list list_terminator newline_list '{' compound_list '}'
+   81            | FOR WORD newline_list IN . list_terminator newline_list DO compound_list DONE
+   82            | FOR WORD newline_list IN . list_terminator newline_list '{' compound_list '}'
+
+    WORD      偏移，并进入状态 245
+    ';'       偏移，并进入状态 72
+    '\n'      偏移，并进入状态 73
+    yacc_EOF  偏移，并进入状态 74
+
+    word_list        转到状态 246
+    list_terminator  转到状态 247
+
+
+状态 208
+
+   76 for_command: FOR WORD newline_list '{' . compound_list '}'
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 248
+    newline_list   转到状态 60
+
+
+状态 209
+
+   85 arith_for_command: FOR ARITH_FOR_EXPRS DO compound_list . DONE
+
+    DONE  偏移，并进入状态 249
+
+
+状态 210
+
+   86 arith_for_command: FOR ARITH_FOR_EXPRS '{' compound_list . '}'
+
+    '}'  偏移，并进入状态 250
+
+
+状态 211
+
+   83 arith_for_command: FOR ARITH_FOR_EXPRS list_terminator newline_list . DO compound_list DONE
+   84                  | FOR ARITH_FOR_EXPRS list_terminator newline_list . '{' compound_list '}'
+  153 newline_list: newline_list . '\n'
+
+    DO    偏移，并进入状态 251
+    '\n'  偏移，并进入状态 136
+    '{'   偏移，并进入状态 252
+
+
+状态 212
+
+   89 select_command: SELECT WORD ';' newline_list . DO list DONE
+   90               | SELECT WORD ';' newline_list . '{' list '}'
+  153 newline_list: newline_list . '\n'
+
+    DO    偏移，并进入状态 253
+    '\n'  偏移，并进入状态 136
+    '{'   偏移，并进入状态 254
+
+
+状态 213
+
+   87 select_command: SELECT WORD newline_list DO . list DONE
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list          转到状态 255
+    newline_list  转到状态 256
+
+
+状态 214
+
+   91 select_command: SELECT WORD newline_list IN . word_list list_terminator newline_list DO list DONE
+   92               | SELECT WORD newline_list IN . word_list list_terminator newline_list '{' list '}'
+   93               | SELECT WORD newline_list IN . list_terminator newline_list DO compound_list DONE
+   94               | SELECT WORD newline_list IN . list_terminator newline_list '{' compound_list '}'
+
+    WORD      偏移，并进入状态 245
+    ';'       偏移，并进入状态 72
+    '\n'      偏移，并进入状态 73
+    yacc_EOF  偏移，并进入状态 74
+
+    word_list        转到状态 257
+    list_terminator  转到状态 258
+
+
+状态 215
+
+   88 select_command: SELECT WORD newline_list '{' . list '}'
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list          转到状态 259
+    newline_list  转到状态 256
+
+
+状态 216
+
+   66 shell_command: WHILE compound_list DO compound_list . DONE
+
+    DONE  偏移，并进入状态 260
+
+
+状态 217
+
+   67 shell_command: UNTIL compound_list DO compound_list . DONE
+
+    DONE  偏移，并进入状态 261
+
+
+状态 218
+
+  101 function_def: FUNCTION WORD '\n' newline_list . function_body
+  153 newline_list: newline_list . '\n'
+
+    IF          偏移，并进入状态 2
+    CASE        偏移，并进入状态 3
+    FOR         偏移，并进入状态 4
+    SELECT      偏移，并进入状态 5
+    WHILE       偏移，并进入状态 6
+    UNTIL       偏移，并进入状态 7
+    COND_START  偏移，并进入状态 10
+    ARITH_CMD   偏移，并进入状态 17
+    '\n'        偏移，并进入状态 136
+    '{'         偏移，并进入状态 32
+    '('         偏移，并进入状态 33
+
+    shell_command      转到状态 152
+    for_command        转到状态 40
+    arith_for_command  转到状态 41
+    select_command     转到状态 42
+    case_command       转到状态 43
+    function_body      转到状态 262
+    subshell           转到状态 45
+    if_command         转到状态 47
+    group_command      转到状态 48
+    arith_command      转到状态 49
+    cond_command       转到状态 50
+
+
+状态 219
+
+   99 function_def: FUNCTION WORD '(' ')' . newline_list function_body
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    newline_list  转到状态 263
+
+
+状态 220
+
+   56 redirection_list: redirection_list . redirection
+  103 function_body: shell_command redirection_list .
+
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+
+    $default  使用规则 103 以归约 (function_body)
+
+    redirection  转到状态 189
+
+
+状态 221
+
+   56 redirection_list: redirection_list . redirection
+  108 coproc: COPROC WORD shell_command redirection_list .
+
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+
+    $default  使用规则 108 以归约 (coproc)
+
+    redirection  转到状态 189
+
+
+状态 222
+
+   98 function_def: WORD '(' ')' newline_list . function_body
+  153 newline_list: newline_list . '\n'
+
+    IF          偏移，并进入状态 2
+    CASE        偏移，并进入状态 3
+    FOR         偏移，并进入状态 4
+    SELECT      偏移，并进入状态 5
+    WHILE       偏移，并进入状态 6
+    UNTIL       偏移，并进入状态 7
+    COND_START  偏移，并进入状态 10
+    ARITH_CMD   偏移，并进入状态 17
+    '\n'        偏移，并进入状态 136
+    '{'         偏移，并进入状态 32
+    '('         偏移，并进入状态 33
+
+    shell_command      转到状态 152
+    for_command        转到状态 40
+    arith_for_command  转到状态 41
+    select_command     转到状态 42
+    case_command       转到状态 43
+    function_body      转到状态 264
+    subshell           转到状态 45
+    if_command         转到状态 47
+    group_command      转到状态 48
+    arith_command      转到状态 49
+    cond_command       转到状态 50
+
+
+状态 223
+
+  158 simple_list1: simple_list1 . AND_AND newline_list simple_list1
+  158             | simple_list1 AND_AND newline_list simple_list1 .
+  159             | simple_list1 . OR_OR newline_list simple_list1
+  160             | simple_list1 . '&' simple_list1
+  161             | simple_list1 . '=' simple_list1
+  162             | simple_list1 . ';' simple_list1
+
+    '='  偏移，并进入状态 225
+
+    $default  使用规则 158 以归约 (simple_list1)
+
+
+状态 224
+
+  158 simple_list1: simple_list1 . AND_AND newline_list simple_list1
+  159             | simple_list1 . OR_OR newline_list simple_list1
+  159             | simple_list1 OR_OR newline_list simple_list1 .
+  160             | simple_list1 . '&' simple_list1
+  161             | simple_list1 . '=' simple_list1
+  162             | simple_list1 . ';' simple_list1
+
+    '='  偏移，并进入状态 225
+
+    $default  使用规则 159 以归约 (simple_list1)
+
+
+状态 225
+
+  161 simple_list1: simple_list1 '=' . simple_list1
+
+    IF                   偏移，并进入状态 2
+    CASE                 偏移，并进入状态 3
+    FOR                  偏移，并进入状态 4
+    SELECT               偏移，并进入状态 5
+    WHILE                偏移，并进入状态 6
+    UNTIL                偏移，并进入状态 7
+    FUNCTION             偏移，并进入状态 8
+    COPROC               偏移，并进入状态 9
+    COND_START           偏移，并进入状态 10
+    BANG                 偏移，并进入状态 11
+    TIME                 偏移，并进入状态 12
+    WORD                 偏移，并进入状态 13
+    ASSIGNMENT_WORD      偏移，并进入状态 14
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    ARITH_CMD            偏移，并进入状态 17
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+    '{'                  偏移，并进入状态 32
+    '('                  偏移，并进入状态 33
+
+    redirection             转到状态 35
+    simple_command_element  转到状态 36
+    simple_command          转到状态 37
+    command                 转到状态 38
+    shell_command           转到状态 39
+    for_command             转到状态 40
+    arith_for_command       转到状态 41
+    select_command          转到状态 42
+    case_command            转到状态 43
+    function_def            转到状态 44
+    subshell                转到状态 45
+    coproc                  转到状态 46
+    if_command              转到状态 47
+    group_command           转到状态 48
+    arith_command           转到状态 49
+    cond_command            转到状态 50
+    simple_list1            转到状态 194
+    pipeline_command        转到状态 53
+    pipeline                转到状态 54
+    timespec                转到状态 55
+
+
+状态 226
+
+  169 pipeline: pipeline . '|' newline_list pipeline
+  170         | pipeline . BAR_AND newline_list pipeline
+  170         | pipeline BAR_AND newline_list pipeline .
+
+    BAR_AND  偏移，并进入状态 131
+    '|'      偏移，并进入状态 132
+
+    $default  使用规则 170 以归约 (pipeline)
+
+
+状态 227
+
+  169 pipeline: pipeline . '|' newline_list pipeline
+  169         | pipeline '|' newline_list pipeline .
+  170         | pipeline . BAR_AND newline_list pipeline
+
+    BAR_AND  偏移，并进入状态 131
+    '|'      偏移，并进入状态 132
+
+    $default  使用规则 169 以归约 (pipeline)
+
+
+状态 228
+
+  111 if_command: IF compound_list THEN compound_list ELSE . compound_list FI
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 265
+    newline_list   转到状态 60
+
+
+状态 229
+
+  116 elif_clause: ELIF . compound_list THEN compound_list
+  117            | ELIF . compound_list THEN compound_list ELSE compound_list
+  118            | ELIF . compound_list THEN compound_list elif_clause
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 266
+    newline_list   转到状态 60
+
+
+状态 230
+
+  110 if_command: IF compound_list THEN compound_list FI .
+
+    $default  使用规则 110 以归约 (if_command)
+
+
+状态 231
+
+  112 if_command: IF compound_list THEN compound_list elif_clause . FI
+
+    FI  偏移，并进入状态 267
+
+
+状态 232
+
+  140 list1: list1 AND_AND newline_list . list1
+  153 newline_list: newline_list . '\n'
+
+    IF                   偏移，并进入状态 2
+    CASE                 偏移，并进入状态 3
+    FOR                  偏移，并进入状态 4
+    SELECT               偏移，并进入状态 5
+    WHILE                偏移，并进入状态 6
+    UNTIL                偏移，并进入状态 7
+    FUNCTION             偏移，并进入状态 8
+    COPROC               偏移，并进入状态 9
+    COND_START           偏移，并进入状态 10
+    BANG                 偏移，并进入状态 11
+    TIME                 偏移，并进入状态 12
+    WORD                 偏移，并进入状态 13
+    ASSIGNMENT_WORD      偏移，并进入状态 14
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    ARITH_CMD            偏移，并进入状态 17
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '\n'                 偏移，并进入状态 136
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+    '{'                  偏移，并进入状态 32
+    '('                  偏移，并进入状态 33
+
+    redirection             转到状态 35
+    simple_command_element  转到状态 36
+    simple_command          转到状态 37
+    command                 转到状态 38
+    shell_command           转到状态 39
+    for_command             转到状态 40
+    arith_for_command       转到状态 41
+    select_command          转到状态 42
+    case_command            转到状态 43
+    function_def            转到状态 44
+    subshell                转到状态 45
+    coproc                  转到状态 46
+    if_command              转到状态 47
+    group_command           转到状态 48
+    arith_command           转到状态 49
+    cond_command            转到状态 50
+    list1                   转到状态 268
+    pipeline_command        转到状态 139
+    pipeline                转到状态 54
+    timespec                转到状态 55
+
+
+状态 233
+
+  141 list1: list1 OR_OR newline_list . list1
+  153 newline_list: newline_list . '\n'
+
+    IF                   偏移，并进入状态 2
+    CASE                 偏移，并进入状态 3
+    FOR                  偏移，并进入状态 4
+    SELECT               偏移，并进入状态 5
+    WHILE                偏移，并进入状态 6
+    UNTIL                偏移，并进入状态 7
+    FUNCTION             偏移，并进入状态 8
+    COPROC               偏移，并进入状态 9
+    COND_START           偏移，并进入状态 10
+    BANG                 偏移，并进入状态 11
+    TIME                 偏移，并进入状态 12
+    WORD                 偏移，并进入状态 13
+    ASSIGNMENT_WORD      偏移，并进入状态 14
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    ARITH_CMD            偏移，并进入状态 17
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '\n'                 偏移，并进入状态 136
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+    '{'                  偏移，并进入状态 32
+    '('                  偏移，并进入状态 33
+
+    redirection             转到状态 35
+    simple_command_element  转到状态 36
+    simple_command          转到状态 37
+    command                 转到状态 38
+    shell_command           转到状态 39
+    for_command             转到状态 40
+    arith_for_command       转到状态 41
+    select_command          转到状态 42
+    case_command            转到状态 43
+    function_def            转到状态 44
+    subshell                转到状态 45
+    coproc                  转到状态 46
+    if_command              转到状态 47
+    group_command           转到状态 48
+    arith_command           转到状态 49
+    cond_command            转到状态 50
+    list1                   转到状态 269
+    pipeline_command        转到状态 139
+    pipeline                转到状态 54
+    timespec                转到状态 55
+
+
+状态 234
+
+  137 list0: list1 '&' newline_list .
+  142 list1: list1 '&' newline_list . list1
+  153 newline_list: newline_list . '\n'
+
+    IF                   偏移，并进入状态 2
+    CASE                 偏移，并进入状态 3
+    FOR                  偏移，并进入状态 4
+    SELECT               偏移，并进入状态 5
+    WHILE                偏移，并进入状态 6
+    UNTIL                偏移，并进入状态 7
+    FUNCTION             偏移，并进入状态 8
+    COPROC               偏移，并进入状态 9
+    COND_START           偏移，并进入状态 10
+    BANG                 偏移，并进入状态 11
+    TIME                 偏移，并进入状态 12
+    WORD                 偏移，并进入状态 13
+    ASSIGNMENT_WORD      偏移，并进入状态 14
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    ARITH_CMD            偏移，并进入状态 17
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '\n'                 偏移，并进入状态 136
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+    '{'                  偏移，并进入状态 32
+    '('                  偏移，并进入状态 33
+
+    $default  使用规则 137 以归约 (list0)
+
+    redirection             转到状态 35
+    simple_command_element  转到状态 36
+    simple_command          转到状态 37
+    command                 转到状态 38
+    shell_command           转到状态 39
+    for_command             转到状态 40
+    arith_for_command       转到状态 41
+    select_command          转到状态 42
+    case_command            转到状态 43
+    function_def            转到状态 44
+    subshell                转到状态 45
+    coproc                  转到状态 46
+    if_command              转到状态 47
+    group_command           转到状态 48
+    arith_command           转到状态 49
+    cond_command            转到状态 50
+    list1                   转到状态 270
+    pipeline_command        转到状态 139
+    pipeline                转到状态 54
+    timespec                转到状态 55
+
+
+状态 235
+
+  139 list0: list1 ';' newline_list .
+  144 list1: list1 ';' newline_list . list1
+  153 newline_list: newline_list . '\n'
+
+    IF                   偏移，并进入状态 2
+    CASE                 偏移，并进入状态 3
+    FOR                  偏移，并进入状态 4
+    SELECT               偏移，并进入状态 5
+    WHILE                偏移，并进入状态 6
+    UNTIL                偏移，并进入状态 7
+    FUNCTION             偏移，并进入状态 8
+    COPROC               偏移，并进入状态 9
+    COND_START           偏移，并进入状态 10
+    BANG                 偏移，并进入状态 11
+    TIME                 偏移，并进入状态 12
+    WORD                 偏移，并进入状态 13
+    ASSIGNMENT_WORD      偏移，并进入状态 14
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    ARITH_CMD            偏移，并进入状态 17
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '\n'                 偏移，并进入状态 136
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+    '{'                  偏移，并进入状态 32
+    '('                  偏移，并进入状态 33
+
+    $default  使用规则 139 以归约 (list0)
+
+    redirection             转到状态 35
+    simple_command_element  转到状态 36
+    simple_command          转到状态 37
+    command                 转到状态 38
+    shell_command           转到状态 39
+    for_command             转到状态 40
+    arith_for_command       转到状态 41
+    select_command          转到状态 42
+    case_command            转到状态 43
+    function_def            转到状态 44
+    subshell                转到状态 45
+    coproc                  转到状态 46
+    if_command              转到状态 47
+    group_command           转到状态 48
+    arith_command           转到状态 49
+    cond_command            转到状态 50
+    list1                   转到状态 271
+    pipeline_command        转到状态 139
+    pipeline                转到状态 54
+    timespec                转到状态 55
+
+
+状态 236
+
+  136 list0: list1 '\n' newline_list .
+  145 list1: list1 '\n' newline_list . list1
+  153 newline_list: newline_list . '\n'
+
+    IF                   偏移，并进入状态 2
+    CASE                 偏移，并进入状态 3
+    FOR                  偏移，并进入状态 4
+    SELECT               偏移，并进入状态 5
+    WHILE                偏移，并进入状态 6
+    UNTIL                偏移，并进入状态 7
+    FUNCTION             偏移，并进入状态 8
+    COPROC               偏移，并进入状态 9
+    COND_START           偏移，并进入状态 10
+    BANG                 偏移，并进入状态 11
+    TIME                 偏移，并进入状态 12
+    WORD                 偏移，并进入状态 13
+    ASSIGNMENT_WORD      偏移，并进入状态 14
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    ARITH_CMD            偏移，并进入状态 17
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '\n'                 偏移，并进入状态 136
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+    '{'                  偏移，并进入状态 32
+    '('                  偏移，并进入状态 33
+
+    $default  使用规则 136 以归约 (list0)
+
+    redirection             转到状态 35
+    simple_command_element  转到状态 36
+    simple_command          转到状态 37
+    command                 转到状态 38
+    shell_command           转到状态 39
+    for_command             转到状态 40
+    arith_for_command       转到状态 41
+    select_command          转到状态 42
+    case_command            转到状态 43
+    function_def            转到状态 44
+    subshell                转到状态 45
+    coproc                  转到状态 46
+    if_command              转到状态 47
+    group_command           转到状态 48
+    arith_command           转到状态 49
+    cond_command            转到状态 50
+    list1                   转到状态 272
+    pipeline_command        转到状态 139
+    pipeline                转到状态 54
+    timespec                转到状态 55
+
+
+状态 237
+
+  138 list0: list1 '=' newline_list .
+  143 list1: list1 '=' newline_list . list1
+  153 newline_list: newline_list . '\n'
+
+    IF                   偏移，并进入状态 2
+    CASE                 偏移，并进入状态 3
+    FOR                  偏移，并进入状态 4
+    SELECT               偏移，并进入状态 5
+    WHILE                偏移，并进入状态 6
+    UNTIL                偏移，并进入状态 7
+    FUNCTION             偏移，并进入状态 8
+    COPROC               偏移，并进入状态 9
+    COND_START           偏移，并进入状态 10
+    BANG                 偏移，并进入状态 11
+    TIME                 偏移，并进入状态 12
+    WORD                 偏移，并进入状态 13
+    ASSIGNMENT_WORD      偏移，并进入状态 14
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    ARITH_CMD            偏移，并进入状态 17
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '\n'                 偏移，并进入状态 136
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+    '{'                  偏移，并进入状态 32
+    '('                  偏移，并进入状态 33
+
+    $default  使用规则 138 以归约 (list0)
+
+    redirection             转到状态 35
+    simple_command_element  转到状态 36
+    simple_command          转到状态 37
+    command                 转到状态 38
+    shell_command           转到状态 39
+    for_command             转到状态 40
+    arith_for_command       转到状态 41
+    select_command          转到状态 42
+    case_command            转到状态 43
+    function_def            转到状态 44
+    subshell                转到状态 45
+    coproc                  转到状态 46
+    if_command              转到状态 47
+    group_command           转到状态 48
+    arith_command           转到状态 49
+    cond_command            转到状态 50
+    list1                   转到状态 273
+    pipeline_command        转到状态 139
+    pipeline                转到状态 54
+    timespec                转到状态 55
+
+
+状态 238
+
+   97 case_command: CASE WORD newline_list IN case_clause . ESAC
+
+    ESAC  偏移，并进入状态 274
+
+
+状态 239
+
+  119 case_clause: pattern_list .
+  125 case_clause_sequence: pattern_list . SEMI_SEMI
+  127                     | pattern_list . SEMI_AND
+  129                     | pattern_list . SEMI_SEMI_AND
+
+    SEMI_SEMI      偏移，并进入状态 275
+    SEMI_AND       偏移，并进入状态 276
+    SEMI_SEMI_AND  偏移，并进入状态 277
+
+    $default  使用规则 119 以归约 (case_clause)
+
+
+状态 240
+
+   96 case_command: CASE WORD newline_list IN case_clause_sequence . newline_list ESAC
+  120 case_clause: case_clause_sequence . pattern_list
+  126 case_clause_sequence: case_clause_sequence . pattern_list SEMI_SEMI
+  128                     | case_clause_sequence . pattern_list SEMI_AND
+  130                     | case_clause_sequence . pattern_list SEMI_SEMI_AND
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    pattern_list  转到状态 278
+    newline_list  转到状态 279
+
+
+状态 241
+
+   95 case_command: CASE WORD newline_list IN newline_list . ESAC
+  121 pattern_list: newline_list . pattern ')' compound_list
+  122             | newline_list . pattern ')' newline_list
+  123             | newline_list . '(' pattern ')' compound_list
+  124             | newline_list . '(' pattern ')' newline_list
+  153 newline_list: newline_list . '\n'
+
+    ESAC  偏移，并进入状态 280
+    WORD  偏移，并进入状态 281
+    '\n'  偏移，并进入状态 136
+    '('   偏移，并进入状态 282
+
+    pattern  转到状态 283
+
+
+状态 242
+
+   77 for_command: FOR WORD ';' newline_list DO . compound_list DONE
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 284
+    newline_list   转到状态 60
+
+
+状态 243
+
+   78 for_command: FOR WORD ';' newline_list '{' . compound_list '}'
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 285
+    newline_list   转到状态 60
+
+
+状态 244
+
+   75 for_command: FOR WORD newline_list DO compound_list . DONE
+
+    DONE  偏移，并进入状态 286
+
+
+状态 245
+
+    6 word_list: WORD .
+
+    $default  使用规则 6 以归约 (word_list)
+
+
+状态 246
+
+    7 word_list: word_list . WORD
+   79 for_command: FOR WORD newline_list IN word_list . list_terminator newline_list DO compound_list DONE
+   80            | FOR WORD newline_list IN word_list . list_terminator newline_list '{' compound_list '}'
+
+    WORD      偏移，并进入状态 287
+    ';'       偏移，并进入状态 72
+    '\n'      偏移，并进入状态 73
+    yacc_EOF  偏移，并进入状态 74
+
+    list_terminator  转到状态 288
+
+
+状态 247
+
+   81 for_command: FOR WORD newline_list IN list_terminator . newline_list DO compound_list DONE
+   82            | FOR WORD newline_list IN list_terminator . newline_list '{' compound_list '}'
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    newline_list  转到状态 289
+
+
+状态 248
+
+   76 for_command: FOR WORD newline_list '{' compound_list . '}'
+
+    '}'  偏移，并进入状态 290
+
+
+状态 249
+
+   85 arith_for_command: FOR ARITH_FOR_EXPRS DO compound_list DONE .
+
+    $default  使用规则 85 以归约 (arith_for_command)
+
+
+状态 250
+
+   86 arith_for_command: FOR ARITH_FOR_EXPRS '{' compound_list '}' .
+
+    $default  使用规则 86 以归约 (arith_for_command)
+
+
+状态 251
+
+   83 arith_for_command: FOR ARITH_FOR_EXPRS list_terminator newline_list DO . compound_list DONE
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 291
+    newline_list   转到状态 60
+
+
+状态 252
+
+   84 arith_for_command: FOR ARITH_FOR_EXPRS list_terminator newline_list '{' . compound_list '}'
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 292
+    newline_list   转到状态 60
+
+
+状态 253
+
+   89 select_command: SELECT WORD ';' newline_list DO . list DONE
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list          转到状态 293
+    newline_list  转到状态 256
+
+
+状态 254
+
+   90 select_command: SELECT WORD ';' newline_list '{' . list '}'
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list          转到状态 294
+    newline_list  转到状态 256
+
+
+状态 255
+
+   87 select_command: SELECT WORD newline_list DO list . DONE
+
+    DONE  偏移，并进入状态 295
+
+
+状态 256
+
+  133 list: newline_list . list0
+  153 newline_list: newline_list . '\n'
+
+    IF                   偏移，并进入状态 2
+    CASE                 偏移，并进入状态 3
+    FOR                  偏移，并进入状态 4
+    SELECT               偏移，并进入状态 5
+    WHILE                偏移，并进入状态 6
+    UNTIL                偏移，并进入状态 7
+    FUNCTION             偏移，并进入状态 8
+    COPROC               偏移，并进入状态 9
+    COND_START           偏移，并进入状态 10
+    BANG                 偏移，并进入状态 11
+    TIME                 偏移，并进入状态 12
+    WORD                 偏移，并进入状态 13
+    ASSIGNMENT_WORD      偏移，并进入状态 14
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    ARITH_CMD            偏移，并进入状态 17
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '\n'                 偏移，并进入状态 136
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+    '{'                  偏移，并进入状态 32
+    '('                  偏移，并进入状态 33
+
+    redirection             转到状态 35
+    simple_command_element  转到状态 36
+    simple_command          转到状态 37
+    command                 转到状态 38
+    shell_command           转到状态 39
+    for_command             转到状态 40
+    arith_for_command       转到状态 41
+    select_command          转到状态 42
+    case_command            转到状态 43
+    function_def            转到状态 44
+    subshell                转到状态 45
+    coproc                  转到状态 46
+    if_command              转到状态 47
+    group_command           转到状态 48
+    arith_command           转到状态 49
+    cond_command            转到状态 50
+    list0                   转到状态 137
+    list1                   转到状态 296
+    pipeline_command        转到状态 139
+    pipeline                转到状态 54
+    timespec                转到状态 55
+
+
+状态 257
+
+    7 word_list: word_list . WORD
+   91 select_command: SELECT WORD newline_list IN word_list . list_terminator newline_list DO list DONE
+   92               | SELECT WORD newline_list IN word_list . list_terminator newline_list '{' list '}'
+
+    WORD      偏移，并进入状态 287
+    ';'       偏移，并进入状态 72
+    '\n'      偏移，并进入状态 73
+    yacc_EOF  偏移，并进入状态 74
+
+    list_terminator  转到状态 297
+
+
+状态 258
+
+   93 select_command: SELECT WORD newline_list IN list_terminator . newline_list DO compound_list DONE
+   94               | SELECT WORD newline_list IN list_terminator . newline_list '{' compound_list '}'
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    newline_list  转到状态 298
+
+
+状态 259
+
+   88 select_command: SELECT WORD newline_list '{' list . '}'
+
+    '}'  偏移，并进入状态 299
+
+
+状态 260
+
+   66 shell_command: WHILE compound_list DO compound_list DONE .
+
+    $default  使用规则 66 以归约 (shell_command)
+
+
+状态 261
+
+   67 shell_command: UNTIL compound_list DO compound_list DONE .
+
+    $default  使用规则 67 以归约 (shell_command)
+
+
+状态 262
+
+  101 function_def: FUNCTION WORD '\n' newline_list function_body .
+
+    $default  使用规则 101 以归约 (function_def)
+
+
+状态 263
+
+   99 function_def: FUNCTION WORD '(' ')' newline_list . function_body
+  153 newline_list: newline_list . '\n'
+
+    IF          偏移，并进入状态 2
+    CASE        偏移，并进入状态 3
+    FOR         偏移，并进入状态 4
+    SELECT      偏移，并进入状态 5
+    WHILE       偏移，并进入状态 6
+    UNTIL       偏移，并进入状态 7
+    COND_START  偏移，并进入状态 10
+    ARITH_CMD   偏移，并进入状态 17
+    '\n'        偏移，并进入状态 136
+    '{'         偏移，并进入状态 32
+    '('         偏移，并进入状态 33
+
+    shell_command      转到状态 152
+    for_command        转到状态 40
+    arith_for_command  转到状态 41
+    select_command     转到状态 42
+    case_command       转到状态 43
+    function_body      转到状态 300
+    subshell           转到状态 45
+    if_command         转到状态 47
+    group_command      转到状态 48
+    arith_command      转到状态 49
+    cond_command       转到状态 50
+
+
+状态 264
+
+   98 function_def: WORD '(' ')' newline_list function_body .
+
+    $default  使用规则 98 以归约 (function_def)
+
+
+状态 265
+
+  111 if_command: IF compound_list THEN compound_list ELSE compound_list . FI
+
+    FI  偏移，并进入状态 301
+
+
+状态 266
+
+  116 elif_clause: ELIF compound_list . THEN compound_list
+  117            | ELIF compound_list . THEN compound_list ELSE compound_list
+  118            | ELIF compound_list . THEN compound_list elif_clause
+
+    THEN  偏移，并进入状态 302
+
+
+状态 267
+
+  112 if_command: IF compound_list THEN compound_list elif_clause FI .
+
+    $default  使用规则 112 以归约 (if_command)
+
+
+状态 268
+
+  140 list1: list1 . AND_AND newline_list list1
+  140      | list1 AND_AND newline_list list1 .
+  141      | list1 . OR_OR newline_list list1
+  142      | list1 . '&' newline_list list1
+  143      | list1 . '=' newline_list list1
+  144      | list1 . ';' newline_list list1
+  145      | list1 . '\n' newline_list list1
+
+    '='  偏移，并进入状态 303
+
+    $default  使用规则 140 以归约 (list1)
+
+
+状态 269
+
+  140 list1: list1 . AND_AND newline_list list1
+  141      | list1 . OR_OR newline_list list1
+  141      | list1 OR_OR newline_list list1 .
+  142      | list1 . '&' newline_list list1
+  143      | list1 . '=' newline_list list1
+  144      | list1 . ';' newline_list list1
+  145      | list1 . '\n' newline_list list1
+
+    '='  偏移，并进入状态 303
+
+    $default  使用规则 141 以归约 (list1)
+
+
+状态 270
+
+  140 list1: list1 . AND_AND newline_list list1
+  141      | list1 . OR_OR newline_list list1
+  142      | list1 . '&' newline_list list1
+  142      | list1 '&' newline_list list1 .
+  143      | list1 . '=' newline_list list1
+  144      | list1 . ';' newline_list list1
+  145      | list1 . '\n' newline_list list1
+
+    AND_AND  偏移，并进入状态 198
+    OR_OR    偏移，并进入状态 199
+    '='      偏移，并进入状态 303
+
+    $default  使用规则 142 以归约 (list1)
+
+
+状态 271
+
+  140 list1: list1 . AND_AND newline_list list1
+  141      | list1 . OR_OR newline_list list1
+  142      | list1 . '&' newline_list list1
+  143      | list1 . '=' newline_list list1
+  144      | list1 . ';' newline_list list1
+  144      | list1 ';' newline_list list1 .
+  145      | list1 . '\n' newline_list list1
+
+    AND_AND  偏移，并进入状态 198
+    OR_OR    偏移，并进入状态 199
+    '='      偏移，并进入状态 303
+
+    $default  使用规则 144 以归约 (list1)
+
+
+状态 272
+
+  140 list1: list1 . AND_AND newline_list list1
+  141      | list1 . OR_OR newline_list list1
+  142      | list1 . '&' newline_list list1
+  143      | list1 . '=' newline_list list1
+  144      | list1 . ';' newline_list list1
+  145      | list1 . '\n' newline_list list1
+  145      | list1 '\n' newline_list list1 .
+
+    AND_AND  偏移，并进入状态 198
+    OR_OR    偏移，并进入状态 199
+    '='      偏移，并进入状态 303
+
+    $default  使用规则 145 以归约 (list1)
+
+
+状态 273
+
+  140 list1: list1 . AND_AND newline_list list1
+  141      | list1 . OR_OR newline_list list1
+  142      | list1 . '&' newline_list list1
+  143      | list1 . '=' newline_list list1
+  143      | list1 '=' newline_list list1 .
+  144      | list1 . ';' newline_list list1
+  145      | list1 . '\n' newline_list list1
+
+    '='  偏移，并进入状态 303
+
+    $default  使用规则 143 以归约 (list1)
+
+
+状态 274
+
+   97 case_command: CASE WORD newline_list IN case_clause ESAC .
+
+    $default  使用规则 97 以归约 (case_command)
+
+
+状态 275
+
+  125 case_clause_sequence: pattern_list SEMI_SEMI .
+
+    $default  使用规则 125 以归约 (case_clause_sequence)
+
+
+状态 276
+
+  127 case_clause_sequence: pattern_list SEMI_AND .
+
+    $default  使用规则 127 以归约 (case_clause_sequence)
+
+
+状态 277
+
+  129 case_clause_sequence: pattern_list SEMI_SEMI_AND .
+
+    $default  使用规则 129 以归约 (case_clause_sequence)
+
+
+状态 278
+
+  120 case_clause: case_clause_sequence pattern_list .
+  126 case_clause_sequence: case_clause_sequence pattern_list . SEMI_SEMI
+  128                     | case_clause_sequence pattern_list . SEMI_AND
+  130                     | case_clause_sequence pattern_list . SEMI_SEMI_AND
+
+    SEMI_SEMI      偏移，并进入状态 304
+    SEMI_AND       偏移，并进入状态 305
+    SEMI_SEMI_AND  偏移，并进入状态 306
+
+    $default  使用规则 120 以归约 (case_clause)
+
+
+状态 279
+
+   96 case_command: CASE WORD newline_list IN case_clause_sequence newline_list . ESAC
+  121 pattern_list: newline_list . pattern ')' compound_list
+  122             | newline_list . pattern ')' newline_list
+  123             | newline_list . '(' pattern ')' compound_list
+  124             | newline_list . '(' pattern ')' newline_list
+  153 newline_list: newline_list . '\n'
+
+    ESAC  偏移，并进入状态 307
+    WORD  偏移，并进入状态 281
+    '\n'  偏移，并进入状态 136
+    '('   偏移，并进入状态 282
+
+    pattern  转到状态 283
+
+
+状态 280
+
+   95 case_command: CASE WORD newline_list IN newline_list ESAC .
+
+    $default  使用规则 95 以归约 (case_command)
+
+
+状态 281
+
+  131 pattern: WORD .
+
+    $default  使用规则 131 以归约 (pattern)
+
+
+状态 282
+
+  123 pattern_list: newline_list '(' . pattern ')' compound_list
+  124             | newline_list '(' . pattern ')' newline_list
+
+    WORD  偏移，并进入状态 281
+
+    pattern  转到状态 308
+
+
+状态 283
+
+  121 pattern_list: newline_list pattern . ')' compound_list
+  122             | newline_list pattern . ')' newline_list
+  132 pattern: pattern . '|' WORD
+
+    '|'  偏移，并进入状态 309
+    ')'  偏移，并进入状态 310
+
+
+状态 284
+
+   77 for_command: FOR WORD ';' newline_list DO compound_list . DONE
+
+    DONE  偏移，并进入状态 311
+
+
+状态 285
+
+   78 for_command: FOR WORD ';' newline_list '{' compound_list . '}'
+
+    '}'  偏移，并进入状态 312
+
+
+状态 286
+
+   75 for_command: FOR WORD newline_list DO compound_list DONE .
+
+    $default  使用规则 75 以归约 (for_command)
+
+
+状态 287
+
+    7 word_list: word_list WORD .
+
+    $default  使用规则 7 以归约 (word_list)
+
+
+状态 288
+
+   79 for_command: FOR WORD newline_list IN word_list list_terminator . newline_list DO compound_list DONE
+   80            | FOR WORD newline_list IN word_list list_terminator . newline_list '{' compound_list '}'
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    newline_list  转到状态 313
+
+
+状态 289
+
+   81 for_command: FOR WORD newline_list IN list_terminator newline_list . DO compound_list DONE
+   82            | FOR WORD newline_list IN list_terminator newline_list . '{' compound_list '}'
+  153 newline_list: newline_list . '\n'
+
+    DO    偏移，并进入状态 314
+    '\n'  偏移，并进入状态 136
+    '{'   偏移，并进入状态 315
+
+
+状态 290
+
+   76 for_command: FOR WORD newline_list '{' compound_list '}' .
+
+    $default  使用规则 76 以归约 (for_command)
+
+
+状态 291
+
+   83 arith_for_command: FOR ARITH_FOR_EXPRS list_terminator newline_list DO compound_list . DONE
+
+    DONE  偏移，并进入状态 316
+
+
+状态 292
+
+   84 arith_for_command: FOR ARITH_FOR_EXPRS list_terminator newline_list '{' compound_list . '}'
+
+    '}'  偏移，并进入状态 317
+
+
+状态 293
+
+   89 select_command: SELECT WORD ';' newline_list DO list . DONE
+
+    DONE  偏移，并进入状态 318
+
+
+状态 294
+
+   90 select_command: SELECT WORD ';' newline_list '{' list . '}'
+
+    '}'  偏移，并进入状态 319
+
+
+状态 295
+
+   87 select_command: SELECT WORD newline_list DO list DONE .
+
+    $default  使用规则 87 以归约 (select_command)
+
+
+状态 296
+
+  136 list0: list1 . '\n' newline_list
+  137      | list1 . '&' newline_list
+  138      | list1 . '=' newline_list
+  139      | list1 . ';' newline_list
+  140 list1: list1 . AND_AND newline_list list1
+  141      | list1 . OR_OR newline_list list1
+  142      | list1 . '&' newline_list list1
+  143      | list1 . '=' newline_list list1
+  144      | list1 . ';' newline_list list1
+  145      | list1 . '\n' newline_list list1
+
+    AND_AND  偏移，并进入状态 198
+    OR_OR    偏移，并进入状态 199
+    '&'      偏移，并进入状态 200
+    ';'      偏移，并进入状态 201
+    '\n'     偏移，并进入状态 202
+    '='      偏移，并进入状态 203
+
+
+状态 297
+
+   91 select_command: SELECT WORD newline_list IN word_list list_terminator . newline_list DO list DONE
+   92               | SELECT WORD newline_list IN word_list list_terminator . newline_list '{' list '}'
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    newline_list  转到状态 320
+
+
+状态 298
+
+   93 select_command: SELECT WORD newline_list IN list_terminator newline_list . DO compound_list DONE
+   94               | SELECT WORD newline_list IN list_terminator newline_list . '{' compound_list '}'
+  153 newline_list: newline_list . '\n'
+
+    DO    偏移，并进入状态 321
+    '\n'  偏移，并进入状态 136
+    '{'   偏移，并进入状态 322
+
+
+状态 299
+
+   88 select_command: SELECT WORD newline_list '{' list '}' .
+
+    $default  使用规则 88 以归约 (select_command)
+
+
+状态 300
+
+   99 function_def: FUNCTION WORD '(' ')' newline_list function_body .
+
+    $default  使用规则 99 以归约 (function_def)
+
+
+状态 301
+
+  111 if_command: IF compound_list THEN compound_list ELSE compound_list FI .
+
+    $default  使用规则 111 以归约 (if_command)
+
+
+状态 302
+
+  116 elif_clause: ELIF compound_list THEN . compound_list
+  117            | ELIF compound_list THEN . compound_list ELSE compound_list
+  118            | ELIF compound_list THEN . compound_list elif_clause
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 323
+    newline_list   转到状态 60
+
+
+状态 303
+
+  143 list1: list1 '=' . newline_list list1
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    newline_list  转到状态 324
+
+
+状态 304
+
+  126 case_clause_sequence: case_clause_sequence pattern_list SEMI_SEMI .
+
+    $default  使用规则 126 以归约 (case_clause_sequence)
+
+
+状态 305
+
+  128 case_clause_sequence: case_clause_sequence pattern_list SEMI_AND .
+
+    $default  使用规则 128 以归约 (case_clause_sequence)
+
+
+状态 306
+
+  130 case_clause_sequence: case_clause_sequence pattern_list SEMI_SEMI_AND .
+
+    $default  使用规则 130 以归约 (case_clause_sequence)
+
+
+状态 307
+
+   96 case_command: CASE WORD newline_list IN case_clause_sequence newline_list ESAC .
+
+    $default  使用规则 96 以归约 (case_command)
+
+
+状态 308
+
+  123 pattern_list: newline_list '(' pattern . ')' compound_list
+  124             | newline_list '(' pattern . ')' newline_list
+  132 pattern: pattern . '|' WORD
+
+    '|'  偏移，并进入状态 309
+    ')'  偏移，并进入状态 325
+
+
+状态 309
+
+  132 pattern: pattern '|' . WORD
+
+    WORD  偏移，并进入状态 326
+
+
+状态 310
+
+  121 pattern_list: newline_list pattern ')' . compound_list
+  122             | newline_list pattern ')' . newline_list
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 327
+    newline_list   转到状态 328
+
+
+状态 311
+
+   77 for_command: FOR WORD ';' newline_list DO compound_list DONE .
+
+    $default  使用规则 77 以归约 (for_command)
+
+
+状态 312
+
+   78 for_command: FOR WORD ';' newline_list '{' compound_list '}' .
+
+    $default  使用规则 78 以归约 (for_command)
+
+
+状态 313
+
+   79 for_command: FOR WORD newline_list IN word_list list_terminator newline_list . DO compound_list DONE
+   80            | FOR WORD newline_list IN word_list list_terminator newline_list . '{' compound_list '}'
+  153 newline_list: newline_list . '\n'
+
+    DO    偏移，并进入状态 329
+    '\n'  偏移，并进入状态 136
+    '{'   偏移，并进入状态 330
+
+
+状态 314
+
+   81 for_command: FOR WORD newline_list IN list_terminator newline_list DO . compound_list DONE
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 331
+    newline_list   转到状态 60
+
+
+状态 315
+
+   82 for_command: FOR WORD newline_list IN list_terminator newline_list '{' . compound_list '}'
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 332
+    newline_list   转到状态 60
+
+
+状态 316
+
+   83 arith_for_command: FOR ARITH_FOR_EXPRS list_terminator newline_list DO compound_list DONE .
+
+    $default  使用规则 83 以归约 (arith_for_command)
+
+
+状态 317
+
+   84 arith_for_command: FOR ARITH_FOR_EXPRS list_terminator newline_list '{' compound_list '}' .
+
+    $default  使用规则 84 以归约 (arith_for_command)
+
+
+状态 318
+
+   89 select_command: SELECT WORD ';' newline_list DO list DONE .
+
+    $default  使用规则 89 以归约 (select_command)
+
+
+状态 319
+
+   90 select_command: SELECT WORD ';' newline_list '{' list '}' .
+
+    $default  使用规则 90 以归约 (select_command)
+
+
+状态 320
+
+   91 select_command: SELECT WORD newline_list IN word_list list_terminator newline_list . DO list DONE
+   92               | SELECT WORD newline_list IN word_list list_terminator newline_list . '{' list '}'
+  153 newline_list: newline_list . '\n'
+
+    DO    偏移，并进入状态 333
+    '\n'  偏移，并进入状态 136
+    '{'   偏移，并进入状态 334
+
+
+状态 321
+
+   93 select_command: SELECT WORD newline_list IN list_terminator newline_list DO . compound_list DONE
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 335
+    newline_list   转到状态 60
+
+
+状态 322
+
+   94 select_command: SELECT WORD newline_list IN list_terminator newline_list '{' . compound_list '}'
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 336
+    newline_list   转到状态 60
+
+
+状态 323
+
+  116 elif_clause: ELIF compound_list THEN compound_list .
+  117            | ELIF compound_list THEN compound_list . ELSE compound_list
+  118            | ELIF compound_list THEN compound_list . elif_clause
+
+    ELSE  偏移，并进入状态 337
+    ELIF  偏移，并进入状态 229
+
+    $default  使用规则 116 以归约 (elif_clause)
+
+    elif_clause  转到状态 338
+
+
+状态 324
+
+  143 list1: list1 '=' newline_list . list1
+  153 newline_list: newline_list . '\n'
+
+    IF                   偏移，并进入状态 2
+    CASE                 偏移，并进入状态 3
+    FOR                  偏移，并进入状态 4
+    SELECT               偏移，并进入状态 5
+    WHILE                偏移，并进入状态 6
+    UNTIL                偏移，并进入状态 7
+    FUNCTION             偏移，并进入状态 8
+    COPROC               偏移，并进入状态 9
+    COND_START           偏移，并进入状态 10
+    BANG                 偏移，并进入状态 11
+    TIME                 偏移，并进入状态 12
+    WORD                 偏移，并进入状态 13
+    ASSIGNMENT_WORD      偏移，并进入状态 14
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    ARITH_CMD            偏移，并进入状态 17
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '\n'                 偏移，并进入状态 136
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+    '{'                  偏移，并进入状态 32
+    '('                  偏移，并进入状态 33
+
+    redirection             转到状态 35
+    simple_command_element  转到状态 36
+    simple_command          转到状态 37
+    command                 转到状态 38
+    shell_command           转到状态 39
+    for_command             转到状态 40
+    arith_for_command       转到状态 41
+    select_command          转到状态 42
+    case_command            转到状态 43
+    function_def            转到状态 44
+    subshell                转到状态 45
+    coproc                  转到状态 46
+    if_command              转到状态 47
+    group_command           转到状态 48
+    arith_command           转到状态 49
+    cond_command            转到状态 50
+    list1                   转到状态 273
+    pipeline_command        转到状态 139
+    pipeline                转到状态 54
+    timespec                转到状态 55
+
+
+状态 325
+
+  123 pattern_list: newline_list '(' pattern ')' . compound_list
+  124             | newline_list '(' pattern ')' . newline_list
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 339
+    newline_list   转到状态 340
+
+
+状态 326
+
+  132 pattern: pattern '|' WORD .
+
+    $default  使用规则 132 以归约 (pattern)
+
+
+状态 327
+
+  121 pattern_list: newline_list pattern ')' compound_list .
+
+    $default  使用规则 121 以归约 (pattern_list)
+
+
+状态 328
+
+  122 pattern_list: newline_list pattern ')' newline_list .
+  133 list: newline_list . list0
+  135 compound_list: newline_list . list1
+  153 newline_list: newline_list . '\n'
+
+    IF                   偏移，并进入状态 2
+    CASE                 偏移，并进入状态 3
+    FOR                  偏移，并进入状态 4
+    SELECT               偏移，并进入状态 5
+    WHILE                偏移，并进入状态 6
+    UNTIL                偏移，并进入状态 7
+    FUNCTION             偏移，并进入状态 8
+    COPROC               偏移，并进入状态 9
+    COND_START           偏移，并进入状态 10
+    BANG                 偏移，并进入状态 11
+    TIME                 偏移，并进入状态 12
+    WORD                 偏移，并进入状态 13
+    ASSIGNMENT_WORD      偏移，并进入状态 14
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    ARITH_CMD            偏移，并进入状态 17
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '\n'                 偏移，并进入状态 136
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+    '{'                  偏移，并进入状态 32
+    '('                  偏移，并进入状态 33
+
+    $default  使用规则 122 以归约 (pattern_list)
+
+    redirection             转到状态 35
+    simple_command_element  转到状态 36
+    simple_command          转到状态 37
+    command                 转到状态 38
+    shell_command           转到状态 39
+    for_command             转到状态 40
+    arith_for_command       转到状态 41
+    select_command          转到状态 42
+    case_command            转到状态 43
+    function_def            转到状态 44
+    subshell                转到状态 45
+    coproc                  转到状态 46
+    if_command              转到状态 47
+    group_command           转到状态 48
+    arith_command           转到状态 49
+    cond_command            转到状态 50
+    list0                   转到状态 137
+    list1                   转到状态 138
+    pipeline_command        转到状态 139
+    pipeline                转到状态 54
+    timespec                转到状态 55
+
+
+状态 329
+
+   79 for_command: FOR WORD newline_list IN word_list list_terminator newline_list DO . compound_list DONE
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 341
+    newline_list   转到状态 60
+
+
+状态 330
+
+   80 for_command: FOR WORD newline_list IN word_list list_terminator newline_list '{' . compound_list '}'
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 342
+    newline_list   转到状态 60
+
+
+状态 331
+
+   81 for_command: FOR WORD newline_list IN list_terminator newline_list DO compound_list . DONE
+
+    DONE  偏移，并进入状态 343
+
+
+状态 332
+
+   82 for_command: FOR WORD newline_list IN list_terminator newline_list '{' compound_list . '}'
+
+    '}'  偏移，并进入状态 344
+
+
+状态 333
+
+   91 select_command: SELECT WORD newline_list IN word_list list_terminator newline_list DO . list DONE
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list          转到状态 345
+    newline_list  转到状态 256
+
+
+状态 334
+
+   92 select_command: SELECT WORD newline_list IN word_list list_terminator newline_list '{' . list '}'
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list          转到状态 346
+    newline_list  转到状态 256
+
+
+状态 335
+
+   93 select_command: SELECT WORD newline_list IN list_terminator newline_list DO compound_list . DONE
+
+    DONE  偏移，并进入状态 347
+
+
+状态 336
+
+   94 select_command: SELECT WORD newline_list IN list_terminator newline_list '{' compound_list . '}'
+
+    '}'  偏移，并进入状态 348
+
+
+状态 337
+
+  117 elif_clause: ELIF compound_list THEN compound_list ELSE . compound_list
+
+    $default  使用规则 152 以归约 (newline_list)
+
+    list           转到状态 58
+    compound_list  转到状态 349
+    newline_list   转到状态 60
+
+
+状态 338
+
+  118 elif_clause: ELIF compound_list THEN compound_list elif_clause .
+
+    $default  使用规则 118 以归约 (elif_clause)
+
+
+状态 339
+
+  123 pattern_list: newline_list '(' pattern ')' compound_list .
+
+    $default  使用规则 123 以归约 (pattern_list)
+
+
+状态 340
+
+  124 pattern_list: newline_list '(' pattern ')' newline_list .
+  133 list: newline_list . list0
+  135 compound_list: newline_list . list1
+  153 newline_list: newline_list . '\n'
+
+    IF                   偏移，并进入状态 2
+    CASE                 偏移，并进入状态 3
+    FOR                  偏移，并进入状态 4
+    SELECT               偏移，并进入状态 5
+    WHILE                偏移，并进入状态 6
+    UNTIL                偏移，并进入状态 7
+    FUNCTION             偏移，并进入状态 8
+    COPROC               偏移，并进入状态 9
+    COND_START           偏移，并进入状态 10
+    BANG                 偏移，并进入状态 11
+    TIME                 偏移，并进入状态 12
+    WORD                 偏移，并进入状态 13
+    ASSIGNMENT_WORD      偏移，并进入状态 14
+    REDIR_WORD           偏移，并进入状态 15
+    NUMBER               偏移，并进入状态 16
+    ARITH_CMD            偏移，并进入状态 17
+    GREATER_GREATER      偏移，并进入状态 18
+    LESS_LESS            偏移，并进入状态 19
+    LESS_AND             偏移，并进入状态 20
+    LESS_LESS_LESS       偏移，并进入状态 21
+    GREATER_AND          偏移，并进入状态 22
+    LESS_LESS_MINUS      偏移，并进入状态 23
+    AND_GREATER          偏移，并进入状态 24
+    AND_GREATER_GREATER  偏移，并进入状态 25
+    LESS_GREATER         偏移，并进入状态 26
+    GREATER_BAR          偏移，并进入状态 27
+    '\n'                 偏移，并进入状态 136
+    '>'                  偏移，并进入状态 30
+    '<'                  偏移，并进入状态 31
+    '{'                  偏移，并进入状态 32
+    '('                  偏移，并进入状态 33
+
+    $default  使用规则 124 以归约 (pattern_list)
+
+    redirection             转到状态 35
+    simple_command_element  转到状态 36
+    simple_command          转到状态 37
+    command                 转到状态 38
+    shell_command           转到状态 39
+    for_command             转到状态 40
+    arith_for_command       转到状态 41
+    select_command          转到状态 42
+    case_command            转到状态 43
+    function_def            转到状态 44
+    subshell                转到状态 45
+    coproc                  转到状态 46
+    if_command              转到状态 47
+    group_command           转到状态 48
+    arith_command           转到状态 49
+    cond_command            转到状态 50
+    list0                   转到状态 137
+    list1                   转到状态 138
+    pipeline_command        转到状态 139
+    pipeline                转到状态 54
+    timespec                转到状态 55
+
+
+状态 341
+
+   79 for_command: FOR WORD newline_list IN word_list list_terminator newline_list DO compound_list . DONE
+
+    DONE  偏移，并进入状态 350
+
+
+状态 342
+
+   80 for_command: FOR WORD newline_list IN word_list list_terminator newline_list '{' compound_list . '}'
+
+    '}'  偏移，并进入状态 351
+
+
+状态 343
+
+   81 for_command: FOR WORD newline_list IN list_terminator newline_list DO compound_list DONE .
+
+    $default  使用规则 81 以归约 (for_command)
+
+
+状态 344
+
+   82 for_command: FOR WORD newline_list IN list_terminator newline_list '{' compound_list '}' .
+
+    $default  使用规则 82 以归约 (for_command)
+
+
+状态 345
+
+   91 select_command: SELECT WORD newline_list IN word_list list_terminator newline_list DO list . DONE
+
+    DONE  偏移，并进入状态 352
+
+
+状态 346
+
+   92 select_command: SELECT WORD newline_list IN word_list list_terminator newline_list '{' list . '}'
+
+    '}'  偏移，并进入状态 353
+
+
+状态 347
+
+   93 select_command: SELECT WORD newline_list IN list_terminator newline_list DO compound_list DONE .
+
+    $default  使用规则 93 以归约 (select_command)
+
+
+状态 348
+
+   94 select_command: SELECT WORD newline_list IN list_terminator newline_list '{' compound_list '}' .
+
+    $default  使用规则 94 以归约 (select_command)
+
+
+状态 349
+
+  117 elif_clause: ELIF compound_list THEN compound_list ELSE compound_list .
+
+    $default  使用规则 117 以归约 (elif_clause)
+
+
+状态 350
+
+   79 for_command: FOR WORD newline_list IN word_list list_terminator newline_list DO compound_list DONE .
+
+    $default  使用规则 79 以归约 (for_command)
+
+
+状态 351
+
+   80 for_command: FOR WORD newline_list IN word_list list_terminator newline_list '{' compound_list '}' .
+
+    $default  使用规则 80 以归约 (for_command)
+
+
+状态 352
+
+   91 select_command: SELECT WORD newline_list IN word_list list_terminator newline_list DO list DONE .
+
+    $default  使用规则 91 以归约 (select_command)
+
+
+状态 353
+
+   92 select_command: SELECT WORD newline_list IN word_list list_terminator newline_list '{' list '}' .
+
+    $default  使用规则 92 以归约 (select_command)

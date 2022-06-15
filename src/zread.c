@@ -30,7 +30,7 @@
 #include <errno.h>
 
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif
 
 #ifndef SEEK_CUR
@@ -41,7 +41,7 @@ extern int errno;
 #  define ZBUFSIZ 4096
 #endif
 
-extern int executing_builtin;
+extern __thread int executing_builtin;
 
 extern void check_signals_and_traps (void);
 extern void check_signals (void);

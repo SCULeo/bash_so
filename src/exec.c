@@ -36,7 +36,7 @@
 
 /* Not all systems declare ERRNO in errno.h... and some systems #define it! */
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif /* !errno */
 
 extern REDIRECT *redirection_undo_list;

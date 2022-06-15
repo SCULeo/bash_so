@@ -55,7 +55,7 @@ extern const char *locale_charset PARAMS((void));
 extern char *get_locale_var PARAMS((char *));
 #endif
 
-extern int locale_utf8locale;
+extern __thread int locale_utf8locale;
 
 static int u32init = 0;
 static int utf8locale = 0;

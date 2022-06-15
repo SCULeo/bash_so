@@ -68,8 +68,8 @@
 #include <strmatch.h>
 
 #include <readline/rlconf.h>
-#include <readline/readline.h>
-#include <readline/history.h>
+#include <readline.h>
+#include <history.h>
 
 #ifdef STRDUP
 #  undef STRDUP

@@ -68,7 +68,7 @@
 #include <strmatch.h>
 
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif /* !errno */
 
 /* The size that strings change by. */
@@ -177,7 +177,7 @@ WORD_LIST *subst_assign_varlist = (WORD_LIST *)NULL;
 
 /* Tell the expansion functions to not longjmp back to top_level on fatal
    errors.  Enabled when doing completion and prompt string expansion. */
-int no_longjmp_on_fatal_error = 0;
+// int no_longjmp_on_fatal_error = 0;
 
 /* Non-zero means to allow unmatched globbed filenames to expand to
    a null file. */
@@ -961,11 +961,11 @@ add_one_character:
 
 	  /* Just paranoia; ret will not be 0 unless no_longjmp_on_fatal_error
 	     is set. */
-	  if (ret == 0 && no_longjmp_on_fatal_error)
-	    {
-	      free_ret = 0;
-	      ret = string + i + 2;
-	    }
+	  // if (ret == 0 && no_longjmp_on_fatal_error)
+	  //   {
+	  //     free_ret = 0;
+	  //     ret = string + i + 2;
+	  //   }
 
 	  /* XXX - CHECK_STRING_OVERRUN here? */
 	  for (t = 0; ret[t]; t++, j++)
@@ -1264,7 +1264,9 @@ extract_command_subst (string, sindex, xflags)
     return (extract_delimited_string (string, sindex, "$(", "(", ")", xflags|SX_COMMAND)); /*)*/
   else
     {
-      xflags |= (no_longjmp_on_fatal_error ? SX_NOLONGJMP : 0);
+      // xflags |= (no_longjmp_on_fatal_error ? SX_NOLONGJMP : 0);
+      xflags |=  0;
+
       ret = xparse_dolparen (string, string+*sindex, sindex, xflags);
       return ret;
     }
@@ -1296,7 +1298,8 @@ extract_process_subst (string, starter, sindex, xflags)
   /* XXX - check xflags&SX_COMPLETE here? */
   return (extract_delimited_string (string, sindex, starter, "(", ")", SX_COMMAND));
 #else
-  xflags |= (no_longjmp_on_fatal_error ? SX_NOLONGJMP : 0);
+  // xflags |= (no_longjmp_on_fatal_error ? SX_NOLONGJMP : 0);
+  xflags |=  0;
   return (xparse_dolparen (string, string+*sindex, sindex, xflags));
 #endif
 }
@@ -1470,13 +1473,13 @@ extract_delimited_string (string, sindex, opener, alt_opener, closer, flags)
 
   if (c == 0 && nesting_level)
     {
-      if (no_longjmp_on_fatal_error == 0)
-	{
-	  last_command_exit_value = EXECUTION_FAILURE;
-	  report_error (_("bad substitution: no closing `%s' in %s"), closer, string);
-	  exp_jump_to_top_level (DISCARD);
-	}
-      else
+  //     if (no_longjmp_on_fatal_error == 0)
+	// {
+	//   last_command_exit_value = EXECUTION_FAILURE;
+	//   report_error (_("bad substitution: no closing `%s' in %s"), closer, string);
+	//   exp_jump_to_top_level (DISCARD);
+	// }
+  //     else
 	{
 	  *sindex = i;
 	  return (char *)NULL;
@@ -1660,13 +1663,13 @@ extract_dollar_brace_string (string, sindex, quoted, flags)
 
   if (c == 0 && nesting_level)
     {
-      if (no_longjmp_on_fatal_error == 0)
-	{			/* { */
-	  last_command_exit_value = EXECUTION_FAILURE;
-	  report_error (_("bad substitution: no closing `%s' in %s"), "}", string);
-	  exp_jump_to_top_level (DISCARD);
-	}
-      else
+  //     if (no_longjmp_on_fatal_error == 0)
+	// {			/* { */
+	//   last_command_exit_value = EXECUTION_FAILURE;
+	//   report_error (_("bad substitution: no closing `%s' in %s"), "}", string);
+	//   exp_jump_to_top_level (DISCARD);
+	// }
+  //     else
 	{
 	  *sindex = i;
 	  return ((char *)NULL);
@@ -1734,8 +1737,9 @@ unquote_bang (string)
   free (temp);
 }
 #endif
+#define CQ_RETURN(x) do {  return (x); } while (0)
 
-#define CQ_RETURN(x) do { no_longjmp_on_fatal_error = oldjmp; return (x); } while (0)
+// #define CQ_RETURN(x) do { no_longjmp_on_fatal_error = oldjmp; return (x); } while (0)
 
 /* This function assumes s[i] == open; returns with s[ret] == close; used to
    parse array subscripts.  FLAGS & 1 means to not attempt to skip over
@@ -1754,8 +1758,8 @@ skip_matched_pair (string, start, open, close, flags)
   DECLARE_MBSTATE;
 
   slen = strlen (string + start) + start;
-  oldjmp = no_longjmp_on_fatal_error;
-  no_longjmp_on_fatal_error = 1;
+  // oldjmp = no_longjmp_on_fatal_error;
+  // no_longjmp_on_fatal_error = 1;
 
   i = start + 1;		/* skip over leading bracket */
   count = 1;
@@ -1871,9 +1875,9 @@ skip_to_delim (string, start, delims, flags)
   DECLARE_MBSTATE;
 
   slen = strlen (string + start) + start;
-  oldjmp = no_longjmp_on_fatal_error;
-  if (flags & SD_NOJMP)
-    no_longjmp_on_fatal_error = 1;
+  // oldjmp = no_longjmp_on_fatal_error;
+  // if (flags & SD_NOJMP)
+  //   no_longjmp_on_fatal_error = 1;
   invert = (flags & SD_INVERT);
   skipcmd = (flags & SD_NOSKIPCMD) == 0;
   noprocsub = (flags & SD_NOPROCSUB);
@@ -2051,9 +2055,9 @@ skip_to_histexp (string, start, delims, flags)
   DECLARE_MBSTATE;
 
   slen = strlen (string + start) + start;
-  oldjmp = no_longjmp_on_fatal_error;
-  if (flags & SD_NOJMP)
-    no_longjmp_on_fatal_error = 1;
+  // oldjmp = no_longjmp_on_fatal_error;
+  // if (flags & SD_NOJMP)
+  //   no_longjmp_on_fatal_error = 1;
 
   histexp_comsub = histexp_backq = old_dquote = 0;
 
@@ -2173,8 +2177,8 @@ char_is_quoted (string, eindex)
   DECLARE_MBSTATE;
 
   slen = strlen (string);
-  oldjmp = no_longjmp_on_fatal_error;
-  no_longjmp_on_fatal_error = 1;
+  // oldjmp = no_longjmp_on_fatal_error;
+  // no_longjmp_on_fatal_error = 1;
   i = pass_next = 0;
   while (i <= eindex)
     {
@@ -3864,9 +3868,9 @@ expand_prompt_string (string, quoted, wflags)
   td.flags = wflags;
   td.word = savestring (string);
 
-  no_longjmp_on_fatal_error = 1;
+  // no_longjmp_on_fatal_error = 1;
   value = expand_word_internal (&td, quoted, 0, (int *)NULL, (int *)NULL);
-  no_longjmp_on_fatal_error = 0;
+  // no_longjmp_on_fatal_error = 0;
 
   if (value == &expand_word_error || value == &expand_word_fatal)
     {
@@ -4918,8 +4922,9 @@ match_upattern (string, pat, mtype, sp, ep)
 }
 
 #if defined (HANDLE_MULTIBYTE)
+// #define WFOLD(c) (match_ignore_case && iswupper (c) ? towlower (c) : (c))
 
-#define WFOLD(c) (match_ignore_case && iswupper (c) ? towlower (c) : (c))
+#define WFOLD(c) ( iswupper (c) ? towlower (c) : (c))
 
 /* Match WPAT anywhere in WSTRING and return the match boundaries.
    This returns 1 in case of a successful match, 0 otherwise.  Wide
@@ -12005,7 +12010,9 @@ expand_word_list_internal (list, eflags)
 #if defined (BRACE_EXPANSION)
   /* Do brace expansion on this word if there are any brace characters
      in the string. */
-  if ((eflags & WEXP_BRACEEXP) && brace_expansion && new_list)
+    // if ((eflags & WEXP_BRACEEXP) && brace_expansion && new_list)
+
+  if ((eflags & WEXP_BRACEEXP) && new_list)
     new_list = brace_expand_word_list (new_list, eflags);
 #endif /* BRACE_EXPANSION */
 

@@ -39,7 +39,8 @@
 #include "variables.h"
 #include "externs.h"
 
-extern int glob_ignore_case, match_ignore_case;
+extern __thread int glob_ignore_case;
+// extern int match_ignore_case;
 
 int
 sh_regmatch (string, pattern, flags)
@@ -64,8 +65,8 @@ sh_regmatch (string, pattern, flags)
 #endif
 
   rflags = REG_EXTENDED;
-  if (match_ignore_case)
-    rflags |= REG_ICASE;
+  // if (match_ignore_case)
+  //   rflags |= REG_ICASE;
 #if !defined (ARRAY_VARS)
   rflags |= REG_NOSUB;
 #endif

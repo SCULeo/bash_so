@@ -26,7 +26,7 @@
 
 /* Not all systems declare ERRNO in errno.h... and some systems #define it! */
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif /* !errno */
 
 static void kill_error PARAMS((pid_t, int));

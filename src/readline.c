@@ -52,7 +52,7 @@
 #include <errno.h>
 
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif /* !errno */
 
 /* System-specific feature definitions and include files. */
@@ -113,34 +113,34 @@ const char *rl_library_version = RL_LIBRARY_VERSION;
 int rl_readline_version = RL_READLINE_VERSION;
 
 /* True if this is `real' readline as opposed to some stub substitute. */
-int rl_gnu_readline_p = 1;
+__thread int rl_gnu_readline_p = 1;
 
 /* A pointer to the keymap that is currently in use.
    By default, it is the standard emacs keymap. */
 Keymap _rl_keymap = emacs_standard_keymap;
 
 /* The current style of editing. */
-int rl_editing_mode = emacs_mode;
+__thread int rl_editing_mode = emacs_mode;
 
 /* The current insert mode:  input (the default) or overwrite */
-int rl_insert_mode = RL_IM_DEFAULT;
+__thread int rl_insert_mode = RL_IM_DEFAULT;
 
 /* Non-zero if we called this function from _rl_dispatch().  It's present
    so functions can find out whether they were called from a key binding
    or directly from an application. */
-int rl_dispatching;
+__thread int rl_dispatching;
 
 /* Non-zero if the previous command was a kill command. */
-int _rl_last_command_was_kill = 0;
+__thread int _rl_last_command_was_kill = 0;
 
 /* The current value of the numeric argument specified by the user. */
-int rl_numeric_arg = 1;
+__thread int rl_numeric_arg = 1;
 
 /* Non-zero if an argument was typed. */
-int rl_explicit_arg = 0;
+__thread int rl_explicit_arg = 0;
 
 /* Temporary value used while generating the argument. */
-int rl_arg_sign = 1;
+__thread int rl_arg_sign = 1;
 
 /* Non-zero means we have been called at least once before. */
 static int rl_initialized;
@@ -151,22 +151,22 @@ static int running_in_emacs;
 #endif
 
 /* Flags word encapsulating the current readline state. */
-unsigned long rl_readline_state = RL_STATE_NONE;
+__thread unsigned long rl_readline_state = RL_STATE_NONE;
 
 /* The current offset in the current input line. */
-int rl_point;
+__thread int rl_point;
 
 /* Mark in the current input line. */
-int rl_mark;
+__thread int rl_mark;
 
 /* Length of the current input line. */
-int rl_end;
+__thread int rl_end;
 
 /* Make this non-zero to return the current input_line. */
-int rl_done;
+__thread int rl_done;
 
 /* The last function executed by readline. */
-rl_command_func_t *rl_last_func = (rl_command_func_t *)NULL;
+__thread rl_command_func_t *rl_last_func = (rl_command_func_t *)NULL;
 
 /* Top level environment for readline_internal (). */
 procenv_t _rl_top_level;
@@ -175,8 +175,8 @@ procenv_t _rl_top_level;
 FILE *_rl_in_stream, *_rl_out_stream;
 
 /* The names of the streams that we do input and output to. */
-FILE *rl_instream = (FILE *)NULL;
-FILE *rl_outstream = (FILE *)NULL;
+__thread FILE *rl_instream = (FILE *)NULL;
+__thread FILE *rl_outstream = (FILE *)NULL;
 
 /* Non-zero means echo characters as they are read.  Defaults to no echo;
    set to 1 if there is a controlling terminal, we can get its attributes,
@@ -185,19 +185,19 @@ FILE *rl_outstream = (FILE *)NULL;
 int _rl_echoing_p = 0;
 
 /* Current prompt. */
-char *rl_prompt = (char *)NULL;
+__thread char *rl_prompt = (char *)NULL;
 int rl_visible_prompt_length = 0;
 
 /* Set to non-zero by calling application if it has already printed rl_prompt
    and does not want readline to do it the first time. */
-int rl_already_prompted = 0;
+__thread int rl_already_prompted = 0;
 
 /* The number of characters read in order to type this complete command. */
-int rl_key_sequence_length = 0;
+__thread int rl_key_sequence_length = 0;
 
 /* If non-zero, then this is the address of a function to call just
    before readline_internal_setup () prints the first prompt. */
-rl_hook_func_t *rl_startup_hook = (rl_hook_func_t *)NULL;
+__thread rl_hook_func_t *rl_startup_hook = (rl_hook_func_t *)NULL;
 
 /* Any readline function can set this and have it run just before the user's
    rl_startup_hook. */
@@ -206,7 +206,7 @@ rl_hook_func_t *_rl_internal_startup_hook = (rl_hook_func_t *)NULL;
 /* If non-zero, this is the address of a function to call just before
    readline_internal_setup () returns and readline_internal starts
    reading input characters. */
-rl_hook_func_t *rl_pre_input_hook = (rl_hook_func_t *)NULL;
+__thread rl_hook_func_t *rl_pre_input_hook = (rl_hook_func_t *)NULL;
 
 /* What we use internally.  You should always refer to RL_LINE_BUFFER. */
 static char *the_line;
@@ -216,7 +216,7 @@ static char *the_line;
 int _rl_eof_char = CTRL ('D');
 
 /* Non-zero makes this the next keystroke to read. */
-int rl_pending_input = 0;
+__thread int rl_pending_input = 0;
 
 /* If non-zero when readline_internal returns, it means we found EOF */
 int _rl_eof_found = 0;
@@ -239,27 +239,27 @@ int _rl_bell_preference = AUDIBLE_BELL;
 char *_rl_comment_begin;
 
 /* Keymap holding the function currently being executed. */
-Keymap rl_executing_keymap;
+__thread Keymap rl_executing_keymap;
 
 /* Keymap we're currently using to dispatch. */
 Keymap _rl_dispatching_keymap;
 
 /* Non-zero means to erase entire line, including prompt, on empty input lines. */
-int rl_erase_empty_line = 0;
+__thread int rl_erase_empty_line = 0;
 
 /* Non-zero means to read only this many characters rather than up to a
    character bound to accept-line. */
-int rl_num_chars_to_read = 0;
+__thread int rl_num_chars_to_read = 0;
 
 /* Line buffer and maintenance. */
-char *rl_line_buffer = (char *)NULL;
+__thread char *rl_line_buffer = (char *)NULL;
 int rl_line_buffer_len = 0;
 
 /* Key sequence `contexts' */
 _rl_keyseq_cxt *_rl_kscxt = 0;
 
-int rl_executing_key;
-char *rl_executing_keyseq = 0;
+__thread int rl_executing_key;
+__thread char *rl_executing_keyseq = 0;
 int _rl_executing_keyseq_size = 0;
 
 struct _rl_cmd _rl_pending_command;

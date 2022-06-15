@@ -79,11 +79,11 @@
 #include "common.h"
 
 #if defined (READLINE)
-# include <readline/readline.h>
+# include <readline.h>
 #endif
 
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif /* !errno */
 
 #if !defined (HAVE_KILLPG)
@@ -172,7 +172,7 @@ extern SigHandler **original_signals;
 extern void set_original_signal PARAMS((int, SigHandler *));
 
 static struct jobstats zerojs = { -1L, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NO_JOB, NO_JOB, 0, 0 };
-struct jobstats js = { -1L, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NO_JOB, NO_JOB, 0, 0 };
+__thread struct jobstats js = { -1L, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NO_JOB, NO_JOB, 0, 0 };
 
 ps_index_t pidstat_table[PIDSTAT_TABLE_SZ];
 struct bgpids bgpids = { 0, 0, 0, 0 };
@@ -180,7 +180,7 @@ struct bgpids bgpids = { 0, 0, 0, 0 };
 struct procchain procsubs = { 0, 0, 0 };
 
 /* The array of known jobs. */
-JOB **jobs = (JOB **)NULL;
+__thread JOB **jobs = (JOB **)NULL;
 
 #if 0
 /* The number of slots currently allocated to JOBS. */
@@ -219,17 +219,17 @@ volatile pid_t last_asynchronous_pid = NO_PID;
 PROCESS *the_pipeline = (PROCESS *)NULL;
 
 /* If this is non-zero, do job control. */
-int job_control = 1;
+__thread int job_control = 1;
 
 /* Are we running in background? (terminal_pgrp != shell_pgrp) */
-int running_in_background = 0;
+__thread int running_in_background = 0;
 
 /* Call this when you start making children. */
-int already_making_children = 0;
+__thread int already_making_children = 0;
 
 /* If this is non-zero, $LINES and $COLUMNS are reset after every process
    exits from get_tty_state(). */
-int check_window_size = CHECKWINSIZE_DEFAULT;
+__thread int check_window_size = CHECKWINSIZE_DEFAULT;
 
 PROCESS *last_procsub_child = (PROCESS *)NULL;
 

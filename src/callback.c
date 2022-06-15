@@ -47,8 +47,8 @@
 
 /* Private data for callback registration functions.  See comments in
    rl_callback_read_char for more details. */
-_rl_callback_func_t *_rl_callback_func = 0;
-_rl_callback_generic_arg *_rl_callback_data = 0;
+// _rl_callback_func_t *_rl_callback_func = 0;
+// _rl_callback_generic_arg *_rl_callback_data = 0;
 
 /* Applications can set this to non-zero to have readline's signal handlers
    installed during the entire duration of reading a complete line, as in
@@ -56,7 +56,7 @@ _rl_callback_generic_arg *_rl_callback_data = 0;
    readline receiving signals and not handling them until it's called again
    via rl_callback_read_char, thereby stealing them from the application.
    By default, signal handlers are only active while readline is active. */   
-int rl_persistent_signal_handlers = 0;
+__thread int rl_persistent_signal_handlers = 0;
 
 /* **************************************************************** */
 /*								    */
@@ -180,19 +180,19 @@ rl_callback_read_char (void)
 	{
 	  int k;
 
-	  k = _rl_callback_data->i2;
+	  // k = _rl_callback_data->i2;
 
-	  eof = (*_rl_callback_func) (_rl_callback_data);
+	  // eof = (*_rl_callback_func) (_rl_callback_data);
 	  /* If the function `deregisters' itself, make sure the data is
 	     cleaned up. */
-	  if (_rl_callback_func == 0)	/* XXX - just sanity check */
-	    {
-	      if (_rl_callback_data)
-		{
-		  _rl_callback_data_dispose (_rl_callback_data);
-		  _rl_callback_data = 0;
-		}
-	    }
+	  // if (_rl_callback_func == 0)	/* XXX - just sanity check */
+	  //   {
+	  //     if (_rl_callback_data)
+		// {
+		//   _rl_callback_data_dispose (_rl_callback_data);
+		//   _rl_callback_data = 0;
+		// }
+	  //   }
 
 	  /* Messy case where vi motion command can be char search */
 	  if (RL_ISSTATE (RL_STATE_VIMOTION))
@@ -237,7 +237,8 @@ rl_callback_read_char (void)
 	      _rl_want_redisplay = 1;
 	    }
 	}
-      else if (_rl_callback_func)
+  else if (0)
+      // else if (_rl_callback_func)
 	{
 	  /* This allows functions that simply need to read an additional
 	     character (like quoted-insert) to register a function to be
@@ -245,18 +246,18 @@ rl_callback_read_char (void)
 	     pointer to a struct that has the argument count originally
 	     passed to the registering function and space for any additional
 	     parameters.  */
-	  eof = (*_rl_callback_func) (_rl_callback_data);
-	  /* If the function `deregisters' itself, make sure the data is
-	     cleaned up. */
-	  if (_rl_callback_func == 0)
-	    {
-	      if (_rl_callback_data) 	
-		{
-		  _rl_callback_data_dispose (_rl_callback_data);
-		  _rl_callback_data = 0;
-		}
-	      _rl_internal_char_cleanup ();
-	    }
+	  // eof = (*_rl_callback_func) (_rl_callback_data);
+	  // /* If the function `deregisters' itself, make sure the data is
+	  //    cleaned up. */
+	  // if (_rl_callback_func == 0)
+	  //   {
+	  //     if (_rl_callback_data) 	
+		// {
+		//   _rl_callback_data_dispose (_rl_callback_data);
+		//   _rl_callback_data = 0;
+		// }
+	  //     _rl_internal_char_cleanup ();
+	  //   }
 	}
       else
 	eof = readline_internal_char ();
@@ -355,6 +356,6 @@ rl_callback_sigcleanup (void)
   if (RL_ISSTATE (RL_STATE_CHARSEARCH))
     RL_UNSETSTATE (RL_STATE_CHARSEARCH);
 
-  _rl_callback_func = 0;
+  // _rl_callback_func = 0;
 }
 #endif

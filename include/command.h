@@ -413,7 +413,7 @@ typedef struct coproc_com {
   COMMAND *command;
 } COPROC_COM;
 
-extern COMMAND *global_command;
+extern __thread COMMAND *global_command;
 extern Coproc sh_coproc;
 
 /* Possible command errors */

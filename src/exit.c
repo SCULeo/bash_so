@@ -22,7 +22,7 @@
 #include "common.h"
 #include "builtext.h"	/* for jobs_builtin */
 
-extern int check_jobs_at_exit;
+extern __thread int check_jobs_at_exit;
 
 static int exit_or_logout PARAMS((WORD_LIST *));
 static int sourced_logout;

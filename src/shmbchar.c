@@ -26,7 +26,7 @@
 #include <shmbchar.h>
 
 #ifndef errno
-extern int errno;
+//extern int errno;
 #endif
 
 #if IS_BASIC_ASCII
@@ -43,7 +43,7 @@ const unsigned int is_basic_table [UCHAR_MAX / 32 + 1] =
 
 #endif /* IS_BASIC_ASCII */
 
-extern int locale_utf8locale;
+extern __thread int locale_utf8locale;
 
 extern char *utf8_mbsmbchar (const char *);
 extern int utf8_mblen (const char *, size_t);

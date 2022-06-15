@@ -59,7 +59,7 @@
 
 /* The currently executing macro string.  If this is non-zero,
    then it is a malloc ()'ed string where input is coming from. */
-char *rl_executing_macro = (char *)NULL;
+__thread char *rl_executing_macro = (char *)NULL;
 
 /* The offset in the above string to the next character to be read. */
 static int executing_macro_index;

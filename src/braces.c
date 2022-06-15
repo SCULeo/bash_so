@@ -52,7 +52,7 @@ typedef char **WORD_LIST;
 #include "chartypes.h"
 
 #ifndef errno
-extern int errno;
+//extern int errno;
 #endif
 
 #define brace_whitespace(c) (!(c) || (c) == ' ' || (c) == '\t' || (c) == '\n')

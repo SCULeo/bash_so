@@ -54,7 +54,7 @@
 #endif
 
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif
 
 #define PC(c) \
@@ -213,7 +213,7 @@ printf_builtin (list)
 	case 'v':
 	  vname = list_optarg;
 #if defined (ARRAY_VARS)
-	  arrayflags = assoc_expand_once ? (VA_NOEXPAND|VA_ONEWORD) : 0;
+	//   arrayflags = assoc_expand_once ? (VA_NOEXPAND|VA_ONEWORD) : 0;
 	  if (legal_identifier (vname) || valid_array_reference (vname, arrayflags))
 #else
 	  if (legal_identifier (vname))

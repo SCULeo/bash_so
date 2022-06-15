@@ -51,10 +51,10 @@ char *sh_optarg = 0;
    how much of ARGV has been scanned so far.  */
 
 /* XXX 1003.2 says this must be 1 before any call.  */
-int sh_optind = 0;
+__thread int sh_optind = 0;
 
 /* Index of the current argument. */
-static int sh_curopt;
+static __thread int sh_curopt;
 
 /* The next char to be scanned in the option-element
    in which the last option character we returned was found.
@@ -63,22 +63,22 @@ static int sh_curopt;
    If this is zero, or a null string, it means resume the scan
    by advancing to the next ARGV-element.  */
 
-static char *nextchar;
-static int sh_charindex;
+static __thread char *nextchar;
+static __thread int sh_charindex;
 
 /* Callers store zero here to inhibit the error message
    for unrecognized options.  */
 
-int sh_opterr = 1;
+__thread int sh_opterr = 1;
 
 /* Set to an option character which was unrecognized.
    This must be initialized on some systems to avoid linking in the
    system's own getopt implementation.  */
 
-int sh_optopt = '?';
+__thread int sh_optopt = '?';
 
 /* Set to 1 when we see an invalid option; public so getopts can reset it. */
-int sh_badopt = 0;
+__thread int sh_badopt = 0;
 
 /* Scan elements of ARGV (whose length is ARGC) for option characters
    given in OPTSTRING.

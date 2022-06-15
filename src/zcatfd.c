@@ -31,7 +31,7 @@
 #include <stdc.h>
 
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif
 
 #ifndef ZBUFSIZ

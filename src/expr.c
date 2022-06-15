@@ -329,7 +329,7 @@ expr_bind_variable (lhs, rhs)
     return;		/* XXX */
 
 #if defined (ARRAY_VARS)
-  aflags = (assoc_expand_once && already_expanded) ? ASS_NOEXPAND : 0;
+  // aflags = (assoc_expand_once && already_expanded) ? ASS_NOEXPAND : 0;
 #else
   aflags = 0;
 #endif
@@ -351,13 +351,13 @@ expr_skipsubscript (vp, cp)
 
   isassoc = 0;
   entry = 0;
-  if (assoc_expand_once & already_expanded)
-    {
-      *cp = '\0';
-      isassoc = legal_identifier (vp) && (entry = find_variable (vp)) && assoc_p (entry);
-      *cp = '[';	/* ] */
-    }
-  flags = (isassoc && assoc_expand_once && already_expanded) ? VA_NOEXPAND : 0;
+  // if (assoc_expand_once & already_expanded)
+  //   {
+  //     *cp = '\0';
+  //     isassoc = legal_identifier (vp) && (entry = find_variable (vp)) && assoc_p (entry);
+  //     *cp = '[';	/* ] */
+  //   }
+  // flags = (isassoc && assoc_expand_once && already_expanded) ? VA_NOEXPAND : 0;
   return (skipsubscript (cp, 0, flags));
 }
 
@@ -1159,7 +1159,7 @@ expr_streval (tok, e, lvalue)
   initial_depth = expr_depth;
 
 #if defined (ARRAY_VARS)
-  tflag = assoc_expand_once && already_expanded;	/* for a start */
+  // tflag = assoc_expand_once && already_expanded;	/* for a start */
 #endif
 
   /* [[[[[ */
@@ -1188,8 +1188,8 @@ expr_streval (tok, e, lvalue)
 	FREE (value);	/* array_variable_name returns new memory */
 #endif
 
-      if (no_longjmp_on_fatal_error && interactive_shell)
-	sh_longjmp (evalbuf, 1);
+  //     if (no_longjmp_on_fatal_error && interactive_shell)
+	// sh_longjmp (evalbuf, 1);
 
       if (interactive_shell)
 	{
@@ -1215,8 +1215,8 @@ expr_streval (tok, e, lvalue)
 
   if (expr_depth < initial_depth)
     {
-      if (no_longjmp_on_fatal_error && interactive_shell)
-	sh_longjmp (evalbuf, 1);
+  //     if (no_longjmp_on_fatal_error && interactive_shell)
+	// sh_longjmp (evalbuf, 1);
       return (0);
     }
 

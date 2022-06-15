@@ -30,8 +30,8 @@
 
 extern char *list_optarg;
 
-extern int list_optopt;
-extern int list_opttype;
+// extern int list_optopt;
+// extern int list_opttype;
 
 extern WORD_LIST *lcurrent;
 extern WORD_LIST *loptend;

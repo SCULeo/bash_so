@@ -24,10 +24,10 @@
 #include "common.h"
 #include "bashgetopt.h"
 
-extern int wait_signal_received;
+extern __thread int wait_signal_received;
 
 procenv_t wait_intr_buf;
-int wait_intr_flag;
+__thread int wait_intr_flag;
 
 static int set_waitlist PARAMS((WORD_LIST *));
 static void unset_waitlist PARAMS((void));
@@ -89,9 +89,9 @@ wait_builtin (list)
   if (vname)
     {
 #if defined (ARRAY_VARS)
-      int arrayflags;
+      int arrayflags = 0;
 
-      arrayflags = assoc_expand_once ? (VA_NOEXPAND|VA_ONEWORD) : 0;
+      // arrayflags = assoc_expand_once ? (VA_NOEXPAND|VA_ONEWORD) : 0;
       if (legal_identifier (vname) == 0 && valid_array_reference (vname, arrayflags) == 0)
 #else
       if (legal_identifier (vname) == 0)

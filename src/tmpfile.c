@@ -39,7 +39,7 @@
 #include <shell.h>
 
 #ifndef errno
-extern int errno;
+//extern int errno;
 #endif
 
 #define BASEOPENFLAGS	(O_CREAT | O_TRUNC | O_EXCL | O_BINARY)

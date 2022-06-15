@@ -83,11 +83,11 @@ static void _emx_get_screensize PARAMS((int *, int *));
 /* If the calling application sets this to a non-zero value, readline will
    use the $LINES and $COLUMNS environment variables to set its idea of the
    window size before interrogating the kernel. */
-int rl_prefer_env_winsize = 0;
+__thread int rl_prefer_env_winsize = 0;
 
 /* If this is non-zero, readline will set LINES and COLUMNS in the
    environment when it handles SIGWINCH. */
-int rl_change_environment = 1;
+__thread int rl_change_environment = 1;
 
 /* **************************************************************** */
 /*								    */

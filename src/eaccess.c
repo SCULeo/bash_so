@@ -34,7 +34,7 @@
 
 #include <errno.h>
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif /* !errno */
 
 #if !defined (_POSIX_VERSION) && defined (HAVE_SYS_FILE_H)

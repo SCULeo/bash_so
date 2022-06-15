@@ -65,7 +65,7 @@
 #endif
 
 #if !defined (errno)
-extern int errno;   
+//extern int errno;   
 #endif /* !errno */
 
 extern const char * const bash_getcwd_errstr;
@@ -980,10 +980,10 @@ builtin_bind_variable (name, value, flags)
   SHELL_VAR *v;
 
 #if defined (ARRAY_VARS)
-  if (valid_array_reference (name, assoc_expand_once ? (VA_NOEXPAND|VA_ONEWORD) : 0) == 0)
-    v = bind_variable (name, value, flags);
-  else
-    v = assign_array_element (name, value, flags | (assoc_expand_once ? ASS_NOEXPAND : 0));
+  // if (valid_array_reference (name, assoc_expand_once ? (VA_NOEXPAND|VA_ONEWORD) : 0) == 0)
+  //   v = bind_variable (name, value, flags);
+  // else
+  //   v = assign_array_element (name, value, flags | (assoc_expand_once ? ASS_NOEXPAND : 0));
 #else /* !ARRAY_VARS */
   v = bind_variable (name, value, flags);
 #endif /* !ARRAY_VARS */

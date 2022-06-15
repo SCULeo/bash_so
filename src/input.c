@@ -42,7 +42,7 @@
 #include "trap.h"
 
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif /* !errno */
 
 #if defined (EAGAIN)
@@ -150,7 +150,7 @@ ungetc_with_restart (c, stream)
 #endif
 #define min(a, b)	((a) > (b) ? (b) : (a))
 
-int bash_input_fd_changed;
+__thread int bash_input_fd_changed;
 
 /* This provides a way to map from a file descriptor to the buffer
    associated with that file descriptor, rather than just the other

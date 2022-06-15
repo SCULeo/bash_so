@@ -32,7 +32,7 @@
 #include "bashgetopt.h"
 
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif /* !errno */
 
 extern const char * const bash_getcwd_errstr;

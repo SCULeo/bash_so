@@ -42,7 +42,7 @@
 
 #include <errno.h>
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif /* !errno */
 
 #if !defined (_POSIX_VERSION) && defined (HAVE_SYS_FILE_H)
@@ -630,7 +630,7 @@ unary_test (op, arg)
 	  int rtype, ret, flags;
 
 	  /* Let's assume that this has already been expanded once. */
-	  flags = assoc_expand_once ? AV_NOEXPAND : 0;
+	  // flags = assoc_expand_once ? AV_NOEXPAND : 0;
 	  t = array_value (arg, 0, flags, &rtype, (arrayind_t *)0);
 	  ret = t ? TRUE : FALSE;
 	  if (rtype > 0)	/* subscript is * or @ */

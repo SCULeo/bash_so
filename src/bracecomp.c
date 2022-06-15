@@ -39,7 +39,7 @@
 #include "shmbutil.h"
 
 #include "shell.h"
-#include <readline/readline.h>
+#include <readline.h>
 
 static int _strcompare PARAMS((char **, char **));
 
@@ -208,7 +208,7 @@ bash_brace_completion (count, ignore)
   rl_filename_quoting_function = (rl_quote_func_t *)NULL;
   rl_filename_quoting_desired = 0;
 
-  r = rl_complete_internal (TAB);
+  // r = rl_complete_internal (TAB);
 
   rl_ignore_some_completions_function = orig_ignore_func;
   rl_attempted_completion_function = orig_attempt_func;

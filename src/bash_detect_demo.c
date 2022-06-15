@@ -1,9 +1,17 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <malloc.h>
-#include "shell.h" 
-#include"command.h"
+#include "../include/shell.h" 
 #include"time.h"
+#include <pthread.h>
+char **g_argv = NULL;
+int g_argc = 0;
+struct param{
+    int id;
+    char ** env;
+};
 void print_self_command(COMMAND*command,int num);
 // 将strRes中的t替换为s，替换成功返回1，否则返回0。
 int StrReplace(char strRes[],char from[], char to[]) {
@@ -410,44 +418,32 @@ void print_self_command(COMMAND*command,int num){
     print_tab(num);
     printf("}\n");
 }
-int main(int argc,char**argv,char**envp) {
-    // char str[80] = "cat///r/n/etc/passwd";
-    // int num = 0;
-    
-    // char *str = ReadFile(argv[1],&num);
-    // char *str = "a=c;b=at;c=fl;d=ag;e=.txt;$a$b $c$d$e;";
-    /* printf("替换前:%s\n",str); */
-    // StrReplace(str,"\\\n","");
-    // StrReplace(str,"$IFS"," ");
-    // StrReplace(str,"${IFS}"," ");
-        /* printf("替换后:%s\n",str); */
-    /* else printf("没有任何替换。\n"); */
-
-
-
-
-
-
-
+void* bash_lint_pthread(void* arg)
+{
     char *line = NULL;
     size_t len = 0;
     FILE *fp = NULL;
     int begintime,endtime;
     double sum = 0;
-    fp = fopen("/home/hxg/work/Cmake_bash/build/a.txt", "r");
+    struct param temp = *((struct param*)arg);
+    if(temp.id == NULL) {
+        printf("Paramter error!\n");
+        pthread_exit(NULL);
+    }
+    fp = fopen((char *)g_argv[temp.id], "r");
     int n = 0;
     while (getline(&line, &len, fp) > 0){
         global_command =NULL;
     
         begintime = clock();
-        detect_bash_language(line,envp);
+        detect_bash_language(line,temp.env);
         endtime = clock();
         // printf("begintime:%d\n",begintime);
         // printf("endtime:%d\n\n",endtime);
         sum = sum +endtime - begintime;
         if (!global_command){
             // print_self_command(global_command,1);
-            printf("the string:%s\n",line);
+            // printf("the string:%s\n",line);
         }
         n++;
     }
@@ -468,4 +464,51 @@ int main(int argc,char**argv,char**envp) {
         // }
     
    return 0;
-} 
+}
+int main(int argc, char **argv,char**envp)
+{
+    int ret = -1;
+    char* err_str = NULL;
+    int err_offset = 0, i;
+    pthread_t tid, *tids = NULL;
+    g_argv = argv;
+    g_argc = argc;
+//    ppr_daemon();
+
+    if (argc == 1) {
+        printf("Error! Use as \"bash_detect_demo detected-filepath1 detected-filepath2 ......\"\n");
+        return -1;
+    }
+
+    
+    tids = malloc((argc - 1) * sizeof(pthread_t));
+    if (tids == NULL) {
+        printf("thread id array alloc failed!\n");
+        return 0;
+    }
+    memset(tids, 0, (argc - 1) * sizeof(pthread_t));
+
+    for (i = 1; i < argc; i++) {
+        int n = i;
+        struct param parmment;
+        parmment.env=envp;
+        parmment.id= i;
+        if (pthread_create(&tid, NULL, bash_lint_pthread, &parmment)) {
+            printf("Thread create failed! Path:%s\n", argv[i]);
+            continue;
+        }
+        printf("Thead %lu created\n", tid);
+        tids[i - 1] = tid;
+#if 0
+        pthread_detach(tid);
+#endif
+    }
+
+    for (i = 1; i < argc; i++) {
+        pthread_join(tids[i - 1], NULL);
+    }
+
+    ret = 0;
+
+    return ret;
+}

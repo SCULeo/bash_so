@@ -82,34 +82,34 @@ static char *quote_breaks PARAMS((char *));
 /* Variables exported by this file. */
 /* The character that represents the start of a history expansion
    request.  This is usually `!'. */
-char history_expansion_char = '!';
+__thread char history_expansion_char = '!';
 
 /* The character that invokes word substitution if found at the start of
    a line.  This is usually `^'. */
-char history_subst_char = '^';
+__thread char history_subst_char = '^';
 
 /* During tokenization, if this character is seen as the first character
    of a word, then it, and all subsequent characters up to a newline are
    ignored.  For a Bourne shell, this should be '#'.  Bash special cases
    the interactive comment character to not be a comment delimiter. */
-char history_comment_char = '\0';
+__thread char history_comment_char = '\0';
 
 /* The list of characters which inhibit the expansion of text if found
    immediately following history_expansion_char. */
-char *history_no_expand_chars = " \t\n\r=";
+__thread char *history_no_expand_chars = " \t\n\r=";
 
 /* If set to a non-zero value, single quotes inhibit history expansion.
    The default is 0. */
-int history_quotes_inhibit_expansion = 0;
+__thread int history_quotes_inhibit_expansion = 0;
 
 /* Used to split words by history_tokenize_internal. */
-char *history_word_delimiters = HISTORY_WORD_DELIMITERS;
+__thread char *history_word_delimiters = HISTORY_WORD_DELIMITERS;
 
 /* If set, this points to a function that is called to verify that a
    particular history expansion should be performed. */
-rl_linebuf_func_t *history_inhibit_expansion_function;
+__thread rl_linebuf_func_t *history_inhibit_expansion_function;
 
-int history_quoting_state = 0;
+__thread int history_quoting_state = 0;
 
 /* **************************************************************** */
 /*								    */
@@ -121,9 +121,9 @@ int history_quoting_state = 0;
    use, and thus belongs in this library. */
 
 /* The last string searched for by a !?string? search. */
-static char *search_string;
+static __thread char *search_string;
 /* The last string matched by a !?string? search. */
-static char *search_match;
+static __thread char *search_match;
 
 /* Return the event specified at TEXT + OFFSET modifying OFFSET to
    point to after the event specifier.  Just a pointer to the history

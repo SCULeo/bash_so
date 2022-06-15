@@ -18,7 +18,7 @@
 
 #line 49 "./shift.def"
 
-int print_shift_error;
+//  int print_shift_error;
 
 /* Shift the arguments ``left''.  Shift DOLLAR_VARS down then take one
    off of REST_OF_ARGS and place it into DOLLAR_VARS[9].  If LIST has
@@ -46,8 +46,8 @@ shift_builtin (list)
   nargs = number_of_args ();
   if (times > nargs)
     {
-      if (print_shift_error)
-	sh_erange (list ? list->word->word : NULL, _("shift count"));
+  //     if (print_shift_error)
+	// sh_erange (list ? list->word->word : NULL, _("shift count"));
       return (EXECUTION_FAILURE);
     }
   else if (times == nargs)

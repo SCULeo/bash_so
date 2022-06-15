@@ -31,17 +31,17 @@
 #include "trap.h"
 
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif /* !errno */
 
 static void maybe_pop_dollar_vars PARAMS((void));
 
 /* If non-zero, `.' uses $PATH to look up the script to be sourced. */
-int source_uses_path = 1;
+// int source_uses_path = 1;
 
 /* If non-zero, `.' looks in the current directory if the filename argument
    is not found in the $PATH. */
-int source_searches_cwd = 1;
+__thread int source_searches_cwd = 1;
 
 /* If this . script is supplied arguments, we save the dollar vars and
    replace them with the script arguments for the duration of the script's
@@ -98,8 +98,8 @@ source_builtin (list)
     filename = savestring (list->word->word);
   else if (absolute_pathname (list->word->word))
     filename = savestring (list->word->word);
-  else if (source_uses_path)
-    filename = find_path_file (list->word->word);
+  // else if (source_uses_path)
+  //   filename = find_path_file (list->word->word);
   if (filename == 0)
     {
       if (source_searches_cwd == 0)

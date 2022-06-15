@@ -408,14 +408,14 @@ rl_vi_complete (int ignore, int key)
       _rl_vi_advance_point ();
     }
 
-  if (key == '*')
-    rl_complete_internal ('*');	/* Expansion and replacement. */
-  else if (key == '=')
-    rl_complete_internal ('?');	/* List possible completions. */
-  else if (key == '\\')
-    rl_complete_internal (TAB);	/* Standard Readline completion. */
-  else
-    rl_complete (0, key);
+  // if (key == '*')
+  //   rl_complete_internal ('*');	/* Expansion and replacement. */
+  // else if (key == '=')
+  //   rl_complete_internal ('?');	/* List possible completions. */
+  // else if (key == '\\')
+  //   rl_complete_internal (TAB);	/* Standard Readline completion. */
+  // else
+  //   rl_complete (0, key);
 
   if (key == '*' || key == '\\')
     rl_vi_start_inserting (key, 1, rl_arg_sign);
@@ -1782,7 +1782,7 @@ _rl_vi_callback_char_search (_rl_callback_generic_arg *data)
   _rl_vi_last_search_char = c;
 #endif
 
-  _rl_callback_func = 0;
+  // _rl_callback_func = 0;
   _rl_want_redisplay = 1;
   RL_UNSETSTATE (RL_STATE_CHARSEARCH);
 
@@ -1846,10 +1846,10 @@ rl_vi_char_search (int count, int key)
 #if defined (READLINE_CALLBACKS)
       else if (RL_ISSTATE (RL_STATE_CALLBACK))
 	{
-	  _rl_callback_data = _rl_callback_data_alloc (count);
-	  _rl_callback_data->i1 = _rl_cs_dir;
-	  _rl_callback_data->i2 = key;
-	  _rl_callback_func = _rl_vi_callback_char_search;
+	  //_rl_callback_data = _rl_callback_data_alloc (count);
+	  //_rl_callback_data->i1 = _rl_cs_dir;
+	  //_rl_callback_data->i2 = key;
+	  // _rl_callback_func = _rl_vi_callback_char_search;
 	  RL_SETSTATE (RL_STATE_CHARSEARCH);
 	  return (0);
 	}
@@ -2047,7 +2047,7 @@ _rl_vi_callback_change_char (_rl_callback_generic_arg *data)
   if (c < 0)
     return -1;
 
-  _rl_callback_func = 0;
+  //_rl_callback_func = 0;
   _rl_want_redisplay = 1;
 
   return (_rl_vi_change_char (data->count, c, mb));
@@ -2069,8 +2069,8 @@ rl_vi_change_char (int count, int key)
 #if defined (READLINE_CALLBACKS)
   else if (RL_ISSTATE (RL_STATE_CALLBACK))
     {
-      _rl_callback_data = _rl_callback_data_alloc (count);
-      _rl_callback_func = _rl_vi_callback_change_char;
+      //_rl_callback_data = _rl_callback_data_alloc (count);
+      //_rl_callback_func = _rl_vi_callback_change_char;
       return (0);
     }
 #endif
@@ -2326,7 +2326,7 @@ _rl_vi_set_mark (void)
 static int
 _rl_vi_callback_set_mark (_rl_callback_generic_arg *data)
 {
-  _rl_callback_func = 0;
+  //_rl_callback_func = 0;
   _rl_want_redisplay = 1;
 
   return (_rl_vi_set_mark ());
@@ -2339,8 +2339,8 @@ rl_vi_set_mark (int count, int key)
 #if defined (READLINE_CALLBACKS)
   if (RL_ISSTATE (RL_STATE_CALLBACK))
     {
-      _rl_callback_data = 0;
-      _rl_callback_func = _rl_vi_callback_set_mark;
+      //_rl_callback_data = 0;
+      //_rl_callback_func = _rl_vi_callback_set_mark;
       return (0);
     }
 #endif
@@ -2384,7 +2384,7 @@ _rl_vi_goto_mark (void)
 static int
 _rl_vi_callback_goto_mark (_rl_callback_generic_arg *data)
 {
-  _rl_callback_func = 0;
+  //_rl_callback_func = 0;
   _rl_want_redisplay = 1;
 
   return (_rl_vi_goto_mark ());
@@ -2397,8 +2397,8 @@ rl_vi_goto_mark (int count, int key)
 #if defined (READLINE_CALLBACKS)
   if (RL_ISSTATE (RL_STATE_CALLBACK))
     {
-      _rl_callback_data = 0;
-      _rl_callback_func = _rl_vi_callback_goto_mark;
+      //_rl_callback_data = 0;
+      //_rl_callback_func = _rl_vi_callback_goto_mark;
       return (0);
     }
 #endif

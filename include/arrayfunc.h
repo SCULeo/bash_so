@@ -27,10 +27,10 @@
 
 /* This variable means to not expand associative array subscripts more than
    once, when performing variable expansion. */
-extern int assoc_expand_once;
+// extern int assoc_expand_once;
 
 /* The analog for indexed array subscripts */
-extern int array_expand_once;
+// extern int array_expand_once;
 
 /* Flags for array_value_internal and callers array_value/get_array_value */
 #define AV_ALLOWALL	0x001

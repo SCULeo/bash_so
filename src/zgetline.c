@@ -31,7 +31,7 @@
 #include "xmalloc.h"
 
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif
 
 extern ssize_t zread PARAMS((int, char *, size_t));

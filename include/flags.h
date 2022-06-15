@@ -40,35 +40,35 @@ struct flags_alist {
 extern const struct flags_alist shell_flags[];
 extern char optflags[];
 
-extern int
+extern __thread int
   mark_modified_vars, errexit_flag, exit_immediately_on_error,
   disallow_filename_globbing,
   place_keywords_in_env, read_but_dont_execute,
   just_one_command, unbound_vars_is_error, echo_input_at_read, verbose_flag,
   echo_command_at_execute, noclobber,
   hashing_enabled, forced_interactive, privileged_mode, jobs_m_flag,
-  asynchronous_notification, interactive_comments, no_symbolic_links,
+  interactive_comments, no_symbolic_links,
   function_trace_mode, error_trace_mode, pipefail_opt;
-
+extern __thread int asynchronous_notification;
 /* -c, -s invocation options -- not really flags, but they show up in $- */
-extern int want_pending_command, read_from_stdin;
+extern __thread int want_pending_command, read_from_stdin;
 
 #if 0
 extern int lexical_scoping;
 #endif
 
 #if defined (BRACE_EXPANSION)
-extern int brace_expansion;
+// extern int brace_expansion;
 #endif
 
 #if defined (BANG_HISTORY)
-extern int history_expansion;
-extern int histexp_flag;
+// extern int history_expansion;
+// extern int histexp_flag;
 #endif /* BANG_HISTORY */
 
 #if defined (RESTRICTED_SHELL)
-extern int restricted;
-extern int restricted_shell;
+extern __thread int restricted;
+extern __thread int restricted_shell;
 #endif /* RESTRICTED_SHELL */
 
 extern int *find_flag PARAMS((int));

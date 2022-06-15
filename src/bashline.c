@@ -65,8 +65,8 @@
 #include "builtext.h"		/* for read_builtin */
 
 #include <readline/rlconf.h>
-#include <readline/readline.h>
-#include <readline/history.h>
+#include <readline.h>
+#include <history.h>
 #include <rlmbutil.h>
 
 #include <glob.h>
@@ -223,7 +223,7 @@ static char *prog_complete_return PARAMS((const char *, int));
 static char **prog_complete_matches;
 #endif
 
-extern int no_symbolic_links;
+extern __thread int no_symbolic_links;
 extern STRING_INT_ALIST word_token_alist[];
 
 /* SPECIFIC_COMPLETION_FUNCTIONS specifies that we have individual
@@ -269,31 +269,31 @@ static int bash_vi_complete PARAMS((int, int));
 static int emacs_edit_and_execute_command PARAMS((int, int));
 
 /* Non-zero once initialize_readline () has been called. */
-int bash_readline_initialized = 0;
+// int bash_readline_initialized = 0;
 
 /* If non-zero, we do hostname completion, breaking words at `@' and
    trying to complete the stuff after the `@' from our own internal
    host list. */
-int perform_hostname_completion = 1;
+//  int perform_hostname_completion = 1;
 
 /* If non-zero, we don't do command completion on an empty line. */
-int no_empty_command_completion;
+// int no_empty_command_completion;
 
 /* Set FORCE_FIGNORE if you want to honor FIGNORE even if it ignores the
    only possible matches.  Set to 0 if you want to match filenames if they
    are the only possible matches, even if FIGNORE says to. */
-int force_fignore = 1;
+// int force_fignore = 1;
 
 /* Perform spelling correction on directory names during word completion */
-int dircomplete_spelling = 0;
+// int dircomplete_spelling = 0;
 
 /* Expand directory names during word/filename completion. */
 #if DIRCOMPLETE_EXPAND_DEFAULT
-int dircomplete_expand = 1;
-int dircomplete_expand_relpath = 1;
+// int dircomplete_expand = 1;
+// int dircomplete_expand_relpath = 1;
 #else
-int dircomplete_expand = 0;
-int dircomplete_expand_relpath = 0;
+// int dircomplete_expand = 0;
+// int dircomplete_expand_relpath = 0;
 #endif
 
 /* When non-zero, perform `normal' shell quoting on completed filenames
@@ -301,7 +301,7 @@ int dircomplete_expand_relpath = 0;
    variable reference, so dollar signs in a filename get quoted appropriately.
    Set to zero to remove dollar sign (and braces or parens as needed) from
    the set of characters that will be quoted. */
-int complete_fullquote = 1;
+// int complete_fullquote = 1;
 
 static char *bash_completer_word_break_characters = " \t\n\"'@><=;|&(:";
 static char *bash_nohostname_word_break_characters = " \t\n\"'><=;|&(:";
@@ -360,7 +360,7 @@ posix_readline_initialize (on_or_off)
 void
 reset_completer_word_break_chars ()
 {
-  rl_completer_word_break_characters = perform_hostname_completion ? savestring (bash_completer_word_break_characters) : savestring (bash_nohostname_word_break_characters);
+  // rl_completer_word_break_characters = perform_hostname_completion ? savestring (bash_completer_word_break_characters) : savestring (bash_nohostname_word_break_characters);
 }
 
 /* When this function returns, rl_completer_word_break_characters points to
@@ -372,16 +372,16 @@ enable_hostname_completion (on_or_off)
   int old_value;
   char *at, *nv, *nval;
 
-  old_value = perform_hostname_completion;
-
+  // old_value = perform_hostname_completion;
+  old_value = 1;
   if (on_or_off)
     {
-      perform_hostname_completion = 1;
+      // perform_hostname_completion = 1;
       rl_special_prefixes = "$@";
     }
   else
     {
-      perform_hostname_completion = 0;
+      // perform_hostname_completion = 0;
       rl_special_prefixes = "$";
     }
 
@@ -392,10 +392,12 @@ enable_hostname_completion (on_or_off)
   /* If this is the first time this has been called
      (bash_readline_initialized == 0), use the sames values as before, but
      allocate new memory for rl_completer_word_break_characters. */
-
-  if (bash_readline_initialized == 0 &&
+  if (
       (rl_completer_word_break_characters == 0 || 
        rl_completer_word_break_characters == rl_basic_word_break_characters))
+  // if (bash_readline_initialized == 0 &&
+  //     (rl_completer_word_break_characters == 0 || 
+  //      rl_completer_word_break_characters == rl_basic_word_break_characters))
     {
       if (on_or_off)
 	rl_completer_word_break_characters = savestring (bash_completer_word_break_characters);
@@ -444,8 +446,8 @@ initialize_readline ()
   rl_command_func_t *func;
   char kseq[2];
 
-  if (bash_readline_initialized)
-    return;
+  // if (bash_readline_initialized)
+  //   return;
 
   rl_terminal_name = get_string_value ("TERM");
   rl_instream = stdin;
@@ -607,7 +609,7 @@ initialize_readline ()
   /* This sets rl_completer_word_break_characters and rl_special_prefixes
      to the appropriate values, depending on whether or not hostname
      completion is enabled. */
-  enable_hostname_completion (perform_hostname_completion);
+  // enable_hostname_completion (perform_hostname_completion);
 
   /* characters that need to be quoted when appearing in filenames. */
   rl_filename_quote_characters = default_filename_quote_characters;
@@ -633,13 +635,13 @@ initialize_readline ()
     posix_readline_initialize (1);
 #endif
 
-  bash_readline_initialized = 1;
+  // bash_readline_initialized = 1;
 }
 
 void
 bashline_reinitialize ()
 {
-  bash_readline_initialized = 0;
+  // bash_readline_initialized = 0;
 }
 
 void
@@ -741,10 +743,10 @@ static char **hostname_list = (char **)NULL;
 static int hostname_list_size;
 
 /* The number of hostnames in the above list. */
-static int hostname_list_length;
+static  int hostname_list_length;
 
 /* Whether or not HOSTNAME_LIST has been initialized. */
-int hostname_list_initialized = 0;
+__thread int hostname_list_initialized = 0;
 
 /* Initialize the hostname completion table. */
 static void
@@ -958,7 +960,7 @@ edit_and_execute_command (count, c, editing_mode, edit_command)
       bash_add_history (rl_line_buffer);
       current_command_line_count = 0;	/* for dummy history entry */
       bash_add_history ("");
-      history_lines_this_session++;
+      // history_lines_this_session++;
       using_history ();
       command = savestring (edit_command);
     }
@@ -1768,7 +1770,8 @@ bash_default_completion (text, start, end, qc, compflags)
 
   /* Another one.  Why not?  If the word starts in '@', then look through
      the world of known hostnames for completion first. */
-  if (matches == 0 && perform_hostname_completion && *text == '@')
+  // if (matches == 0 && perform_hostname_completion && *text == '@')
+  if (matches == 0  && *text == '@')
     matches = rl_completion_matches (text, hostname_completion_function);
 
   /* And last, (but not least) if this word is in a command position, then
@@ -1778,7 +1781,8 @@ bash_default_completion (text, start, end, qc, compflags)
     {
       /* If END == START and text[0] == 0, we are trying to complete an empty
 	 command word. */
-      if (no_empty_command_completion && end == start && text[0] == '\0')
+      // if (no_empty_command_completion && end == start && text[0] == '\0')
+      if ( end == start && text[0] == '\0')
 	{
 	  matches = (char **)NULL;
 	  rl_ignore_some_completions_function = bash_ignore_everything;
@@ -1958,11 +1962,11 @@ command_word_completion_function (hint_text, state)
 		  directory_part = (char *)NULL;
 		}
 	    }
-	  else if (dircomplete_expand)
-	    {
-	      hint = savestring (hint_text);
-	      bash_directory_completion_hook (&hint);
-	    }
+	  // else if (dircomplete_expand)
+	  //   {
+	  //     hint = savestring (hint_text);
+	  //     bash_directory_completion_hook (&hint);
+	  //   }
 	  else
 	    hint = savestring (hint_text);
 
@@ -1994,12 +1998,12 @@ command_word_completion_function (hint_text, state)
 	    }
 	  else
 	    {
-	     if (dircomplete_expand && path_dot_or_dotdot (filename_hint))
-		{
-		  dircomplete_expand = 0;
-		  set_directory_hook ();
-		  dircomplete_expand = 1;
-		}
+	  //    if (dircomplete_expand && path_dot_or_dotdot (filename_hint))
+		// {
+		//   dircomplete_expand = 0;
+		//   set_directory_hook ();
+		//   dircomplete_expand = 1;
+		// }
 	      mapping_over = 4;
 	      goto inner;
 	    }
@@ -2212,8 +2216,8 @@ globword:
 
  inner:
   val = rl_filename_completion_function (fnhint, istate);
-  if (mapping_over == 4 && dircomplete_expand)
-    set_directory_hook ();
+  // if (mapping_over == 4 && dircomplete_expand)
+  //   set_directory_hook ();
 
   istate = 1;
 
@@ -2608,10 +2612,10 @@ history_expand_line_internal (line)
   char *new_line;
   int old_verify;
 
-  old_verify = hist_verify;
-  hist_verify = 0;
+  // old_verify = hist_verify;
+  // hist_verify = 0;
   new_line = pre_process_line (line, 0, 0);
-  hist_verify = old_verify;
+  // hist_verify = old_verify;
 
   return (new_line == line) ? savestring (line) : new_line;
 }
@@ -2626,14 +2630,14 @@ cleanup_expansion_error ()
 #if defined (BANG_HISTORY)
   int old_verify;
 
-  old_verify = hist_verify;
-  hist_verify = 0;
+  // old_verify = hist_verify;
+  // hist_verify = 0;
 #endif
 
   fprintf (rl_outstream, "\r\n");
   to_free = pre_process_line (rl_line_buffer, 1, 0);
 #if defined (BANG_HISTORY)
-  hist_verify = old_verify;
+  // hist_verify = old_verify;
 #endif
   if (to_free != rl_line_buffer)
     FREE (to_free);
@@ -2908,12 +2912,12 @@ _ignore_completion_names (names, name_func)
      if there is only one completion; it is the completion itself. */
   if (names[1] == (char *)0)
     {
-      if (force_fignore)
-	if ((*name_func) (names[0]) == 0)
-	  {
-	    free (names[0]);
-	    names[0] = (char *)NULL;
-	  }
+  //     if (force_fignore)
+	// if ((*name_func) (names[0]) == 0)
+	//   {
+	//     free (names[0]);
+	//     names[0] = (char *)NULL;
+	//   }
 
       return;
     }
@@ -2924,19 +2928,22 @@ _ignore_completion_names (names, name_func)
     ;
   newnames = strvec_create (nidx + 1);
 
-  if (force_fignore == 0)
-    {
-      oldnames = strvec_create (nidx - 1);
-      oidx = 0;
-    }
+  // if (force_fignore == 0)
+  //   {
+  //     oldnames = strvec_create (nidx - 1);
+  //     oidx = 0;
+  //   }
 
   newnames[0] = names[0];
   for (idx = nidx = 1; names[idx]; idx++)
     {
       if ((*name_func) (names[idx]))
 	newnames[nidx++] = names[idx];
-      else if (force_fignore == 0)
-	oldnames[oidx++] = names[idx];
+  //     else
+  //     {
+  //       if (force_fignore == 0)
+	// oldnames[oidx++] = names[idx];
+  //     } 
       else
 	free (names[idx]);
     }
@@ -2946,24 +2953,24 @@ _ignore_completion_names (names, name_func)
   /* If none are acceptable then let the completer handle it. */
   if (nidx == 1)
     {
-      if (force_fignore)
-	{
-	  free (names[0]);
-	  names[0] = (char *)NULL;
-	}
-      else
+  //     if (force_fignore)
+	// {
+	//   free (names[0]);
+	//   names[0] = (char *)NULL;
+	// }
+  //     else
 	free (oldnames);
 
       free (newnames);
       return;
     }
 
-  if (force_fignore == 0)
-    {
-      while (oidx)
-	free (oldnames[--oidx]);
-      free (oldnames);
-    }
+  // if (force_fignore == 0)
+  //   {
+  //     while (oidx)
+	// free (oldnames[--oidx]);
+  //     free (oldnames);
+  //   }
 
   /* If only one is acceptable, copy it to names[0] and return. */
   if (nidx == 2)
@@ -3156,7 +3163,7 @@ maybe_restore_tilde (val, directory_part)
   rl_icppfunc_t *save;
   char *ret;
 
-  save = (dircomplete_expand == 0) ? save_directory_hook () : (rl_icppfunc_t *)0;
+  // save = (dircomplete_expand == 0) ? save_directory_hook () : (rl_icppfunc_t *)0;
   ret = restore_tilde (val, directory_part);
   if (save)
     restore_directory_hook (save);
@@ -3212,12 +3219,12 @@ bash_filename_rewrite_hook (fname, fnlen)
 void
 set_directory_hook ()
 {
-  if (dircomplete_expand)
-    {
-      rl_directory_completion_hook = bash_directory_completion_hook;
-      rl_directory_rewrite_hook = (rl_icppfunc_t *)0;
-    }
-  else
+  // if (dircomplete_expand)
+  //   {
+  //     rl_directory_completion_hook = bash_directory_completion_hook;
+  //     rl_directory_rewrite_hook = (rl_icppfunc_t *)0;
+  //   }
+  // else
     {
       rl_directory_rewrite_hook = bash_directory_completion_hook;
       rl_directory_completion_hook = (rl_icppfunc_t *)0;
@@ -3229,12 +3236,12 @@ save_directory_hook ()
 {
   rl_icppfunc_t *ret;
 
-  if (dircomplete_expand)
-    {
-      ret = rl_directory_completion_hook;
-      rl_directory_completion_hook = (rl_icppfunc_t *)NULL;
-    }
-  else
+  // if (dircomplete_expand)
+  //   {
+  //     ret = rl_directory_completion_hook;
+  //     rl_directory_completion_hook = (rl_icppfunc_t *)NULL;
+  //   }
+  // else
     {
       ret = rl_directory_rewrite_hook;
       rl_directory_rewrite_hook = (rl_icppfunc_t *)NULL;
@@ -3247,9 +3254,9 @@ static void
 restore_directory_hook (hookf)
      rl_icppfunc_t *hookf;
 {
-  if (dircomplete_expand)
-    rl_directory_completion_hook = hookf;
-  else
+  // if (dircomplete_expand)
+  //   rl_directory_completion_hook = hookf;
+  // else
     rl_directory_rewrite_hook = hookf;
 }
 
@@ -3492,7 +3499,9 @@ bash_directory_completion_hook (dirname)
       /* Try spelling correction if initial canonicalization fails.  Make
 	 sure we are set to replace the directory name with the results so
 	 subsequent directory checks don't fail. */
-      if (temp2 == 0 && dircomplete_spelling && dircomplete_expand)
+    //  if (temp2 == 0 && dircomplete_spelling && dircomplete_expand)
+      // if (temp2 == 0  && dircomplete_expand)
+      if (temp2 == 0 )
 	{
 	  temp2 = dirspell (temp1);
 	  if (temp2)
@@ -3527,8 +3536,8 @@ bash_directory_completion_hook (dirname)
 	 (consistent with general.c:absolute_pathname())
 	 temp1 == temp2 (after appending a slash to temp2) means the pathname
 	 is not changed by canonicalization as described above. */
-      if (dircomplete_expand_relpath || ((local_dirname[0] != '/' && local_dirname[0] != '.') && STREQ (temp1, temp2) == 0))
-	return_value |= STREQ (local_dirname, temp2) == 0;
+  //     if (dircomplete_expand_relpath || ((local_dirname[0] != '/' && local_dirname[0] != '.') && STREQ (temp1, temp2) == 0))
+	// return_value |= STREQ (local_dirname, temp2) == 0;
       free (local_dirname);
       *dirname = temp2;
       free (temp1);
@@ -3634,10 +3643,10 @@ dynamic_complete_history (count, key)
   rl_ignore_some_completions_function = filename_completion_ignore;
 
   /* XXX - use rl_completion_mode here? */
-  if (rl_last_func == dynamic_complete_history)
-    r = rl_complete_internal ('?');
-  else
-    r = rl_complete_internal (TAB);
+  // if (rl_last_func == dynamic_complete_history)
+  //   r = rl_complete_internal ('?');
+  // else
+  //   r = rl_complete_internal (TAB);
 
   rl_completion_entry_function = orig_func;
   rl_attempted_completion_function = orig_attempt_func;
@@ -3744,7 +3753,7 @@ bash_complete_filename_internal (what_to_do)
   rl_ignore_some_completions_function = filename_completion_ignore;
   rl_completer_word_break_characters = " \t\n\"\'";
 
-  r = rl_complete_internal (what_to_do);
+  // r = rl_complete_internal (what_to_do);
 
   rl_completion_entry_function = orig_func;
   rl_attempted_completion_function = orig_attempt_func;
@@ -3945,7 +3954,7 @@ bash_specific_completion (what_to_do, generator)
   rl_attempted_completion_function = NULL;
   rl_ignore_some_completions_function = orig_ignore_func;
 
-  r = rl_complete_internal (what_to_do);
+  // r = rl_complete_internal (what_to_do);
 
   rl_completion_entry_function = orig_func;
   rl_attempted_completion_function = orig_attempt_func;
@@ -4151,12 +4160,14 @@ bash_quote_filename (s, rtype, qcp)
   else if (*qcp == '\'')
     cs = COMPLETE_SQUOTE;
 #if defined (BANG_HISTORY)
-  else if (*qcp == '\0' && history_expansion && cs == COMPLETE_DQUOTE &&
-	   history_expansion_inhibited == 0 && mbschr (s, '!'))
+    else if (*qcp == '\0'  && cs == COMPLETE_DQUOTE &&
+  // else if (*qcp == '\0' && history_expansion && cs == COMPLETE_DQUOTE &&
+	    mbschr (s, '!'))
     cs = COMPLETE_BSQUOTE;
 
-  if (*qcp == '"' && history_expansion && cs == COMPLETE_DQUOTE &&
-	history_expansion_inhibited == 0 && mbschr (s, '!'))
+  // if (*qcp == '"' && history_expansion && cs == COMPLETE_DQUOTE &&
+	// history_expansion_inhibited == 0 && mbschr (s, '!'))
+  if (*qcp == '"'  && cs == COMPLETE_DQUOTE && mbschr (s, '!'))
     {
       cs = COMPLETE_BSQUOTE;
       *qcp = '\0';
@@ -4178,7 +4189,9 @@ bash_quote_filename (s, rtype, qcp)
       rtext = sh_single_quote (mtext);
       break;
     case COMPLETE_BSQUOTE:
-      rtext = sh_backslash_quote (mtext, complete_fullquote ? 0 : filename_bstab, 0);
+      // rtext = sh_backslash_quote (mtext, complete_fullquote ? 0 : filename_bstab, 0);
+      rtext = sh_backslash_quote (mtext, 0, 0);
+
       break;
     }
 

@@ -51,7 +51,7 @@
 #include <typemax.h>
 
 #ifndef errno
-extern int errno;
+extern  int errno;
 #endif
 
 #define x_digs  "0123456789abcdef"

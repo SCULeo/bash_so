@@ -39,8 +39,8 @@ extern char **glob_filename PARAMS((char *, int));
 
 extern int extglob_pattern_p PARAMS((const char *));
 
-extern char *glob_error_return;
-extern int noglob_dot_filenames;
-extern int glob_ignore_case;
+extern __thread char *glob_error_return;
+extern __thread int noglob_dot_filenames;
+extern __thread int glob_ignore_case;
 
 #endif /* _GLOB_H_ */

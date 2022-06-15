@@ -204,7 +204,7 @@ extern int _rl_colored_completion_prefix;
 
 /* readline.c */
 extern int rl_line_buffer_len;
-extern int rl_arg_sign;
+extern int __thread rl_arg_sign;
 extern int rl_visible_prompt_length;
 extern int rl_byte_oriented;
 
@@ -471,17 +471,17 @@ extern int _rl_vi_domove_motion_cleanup PARAMS((int, _rl_vimotion_cxt *));
  *************************************************************************/
 
 /* bind.c */
-extern const char * const _rl_possible_control_prefixes[];
-extern const char * const _rl_possible_meta_prefixes[];
+// extern const char * const _rl_possible_control_prefixes[];
+// extern const char * const _rl_possible_meta_prefixes[];
 
 /* callback.c */
-extern _rl_callback_func_t *_rl_callback_func;
-extern _rl_callback_generic_arg *_rl_callback_data;
+// extern _rl_callback_func_t *_rl_callback_func;
+// extern _rl_callback_generic_arg *_rl_callback_data;
 
 /* complete.c */
-extern int _rl_complete_show_all;
-extern int _rl_complete_show_unmodified;
-extern int _rl_complete_mark_directories;
+// extern int _rl_complete_show_all;
+// extern int _rl_complete_show_unmodified;
+// extern int _rl_complete_mark_directories;
 extern int _rl_complete_mark_symlink_dirs;
 extern int _rl_completion_prefix_display_length;
 extern int _rl_completion_columns;
@@ -542,7 +542,7 @@ extern unsigned char _rl_parsing_conditionalized_out;
 extern Keymap _rl_keymap;
 extern FILE *_rl_in_stream;
 extern FILE *_rl_out_stream;
-extern int _rl_last_command_was_kill;
+extern __thread int _rl_last_command_was_kill;
 extern int _rl_eof_char;
 extern int _rl_eof_found;
 extern procenv_t _rl_top_level;

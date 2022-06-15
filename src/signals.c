@@ -89,13 +89,13 @@ static RETSIGTYPE _rl_handle_signal PARAMS((int));
 
 /* If non-zero, readline will install its own signal handlers for
    SIGINT, SIGTERM, SIGHUP, SIGQUIT, SIGALRM, SIGTSTP, SIGTTIN, and SIGTTOU. */
-int rl_catch_signals = 1;
+__thread int rl_catch_signals = 1;
 
 /* If non-zero, readline will install a signal handler for SIGWINCH. */
 #ifdef SIGWINCH
-int rl_catch_sigwinch = 1;
+__thread int rl_catch_sigwinch = 1;
 #else
-int rl_catch_sigwinch = 0;	/* for the readline state struct in readline.c */
+__thread int rl_catch_sigwinch = 0;	/* for the readline state struct in readline.c */
 #endif
 
 /* Private variables. */

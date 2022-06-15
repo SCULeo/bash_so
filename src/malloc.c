@@ -291,7 +291,7 @@ static const unsigned long binsizes[NBUCKETS] = {
 #define binsize(x)	binsizes[(x)]
 
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif
 
 /* Declarations for internal functions */

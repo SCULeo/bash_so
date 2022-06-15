@@ -39,7 +39,7 @@
 #include <errno.h>
 
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif
 
 #include "bashansi.h"

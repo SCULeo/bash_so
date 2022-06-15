@@ -43,7 +43,7 @@
 #include <errno.h>
 
 #ifndef errno
-extern int errno;
+//extern int errno;
 #endif
 
 #define RTLD_LAZY BIND_DEFERRED

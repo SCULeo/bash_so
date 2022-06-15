@@ -56,12 +56,12 @@
 #include "builtext.h"
 
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif
 
 #define IS_BUILTIN(s)	(builtin_address_internal(s, 0) != (struct builtin *)NULL)
 
-int parse_and_execute_level = 0;
+__thread int parse_and_execute_level = 0;
 
 static int cat_file PARAMS((REDIRECT *));
 
@@ -72,7 +72,7 @@ static int cat_file PARAMS((REDIRECT *));
 static void
 set_history_remembering ()
 {
-  remember_on_history = enable_history_list;
+  // remember_on_history = enable_history_list;
 }
 #endif
 
@@ -220,15 +220,15 @@ parse_prologue (string, flags, tag)
   if (flags & (SEVAL_NONINT|SEVAL_INTERACT))
     unwind_protect_int (interactive);
 
-#if defined (HISTORY)
-  if (parse_and_execute_level == 0)
-    add_unwind_protect (set_history_remembering, (char *)NULL);
-  else
-    unwind_protect_int (remember_on_history);	/* can be used in scripts */
-#  if defined (BANG_HISTORY)
-  unwind_protect_int (history_expansion_inhibited);
-#  endif /* BANG_HISTORY */
-#endif /* HISTORY */
+// #if defined (HISTORY)
+//   if (parse_and_execute_level == 0)
+//     add_unwind_protect (set_history_remembering, (char *)NULL);
+//   else
+//     unwind_protect_int (remember_on_history);	/* can be used in scripts */
+// #  if defined (BANG_HISTORY)
+//   unwind_protect_int (history_expansion_inhibited);
+// #  endif /* BANG_HISTORY */
+// #endif /* HISTORY */
 
   if (interactive_shell)
     {
@@ -258,7 +258,10 @@ parse_prologue (string, flags, tag)
     bash_history_disable ();
 #  if defined (BANG_HISTORY)
   if (flags & SEVAL_NOHISTEXP)
-    history_expansion_inhibited = 1;
+  {
+     // history_expansion_inhibited = 1;
+  }
+   
 #  endif /* BANG_HISTORY */
 #endif /* HISTORY */
 }
@@ -393,151 +396,11 @@ parse_and_execute (string, from_file, flags)
   // // 修改
 	  parse_command ();
     return 0;
-  // // 修改
-      if (parse_command () == 0)
-	{
-	  if ((flags & SEVAL_PARSEONLY) || (interactive_shell == 0 && read_but_dont_execute))
-	    {
-	      last_result = EXECUTION_SUCCESS;
-	      dispose_command (global_command);
-	      global_command = (COMMAND *)NULL;
-	    }
-	  else if (command = global_command)
-	    {
-	      struct fd_bitmap *bitmap;
-
-	      if (flags & SEVAL_FUNCDEF)
-		{
-		  char *x;
-
-		  /* If the command parses to something other than a straight
-		     function definition, or if we have not consumed the entire
-		     string, or if the parser has transformed the function
-		     name (as parsing will if it begins or ends with shell
-		     whitespace, for example), reject the attempt */
-		  if (command->type != cm_function_def ||
-		      ((x = parser_remaining_input ()) && *x) ||
-		      (STREQ (from_file, command->value.Function_def->name->word) == 0))
-		    {
-		      internal_warning (_("%s: ignoring function definition attempt"), from_file);
-		      should_jump_to_top_level = 0;
-		      last_result = last_command_exit_value = EX_BADUSAGE;
-		      set_pipestatus_from_exit (last_command_exit_value);
-		      reset_parser ();
-		      break;
-		    }
-		}
-
-	      bitmap = new_fd_bitmap (FD_BITMAP_SIZE);
-	      begin_unwind_frame ("pe_dispose");
-	      add_unwind_protect (dispose_fd_bitmap, bitmap);
-	      add_unwind_protect (dispose_command, command);	/* XXX */
-
-	      global_command = (COMMAND *)NULL;
-
-	      if ((subshell_environment & SUBSHELL_COMSUB) && comsub_ignore_return)
-		command->flags |= CMD_IGNORE_RETURN;
-
-#if defined (ONESHOT)
-	      /*
-	       * IF
-	       *   we were invoked as `bash -c' (startup_state == 2) AND
-	       *   parse_and_execute has not been called recursively AND
-	       *   we're not running a trap AND
-	       *   we have parsed the full command (string == '\0') AND
-	       *   we're not going to run the exit trap AND
-	       *   we have a simple command without redirections AND
-	       *   the command is not being timed AND
-	       *   the command's return status is not being inverted AND
-	       *   there aren't any traps in effect
-	       * THEN
-	       *   tell the execution code that we don't need to fork
-	       */
-	      if (should_suppress_fork (command))
-		{
-		  command->flags |= CMD_NO_FORK;
-		  command->value.Simple->flags |= CMD_NO_FORK;
-		}
-
-	      /* Can't optimize forks out here execept for simple commands.
-		 This knows that the parser sets up commands as left-side heavy
-		 (&& and || are left-associative) and after the single parse,
-		 if we are at the end of the command string, the last in a
-		 series of connection commands is
-		 command->value.Connection->second. */
-	      else if (command->type == cm_connection && can_optimize_connection (command))
-		{
-		  command->value.Connection->second->flags |= CMD_TRY_OPTIMIZING;
-		  command->value.Connection->second->value.Simple->flags |= CMD_TRY_OPTIMIZING;
-		}
-#endif /* ONESHOT */
-
-	      /* See if this is a candidate for $( <file ). */
-	      if (startup_state == 2 &&
-		  (subshell_environment & SUBSHELL_COMSUB) &&
-		  *bash_input.location.string == '\0' &&
-		  command->type == cm_simple && !command->redirects &&
-		  (command->flags & CMD_TIME_PIPELINE) == 0 &&
-		  command->value.Simple->words == 0 &&
-		  command->value.Simple->redirects &&
-		  command->value.Simple->redirects->next == 0 &&
-		  command->value.Simple->redirects->instruction == r_input_direction &&
-		  command->value.Simple->redirects->redirector.dest == 0)
-		{
-		  int r;
-		  r = cat_file (command->value.Simple->redirects);
-		  last_result = (r < 0) ? EXECUTION_FAILURE : EXECUTION_SUCCESS;
-		}
-	      else
-		last_result = execute_command_internal
-				(command, 0, NO_PIPE, NO_PIPE, bitmap);
-	      dispose_command (command);
-	      dispose_fd_bitmap (bitmap);
-	      discard_unwind_frame ("pe_dispose");
-
-	      if (flags & SEVAL_ONECMD)
-		{
-		  reset_parser ();
-		  break;
-		}
-	    }
-	}
-      else
-	{
-	  last_result = EX_BADUSAGE;	/* was EXECUTION_FAILURE */
-
-	  if (interactive_shell == 0 && this_shell_builtin &&
-	      (this_shell_builtin == source_builtin || this_shell_builtin == eval_builtin) &&
-	      last_command_exit_value == EX_BADSYNTAX && posixly_correct && executing_command_builtin == 0)
-	    {
-	      should_jump_to_top_level = 1;
-	      code = ERREXIT;
-	      last_command_exit_value = EX_BADUSAGE;
-	    }
-
-	  /* Since we are shell compatible, syntax errors in a script
-	     abort the execution of the script.  Right? */
-	  break;
-	}
+  
     }
 
  out:
-
-  run_unwind_frame (PE_TAG);
-
-  if (interrupt_state && parse_and_execute_level == 0)
-    {
-      /* An interrupt during non-interactive execution in an
-	 interactive shell (e.g. via $PROMPT_COMMAND) should
-	 not cause the shell to exit. */
-      interactive = interactive_shell;
-      throw_to_top_level ();
-    }
-
-  if (should_jump_to_top_level)
-    jump_to_top_level (code);
-
-  return (last_result);
+  return (0);
 }
 
 /* Parse a command contained in STRING according to FLAGS and return the

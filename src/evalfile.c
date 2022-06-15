@@ -55,7 +55,7 @@
 #include "common.h"
 
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif
 
 /* Flags for _evalfile() */
@@ -70,7 +70,7 @@ extern int errno;
 #define FEVAL_NOPUSHARGS	0x100
 
 /* How many `levels' of sourced files we have. */
-int sourcelevel = 0;
+__thread int sourcelevel = 0;
 
 static int
 _evalfile (filename, flags)

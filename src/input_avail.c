@@ -53,7 +53,7 @@
 #include <errno.h>
 
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif /* !errno */
 
 #if !defined (O_NDELAY) && defined (O_NONBLOCK)

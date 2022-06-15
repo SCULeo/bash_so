@@ -39,8 +39,8 @@
 static int	sp;
 
 char    *list_optarg;
-int	list_optopt;
-int	list_opttype;
+// int	list_optopt;
+// int	list_opttype;
 
 static WORD_LIST *lhead = (WORD_LIST *)NULL;
 WORD_LIST	*lcurrent = (WORD_LIST *)NULL;
@@ -89,10 +89,10 @@ char		*opts;
 			loptend = lcurrent->next;
 			return(-1);
 		}
-		errstr[0] = list_opttype = lcurrent->word->word[0];
+		// errstr[0] = list_opttype = lcurrent->word->word[0];
 	}
 
-	list_optopt = c = lcurrent->word->word[sp];
+	// list_optopt = c = lcurrent->word->word[sp];
 
 	if (c == ':' || (cp = strchr(opts, c)) == NULL) {
 		errstr[1] = c;

@@ -45,19 +45,19 @@ extern char *sh_optarg;
    Otherwise, `sh_optind' communicates from one call to the next
    how much of ARGV has been scanned so far.  */
 
-extern int sh_optind;
+extern __thread int sh_optind;
 
 /* Callers store zero here to inhibit the error message `getopt' prints
    for unrecognized options.  */
 
-extern int sh_opterr;
+extern __thread int sh_opterr;
 
 /* Set to an option character which was unrecognized.  */
 
-extern int sh_optopt;
+extern __thread int sh_optopt;
 
 /* Set to 1 when an unrecognized option is encountered. */
-extern int sh_badopt;
+extern __thread int sh_badopt;
 
 extern int sh_getopt PARAMS((int, char *const *, const char *));
 

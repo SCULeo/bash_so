@@ -24,7 +24,7 @@
 #if defined (READLINE)
 #  include "input.h"
 #  include "bashline.h"
-#  include <readline/readline.h>
+#  include <readline.h>
 #endif
 
 #if defined (HISTORY)
@@ -70,49 +70,49 @@ const struct {
   setopt_set_func_t *set_func;
   setopt_get_func_t *get_func;
 } o_options[] = {
-  { "allexport",  'a', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL },
-#if defined (BRACE_EXPANSION)
-  { "braceexpand",'B', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
-#endif
-#if defined (READLINE)
-  { "emacs",     '\0', (int *)NULL, set_edit_mode, get_edit_mode },
-#endif
-  { "errexit",	  'e', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
-  { "errtrace",	  'E', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
-  { "functrace",  'T', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
-  { "hashall",    'h', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
-#if defined (BANG_HISTORY)
-  { "histexpand", 'H', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
-#endif /* BANG_HISTORY */
-#if defined (HISTORY)
-  { "history",   '\0', &enable_history_list, bash_set_history, (setopt_get_func_t *)NULL },
-#endif
-  { "ignoreeof", '\0', &ignoreeof, set_ignoreeof, (setopt_get_func_t *)NULL },
-  { "interactive-comments", '\0', &interactive_comments, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL },
-  { "keyword",    'k', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
-#if defined (JOB_CONTROL)
-  { "monitor",	  'm', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
-#endif
-  { "noclobber",  'C', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
-  { "noexec",	  'n', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
-  { "noglob",	  'f', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
-#if defined (HISTORY)
-  { "nolog",     '\0', &dont_save_function_defs, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL },
-#endif
-#if defined (JOB_CONTROL)
-  { "notify",	  'b', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
-#endif /* JOB_CONTROL */
-  { "nounset",	  'u', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
-  { "onecmd",	  't', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL },
-  { "physical",   'P', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
-  { "pipefail",  '\0', &pipefail_opt, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
-  { "posix",     '\0', &posixly_correct, set_posix_mode, (setopt_get_func_t *)NULL },
-  { "privileged", 'p', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
-  { "verbose",	  'v', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
-#if defined (READLINE)
-  { "vi",        '\0', (int *)NULL, set_edit_mode, get_edit_mode },
-#endif
-  { "xtrace",	  'x', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
+//   { "allexport",  'a', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL },
+// #if defined (BRACE_EXPANSION)
+//   { "braceexpand",'B', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
+// #endif
+// #if defined (READLINE)
+//   { "emacs",     '\0', (int *)NULL, set_edit_mode, get_edit_mode },
+// #endif
+//   { "errexit",	  'e', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
+//   { "errtrace",	  'E', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
+//   { "functrace",  'T', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
+//   { "hashall",    'h', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
+// #if defined (BANG_HISTORY)
+//   { "histexpand", 'H', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
+// #endif /* BANG_HISTORY */
+// #if defined (HISTORY)
+//   // { "history",   '\0', &enable_history_list, bash_set_history, (setopt_get_func_t *)NULL },
+// #endif
+//   { "ignoreeof", '\0', &ignoreeof, set_ignoreeof, (setopt_get_func_t *)NULL },
+//   { "interactive-comments", '\0', &interactive_comments, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL },
+//   { "keyword",    'k', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
+// #if defined (JOB_CONTROL)
+//   { "monitor",	  'm', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
+// #endif
+//   { "noclobber",  'C', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
+//   { "noexec",	  'n', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
+//   { "noglob",	  'f', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
+// #if defined (HISTORY)
+//   // { "nolog",     '\0', &dont_save_function_defs, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL },
+// #endif
+// #if defined (JOB_CONTROL)
+//   { "notify",	  'b', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
+// #endif /* JOB_CONTROL */
+//   { "nounset",	  'u', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
+//   { "onecmd",	  't', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL },
+//   { "physical",   'P', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
+//   { "pipefail",  '\0', &pipefail_opt, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
+//   { "posix",     '\0', &posixly_correct, set_posix_mode, (setopt_get_func_t *)NULL },
+//   { "privileged", 'p', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
+//   { "verbose",	  'v', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
+// #if defined (READLINE)
+//   { "vi",        '\0', (int *)NULL, set_edit_mode, get_edit_mode },
+// #endif
+//   { "xtrace",	  'x', (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL  },
   {(char *)NULL, 0 , (int *)NULL, (setopt_set_func_t *)NULL, (setopt_get_func_t *)NULL },
 };
 
@@ -350,17 +350,18 @@ bash_set_history (on_or_off, option_name)
 {
   if (on_or_off == FLAG_ON)
     {
-      enable_history_list = 1;
+      // enable_history_list = 1;
       bash_history_enable ();
-      if (history_lines_this_session == 0)
-	load_history ();
+  //     if (history_lines_this_session == 0)
+	// load_history ();
     }
   else
     {
-      enable_history_list = 0;
+      // enable_history_list = 0;
       bash_history_disable ();
     }
-  return (1 - enable_history_list);
+  // return (1 - enable_history_list);
+  return (1);
 }
 #endif
 
@@ -544,8 +545,8 @@ reset_shell_options ()
   posixly_correct = 0;
 #endif
 #if defined (HISTORY)
-  dont_save_function_defs = 0;
-  remember_on_history = enable_history_list = 1;	/* XXX */
+  // dont_save_function_defs = 0;
+  // remember_on_history = enable_history_list = 1;	/* XXX */
 #endif
 }
 
@@ -574,7 +575,8 @@ set_builtin (list)
       switch (flag_name)
 	{
 	  case 'i':	/* don't allow set -i */
-	    s[0] = list_opttype;
+	    // s[0] = list_opttype;
+      s[0] = ' ';
 	    s[1] = 'i';
 	    s[2] = '\0';
 	    sh_invalidopt (s);
@@ -583,7 +585,8 @@ set_builtin (list)
 	  CASE_HELPOPT;
 	  case '?':
 	    builtin_usage ();
-	    return (list_optopt == '?' ? EXECUTION_SUCCESS : EX_USAGE);
+	    // return (list_optopt == '?' ? EXECUTION_SUCCESS : EX_USAGE);
+      return EXECUTION_SUCCESS;
 	  default:
 	    break;
 	}
@@ -735,7 +738,7 @@ unset_builtin (list)
     nameref = 0;
 
 #if defined (ARRAY_VARS)
-  vflags = assoc_expand_once ? (VA_NOEXPAND|VA_ONEWORD) : 0;
+  // vflags = assoc_expand_once ? (VA_NOEXPAND|VA_ONEWORD) : 0;
 #endif
 
   while (list)

@@ -48,7 +48,7 @@
 
 #if defined (READLINE)
 #  include "bashline.h"
-#  include <readline/readline.h>
+#  include <readline.h>
 #endif
 
 #if defined (HISTORY)
@@ -541,7 +541,9 @@ termsig_sighandler (sig)
 #  if defined (READLINE)
       if (interactive_shell == 0 || interactive == 0 || (sig != SIGHUP && sig != SIGTERM) || no_line_editing || (RL_ISSTATE (RL_STATE_READCMD) == 0))
 #  endif
-        history_lines_this_session = 0;
+        {
+          // history_lines_this_session = 0;
+        }
 #endif
       terminate_immediately = 0;
       termsig_handler (sig);
@@ -585,7 +587,8 @@ termsig_handler (sig)
      an interactive shell is running in a terminal window that gets closed
      with the `close' button.  We can't test for RL_STATE_READCMD because
      readline no longer handles SIGTERM synchronously.  */
-  if (interactive_shell && interactive && (sig == SIGHUP || sig == SIGTERM) && remember_on_history)
+       if (interactive_shell && interactive && (sig == SIGHUP || sig == SIGTERM))
+  // if (interactive_shell && interactive && (sig == SIGHUP || sig == SIGTERM) && remember_on_history)
     maybe_save_shell_history ();
 #endif /* HISTORY */
 

@@ -25,12 +25,12 @@
 #include "flags.h"
 #include "parser.h"
 #include "bashhist.h"
-#include <readline/history.h>
+#include <history.h>
 #include "bashgetopt.h"
 #include "common.h"
 
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif
 
 static char *histtime PARAMS((HIST_ENTRY *, const char *));
@@ -232,20 +232,20 @@ range_error:
   else if (flags & RFLAG)	/* Read entire file. */
     {
       result = read_history (filename);
-      history_lines_in_file = history_lines_read_from_file;
+      // history_lines_in_file = history_lines_read_from_file;
       /* history_lines_in_file = where_history () + history_base - 1; */
     }
   else if (flags & NFLAG)	/* Read `new' history from file. */
     {
       /* Read all of the lines in the file that we haven't already read. */
-      old_history_lines = history_lines_in_file;
+      // old_history_lines = history_lines_in_file;
       obase = history_base;
 
       using_history ();
-      result = read_history_range (filename, history_lines_in_file, -1);
+      // result = read_history_range (filename, history_lines_in_file, -1);
       using_history ();
 
-      history_lines_in_file = history_lines_read_from_file;
+      // history_lines_in_file = history_lines_read_from_file;
       /* history_lines_in_file = where_history () + history_base - 1; */
 
       /* If we're rewriting the history file at shell exit rather than just
@@ -258,9 +258,9 @@ range_error:
 	 to be written to the history file along with any intermediate entries
 	 we add when we do a `history -a', but the alternative is losing
 	 them altogether. */
-      if (force_append_history == 0)
-	history_lines_this_session += history_lines_in_file - old_history_lines +
-				    history_base - obase;
+  //     if (force_append_history == 0)
+	// history_lines_this_session += history_lines_in_file - old_history_lines +
+	// 			    history_base - obase;
     }
 
   return (result ? EXECUTION_FAILURE : EXECUTION_SUCCESS);
@@ -359,10 +359,10 @@ push_history (list)
   if (remember_on_history && hist_last_line_pushed == 0 &&
 	hist_last_line_added && bash_delete_last_history () == 0)
 #else
-  if (remember_on_history && hist_last_line_pushed == 0 &&
-	(hist_last_line_added ||
-	  (current_command_line_count > 0 && current_command_first_line_saved && command_oriented_history))
-      && bash_delete_last_history () == 0)
+  // if (remember_on_history && hist_last_line_pushed == 0 &&
+  // (hist_last_line_added ||(current_command_line_count > 0 && current_command_first_line_saved && command_oriented_history))
+	  
+  //     && bash_delete_last_history () == 0)
 #endif
       return;
 
@@ -375,7 +375,7 @@ push_history (list)
      line would be appended to the entry before the just-deleted entry. */
   check_add_history (s, 1);	/* obeys HISTCONTROL, HISTIGNORE */
 
-  hist_last_line_pushed = 1;	/* XXX */
+  // hist_last_line_pushed = 1;	/* XXX */
   free (s);
 }
 
@@ -386,8 +386,8 @@ expand_and_print_history (list)
 {
   char *s;
   int r, result;
-
-  if (hist_last_line_pushed == 0 && hist_last_line_added && bash_delete_last_history () == 0)
+  // if (hist_last_line_pushed == 0 && hist_last_line_added && bash_delete_last_history () == 0)
+  if ( bash_delete_last_history () == 0)
     return EXECUTION_FAILURE;
   result = EXECUTION_SUCCESS;
   while (list)

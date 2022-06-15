@@ -41,7 +41,7 @@
 #include "pathnames.h"
 #include "externs.h"
 
-extern int EOF_Reached;
+extern __thread int EOF_Reached;
 
 #define NO_PIPE -1
 #define REDIRECT_BOTH -2
@@ -87,47 +87,51 @@ extern int EOF_Reached;
 #define MATCH_STARSUB	0x080
 
 /* Some needed external declarations. */
-extern char **shell_environment;
-extern WORD_LIST *rest_of_args;
+extern __thread char **shell_environment;
+extern __thread WORD_LIST *rest_of_args;
 
 /* Generalized global variables. */
-extern char *command_execution_string;
+extern __thread char *command_execution_string;
 
-extern int debugging_mode;
-extern int executing, login_shell;
-extern int interactive, interactive_shell;
-extern int startup_state;
-extern int reading_shell_script;
-extern int shell_initialized;
-extern int bash_argv_initialized;
-extern int subshell_environment;
-extern int current_command_number;
-extern int indirection_level;
-extern int shell_compatibility_level;
-extern int running_under_emacs;
+extern __thread int debugging_mode;
+extern __thread int executing;
+extern __thread int login_shell;
+extern __thread int interactive;
+extern __thread int interactive_shell;
+extern __thread int startup_state;
+extern __thread int reading_shell_script;
+extern __thread int  shell_initialized;
+extern __thread int  bash_argv_initialized;
+extern __thread int subshell_environment;
+extern __thread int current_command_number;
+extern __thread int indirection_level;
+extern __thread int shell_compatibility_level;
+extern __thread int running_under_emacs;
 
-extern int posixly_correct;
-extern int no_line_editing;
+extern __thread int posixly_correct;
+extern __thread int no_line_editing;
 
-extern char *shell_name;
-extern char *current_host_name;
+extern __thread char *shell_name;
+extern __thread char *current_host_name;
 
-extern int subshell_argc;
-extern char **subshell_argv;
-extern char **subshell_envp;
+extern __thread int subshell_argc;
+extern __thread char **subshell_argv;
+extern __thread char **subshell_envp;
 
 /* variables managed using shopt */
-extern int hup_on_exit;
-extern int check_jobs_at_exit;
-extern int autocd;
-extern int check_window_size;
+extern __thread int hup_on_exit;
+extern __thread int check_jobs_at_exit;
+extern __thread int autocd;
+extern __thread int check_window_size;
 
 /* from version.c */
-extern int build_version, patch_level;
-extern char *dist_version, *release_status;
+extern int build_version;
+extern int patch_level;
+extern char *dist_version;
+extern char *release_status;
 
-extern int locale_mb_cur_max;
-extern int locale_utf8locale;
+extern __thread int locale_mb_cur_max;
+extern __thread int locale_utf8locale;
 
 /* Structure to pass around that holds a bitmap of file descriptors
    to close, and the size of that structure.  Used in execute_cmd.c. */
@@ -187,12 +191,12 @@ typedef struct _sh_parser_state_t {
   /* history state affecting or modified by the parser */
   int current_command_line_count;
 #if defined (HISTORY)
-  int remember_on_history;
-  int history_expansion_inhibited;
+  // int remember_on_history;
+  // int history_expansion_inhibited;
 #endif
 
   /* execution state possibly modified by the parser */
-  int last_command_exit_value;
+ int last_command_exit_value;
 #if defined (ARRAY_VARS)
   ARRAY *pipestatus;
 #endif

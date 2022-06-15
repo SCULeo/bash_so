@@ -27,7 +27,7 @@
 #include "common.h"
 #include "bashgetopt.h"
 
-extern int dot_found_in_search;
+extern __thread int dot_found_in_search;
 
 static int add_hashed_command PARAMS((char *, int));
 static int print_hash_info PARAMS((BUCKET_CONTENTS *));

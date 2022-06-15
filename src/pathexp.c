@@ -53,7 +53,7 @@ typedef int posix_glob_errfunc_t PARAMS((const char *, int));
 int glob_dot_filenames;
 
 /* Control whether the extended globbing features are enabled. */
-int extended_glob = EXTGLOB_DEFAULT;
+__thread int extended_glob = EXTGLOB_DEFAULT;
 
 /* Control enabling special handling of `**' */
 int glob_star = 0;

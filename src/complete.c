@@ -24,7 +24,7 @@
 #include "common.h"
 #include "bashgetopt.h"
 
-#include <readline/readline.h>
+#include <readline.h>
 
 #define STRDUP(x)       ((x) ? savestring (x) : (char *)NULL)
 
@@ -705,7 +705,8 @@ compopt_builtin (list)
   reset_internal_getopt ();
   while ((opt = internal_getopt (list, "+o:DEI")) != -1)
     {
-      opts = (list_opttype == '-') ? &opts_on : &opts_off;
+      // opts = (list_opttype == '-') ? &opts_on : &opts_off;
+      opts = &opts_off;
 
       switch (opt)
 	{

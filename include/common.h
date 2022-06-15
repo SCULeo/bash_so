@@ -226,27 +226,27 @@ extern SHELL_VAR *builtin_bind_variable PARAMS((char *, char *, int));
 extern int builtin_unbind_variable PARAMS((const char *));
 
 /* variables from evalfile.c */
-extern int sourcelevel;
+extern __thread int sourcelevel;
 
 /* variables from evalstring.c */
-extern int parse_and_execute_level;
+extern __thread int parse_and_execute_level;
 
 /* variables from break.def/continue.def */
-extern int breaking;
-extern int continuing;
-extern int loop_level;
+extern __thread int breaking;
+extern __thread int continuing;
+extern __thread int loop_level;
 
 /* variables from read.def */
-extern int sigalrm_seen;
+extern __thread int sigalrm_seen;
 
 /* variables from shift.def */
-extern int print_shift_error;
+// extern  int print_shift_error;
 
 /* variables from source.def */
-extern int source_searches_cwd;
-extern int source_uses_path;
+extern __thread int source_searches_cwd;
+// extern int source_uses_path;
 
 /* variables from wait.def */
-extern int wait_intr_flag;
+extern __thread int wait_intr_flag;
 
 #endif /* !__COMMON_H */

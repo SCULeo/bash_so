@@ -39,14 +39,14 @@
 #include "input.h"	/* For bash_input */
 
 #ifndef errno
-extern int errno;
+//extern int errno;
 #endif
 
-int locale_utf8locale;
-int locale_mb_cur_max;	/* value of MB_CUR_MAX for current locale (LC_CTYPE) */
+__thread int locale_utf8locale;
+__thread int locale_mb_cur_max;	/* value of MB_CUR_MAX for current locale (LC_CTYPE) */
 int locale_shiftstates = 0;
 
-extern int dump_translatable_strings, dump_po_strings;
+extern __thread int dump_translatable_strings, dump_po_strings;
 
 /* The current locale when the program begins */
 static char *default_locale;

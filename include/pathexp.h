@@ -25,8 +25,8 @@
 #  define GLOB_FAILED(glist)	!(glist)
 #else /* !USE_POSIX_GLOB_LIBRARY */
 #  define GLOB_FAILED(glist)	(glist) == (char **)&glob_error_return
-extern int noglob_dot_filenames;
-extern char *glob_error_return;
+extern __thread int noglob_dot_filenames;
+extern __thread char *glob_error_return;
 #endif /* !USE_POSIX_GLOB_LIBRARY */
 
 /* Flag values for quote_string_for_globbing */
@@ -44,13 +44,15 @@ extern char *glob_error_return;
 #  define FNMATCH_EXTFLAG	0
 #endif /* !EXTENDED_GLOB */
 
-#define FNMATCH_IGNCASE		(match_ignore_case ? FNM_CASEFOLD : 0)
+// #define FNMATCH_IGNCASE		(match_ignore_case ? FNM_CASEFOLD : 0)
+#define FNMATCH_IGNCASE		0
+
 #define FNMATCH_NOCASEGLOB	(glob_ignore_case ? FNM_CASEFOLD : 0)
 
 extern int glob_dot_filenames;
-extern int extended_glob;
+extern __thread int extended_glob;
 extern int glob_star;
-extern int match_ignore_case;	/* doesn't really belong here */
+// extern  int match_ignore_case;	/* doesn't really belong here */
 
 extern int unquoted_glob_pattern_p PARAMS((char *));
 

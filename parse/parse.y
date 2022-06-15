@@ -60,12 +60,12 @@
 
 #if defined (READLINE)
 #  include "bashline.h"
-#  include <readline/readline.h>
+#  include <readline.h>
 #endif /* READLINE */
 
 #if defined (HISTORY)
 #  include "bashhist.h"
-#  include <readline/history.h>
+#  include <history.h>
 #endif /* HISTORY */
 
 #if defined (JOB_CONTROL)
@@ -77,7 +77,7 @@ extern int cleanup_dead_jobs PARAMS((void));
 #if defined (ALIAS)
 #  include "alias.h"
 #else
-typedef void *alias_t;
+typedef __thread void *alias_t;
 #endif /* ALIAS */
 
 #if defined (PROMPT_STRING_DECODE)
@@ -115,13 +115,13 @@ typedef void *alias_t;
 #endif
 
 #if defined (EXTENDED_GLOB)
-extern int extended_glob;
+extern __thread int extended_glob;
 #endif
 
-extern int dump_translatable_strings, dump_po_strings;
+extern __thread int dump_translatable_strings, dump_po_strings;
 
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif
 
 /* **************************************************************** */
@@ -217,112 +217,111 @@ static size_t shell_input_line_propsize = 0;
 extern int yyerror PARAMS((const char *));
 
 #ifdef DEBUG
-extern int yydebug;
+extern __thread int yydebug;
 #endif
 
 /* Default prompt strings */
-char *primary_prompt = PPROMPT;
-char *secondary_prompt = SPROMPT;
+__thread char *primary_prompt = PPROMPT;
+__thread char *secondary_prompt = SPROMPT;
 
 /* PROMPT_STRING_POINTER points to one of these, never to an actual string. */
-char *ps1_prompt, *ps2_prompt;
+__thread char *ps1_prompt, *ps2_prompt;
 
 /* Displayed after reading a command but before executing it in an interactive shell */
-char *ps0_prompt;
+__thread char *ps0_prompt;
 
 /* Handle on the current prompt string.  Indirectly points through
    ps1_ or ps2_prompt. */
-char **prompt_string_pointer = (char **)NULL;
-char *current_prompt_string;
+__thread char **prompt_string_pointer = (char **)NULL;
+__thread char *current_prompt_string;
 
 /* Non-zero means we expand aliases in commands. */
-int expand_aliases = 0;
+__thread int expand_aliases = 0;
 
 /* If non-zero, the decoded prompt string undergoes parameter and
    variable substitution, command substitution, arithmetic substitution,
    string expansion, process substitution, and quote removal in
    decode_prompt_string. */
-int promptvars = 1;
+__thread int promptvars = 1;
 
 /* If non-zero, $'...' and $"..." are expanded when they appear within
    a ${...} expansion, even when the expansion appears within double
    quotes. */
-int extended_quote = 1;
+__thread int extended_quote = 1;
 
 /* The number of lines read from input while creating the current command. */
-int current_command_line_count;
+__thread int current_command_line_count;
 
 /* The number of lines in a command saved while we run parse_and_execute */
-int saved_command_line_count;
+__thread int saved_command_line_count;
 
 /* The token that currently denotes the end of parse. */
-int shell_eof_token;
+__thread int shell_eof_token;
 
 /* The token currently being read. */
-int current_token;
+__thread int current_token;
 
 /* The current parser state. */
-int parser_state;
+__thread int parser_state;
 
 /* Variables to manage the task of reading here documents, because we need to
    defer the reading until after a complete command has been collected. */
-static REDIRECT *redir_stack[HEREDOC_MAX];
-int need_here_doc;
+static __thread REDIRECT *redir_stack[HEREDOC_MAX];
+__thread int need_here_doc;
 
 /* Where shell input comes from.  History expansion is performed on each
    line when the shell is interactive. */
-static char *shell_input_line = (char *)NULL;
-static size_t shell_input_line_index;
-static size_t shell_input_line_size;	/* Amount allocated for shell_input_line. */
-static size_t shell_input_line_len;	/* strlen (shell_input_line) */
+static __thread char *shell_input_line = (char *)NULL;
+static __thread size_t shell_input_line_index;
+static __thread size_t shell_input_line_size;	/* Amount allocated for shell_input_line. */
+static __thread size_t shell_input_line_len;	/* strlen (shell_input_line) */
 
 /* Either zero or EOF. */
-static int shell_input_line_terminator;
+static __thread int shell_input_line_terminator;
 
 /* The line number in a script on which a function definition starts. */
-static int function_dstart;
+static __thread int function_dstart;
 
 /* The line number in a script on which a function body starts. */
-static int function_bstart;
+static __thread int function_bstart;
 
 /* The line number in a script at which an arithmetic for command starts. */
-static int arith_for_lineno;
+static __thread int arith_for_lineno;
 
 /* The decoded prompt string.  Used if READLINE is not defined or if
    editing is turned off.  Analogous to current_readline_prompt. */
-static char *current_decoded_prompt;
+static __thread char *current_decoded_prompt;
 
 /* The last read token, or NULL.  read_token () uses this for context
    checking. */
-static int last_read_token;
+static __thread int last_read_token;
 
 /* The token read prior to last_read_token. */
-static int token_before_that;
+static __thread int token_before_that;
 
 /* The token read prior to token_before_that. */
-static int two_tokens_ago;
+static __thread int two_tokens_ago;
 
-static int global_extglob;
+static __thread int global_extglob;
 
 /* The line number in a script where the word in a `case WORD', `select WORD'
    or `for WORD' begins.  This is a nested command maximum, since the array
    index is decremented after a case, select, or for command is parsed. */
 #define MAX_CASE_NEST	128
-static int word_lineno[MAX_CASE_NEST+1];
-static int word_top = -1;
+static __thread int word_lineno[MAX_CASE_NEST+1];
+static __thread int word_top = -1;
 
 /* If non-zero, it is the token that we want read_token to return
    regardless of what text is (or isn't) present to be read.  This
    is reset by read_token.  If token_to_read == WORD or
    ASSIGNMENT_WORD, yylval.word should be set to word_desc_to_read. */
-static int token_to_read;
-static WORD_DESC *word_desc_to_read;
+static __thread int token_to_read;
+static __thread WORD_DESC *word_desc_to_read;
 
-static REDIRECTEE source;
-static REDIRECTEE redir;
+static __thread REDIRECTEE source;
+static __thread REDIRECTEE redir;
 
-static FILE *yyoutstream;
-static FILE *yyerrstream;
+
 %}
 
 %union {
@@ -1374,7 +1373,7 @@ timespec:	TIME
 #endif
 
 /* Global var is non-zero when end of file has been reached. */
-int EOF_Reached = 0;
+__thread int EOF_Reached = 0;
 
 #ifdef DEBUG
 static void
@@ -1383,8 +1382,7 @@ debug_parser (i)
 {
 #if YYDEBUG != 0
   yydebug = i;
-  yyoutstream = stdout;
-  yyerrstream = stderr;
+
 #endif
 }
 #endif
@@ -1406,7 +1404,7 @@ return_EOF ()
 
 /* Variable containing the current get and unget functions.
    See ./input.h for a clearer description. */
-BASH_INPUT bash_input;
+__thread BASH_INPUT bash_input;
 
 /* Set all of the fields in BASH_INPUT to NULL.  Free bash_input.name if it
    is non-null, avoiding a memory leak. */
@@ -1494,9 +1492,9 @@ input_file_descriptor ()
 /* **************************************************************** */
 
 #if defined (READLINE)
-char *current_readline_prompt = (char *)NULL;
-char *current_readline_line = (char *)NULL;
-int current_readline_line_index = 0;
+__thread char *current_readline_prompt = (char *)NULL;
+__thread char *current_readline_line = (char *)NULL;
+__thread int current_readline_line_index = 0;
 
 static int
 yy_readline_get ()
@@ -1507,8 +1505,8 @@ yy_readline_get ()
 
   if (current_readline_line == 0)
     {
-      if (bash_readline_initialized == 0)
-	initialize_readline ();
+    //   if (bash_readline_initialized == 0)
+	// initialize_readline ();
 
 #if defined (JOB_CONTROL)
       if (job_control)
@@ -1728,17 +1726,17 @@ typedef struct stream_saver {
 } STREAM_SAVER;
 
 /* The globally known line number. */
-int line_number = 0;
+__thread int line_number = 0;
 
 /* The line number offset set by assigning to LINENO.  Not currently used. */
-int line_number_base = 0;
+__thread int line_number_base = 0;
 
 #if defined (COND_COMMAND)
-static int cond_lineno;
-static int cond_token;
+static __thread int cond_lineno;
+static __thread int cond_token;
 #endif
 
-STREAM_SAVER *stream_list = (STREAM_SAVER *)NULL;
+__thread STREAM_SAVER *stream_list = (STREAM_SAVER *)NULL;
 
 void
 push_stream (reset_lineno)
@@ -1890,7 +1888,7 @@ typedef struct string_saver {
   int flags;
 } STRING_SAVER;
 
-STRING_SAVER *pushed_string_list = (STRING_SAVER *)NULL;
+__thread STRING_SAVER *pushed_string_list = (STRING_SAVER *)NULL;
 
 /*
  * Push the current shell_input_line onto a stack of such lines and make S
@@ -2166,17 +2164,17 @@ read_secondary_line (remove_quoted_newline)
     prompt_again ();
   ret = read_a_line (remove_quoted_newline);
 #if defined (HISTORY)
-  if (ret && remember_on_history && (parser_state & PST_HEREDOC))
-    {
-      /* To make adding the here-document body right, we need to rely on
-	 history_delimiting_chars() returning \n for the first line of the
-	 here-document body and the null string for the second and subsequent
-	 lines, so we avoid double newlines.
-	 current_command_line_count == 2 for the first line of the body. */
+//   if (ret && remember_on_history && (parser_state & PST_HEREDOC))
+//     {
+//       /* To make adding the here-document body right, we need to rely on
+// 	 history_delimiting_chars() returning \n for the first line of the
+// 	 here-document body and the null string for the second and subsequent
+// 	 lines, so we avoid double newlines.
+// 	 current_command_line_count == 2 for the first line of the body. */
 
-      current_command_line_count++;
-      maybe_add_history (ret);
-    }
+//       current_command_line_count++;
+//       maybe_add_history (ret);
+//     }
 #endif /* HISTORY */
   return ret;
 }
@@ -2274,12 +2272,12 @@ STRING_INT_ALIST other_token_alist[] = {
    can use them to decide when to add otherwise blank lines to the history. */
 
 /* The primary delimiter stack. */
-struct dstack dstack = {  (char *)NULL, 0, 0 };
+__thread struct dstack dstack = {  (char *)NULL, 0, 0 };
 
 /* A temporary delimiter stack to be used when decoding prompt strings.
    This is needed because command substitutions in prompt strings (e.g., PS2)
    can screw up the parser's quoting state. */
-static struct dstack temp_dstack = { (char *)NULL, 0, 0 };
+static __thread struct dstack temp_dstack = { (char *)NULL, 0, 0 };
 
 /* Macro for accessing the top delimiter on the stack.  Returns the
    delimiter or zero if none. */
@@ -2307,9 +2305,9 @@ static struct dstack temp_dstack = { (char *)NULL, 0, 0 };
 /* This implements one-character lookahead/lookbehind across physical input
    lines, to avoid something being lost because it's pushed back with
    shell_ungetc when we're at the start of a line. */
-static int eol_ungetc_lookahead = 0;
+static __thread int eol_ungetc_lookahead = 0;
 
-static int unquoted_backslash = 0;
+static __thread int unquoted_backslash = 0;
 
 static int
 shell_getc (remove_quoted_newline)
@@ -2471,65 +2469,65 @@ shell_getc (remove_quoted_newline)
 
       set_line_mbstate ();
 
-#if defined (HISTORY)
-      if (remember_on_history && shell_input_line && shell_input_line[0])
-	{
-	  char *expansions;
-#  if defined (BANG_HISTORY)
-	  /* If the current delimiter is a single quote, we should not be
-	     performing history expansion, even if we're on a different
-	     line from the original single quote. */
-	  if (current_delimiter (dstack) == '\'')
-	    history_quoting_state = '\'';
-	  else if (current_delimiter (dstack) == '"')
-	    history_quoting_state = '"';
-	  else
-	    history_quoting_state = 0;
-#  endif
-	  /* Calling with a third argument of 1 allows remember_on_history to
-	     determine whether or not the line is saved to the history list */
-	  expansions = pre_process_line (shell_input_line, 1, 1);
-#  if defined (BANG_HISTORY)
-	  history_quoting_state = 0;
-#  endif
-	  if (expansions != shell_input_line)
-	    {
-	      free (shell_input_line);
-	      shell_input_line = expansions;
-	      shell_input_line_len = shell_input_line ?
-					strlen (shell_input_line) : 0;
-	      if (shell_input_line_len == 0)
-		current_command_line_count--;
+// #if defined (HISTORY)
+//       if (remember_on_history && shell_input_line && shell_input_line[0])
+// 	{
+// 	  char *expansions;
+// #  if defined (BANG_HISTORY)
+// 	  /* If the current delimiter is a single quote, we should not be
+// 	     performing history expansion, even if we're on a different
+// 	     line from the original single quote. */
+// 	  if (current_delimiter (dstack) == '\'')
+// 	    history_quoting_state = '\'';
+// 	  else if (current_delimiter (dstack) == '"')
+// 	    history_quoting_state = '"';
+// 	  else
+// 	    history_quoting_state = 0;
+// #  endif
+// 	  /* Calling with a third argument of 1 allows remember_on_history to
+// 	     determine whether or not the line is saved to the history list */
+// 	  expansions = pre_process_line (shell_input_line, 1, 1);
+// #  if defined (BANG_HISTORY)
+// 	  history_quoting_state = 0;
+// #  endif
+// 	  if (expansions != shell_input_line)
+// 	    {
+// 	      free (shell_input_line);
+// 	      shell_input_line = expansions;
+// 	      shell_input_line_len = shell_input_line ?
+// 					strlen (shell_input_line) : 0;
+// 	      if (shell_input_line_len == 0)
+// 		current_command_line_count--;
 
-	      /* We have to force the xrealloc below because we don't know
-		 the true allocated size of shell_input_line anymore. */
-	      shell_input_line_size = shell_input_line_len;
+// 	      /* We have to force the xrealloc below because we don't know
+// 		 the true allocated size of shell_input_line anymore. */
+// 	      shell_input_line_size = shell_input_line_len;
 
-	      set_line_mbstate ();
-	    }
-	}
-      /* Try to do something intelligent with blank lines encountered while
-	 entering multi-line commands.  XXX - this is grotesque */
-      else if (remember_on_history && shell_input_line &&
-	       shell_input_line[0] == '\0' &&
-	       current_command_line_count > 1)
-	{
-	  if (current_delimiter (dstack))
-	    /* We know shell_input_line[0] == 0 and we're reading some sort of
-	       quoted string.  This means we've got a line consisting of only
-	       a newline in a quoted string.  We want to make sure this line
-	       gets added to the history. */
-	    maybe_add_history (shell_input_line);
-	  else
-	    {
-	      char *hdcs;
-	      hdcs = history_delimiting_chars (shell_input_line);
-	      if (hdcs && hdcs[0] == ';')
-		maybe_add_history (shell_input_line);
-	    }
-	}
+// 	      set_line_mbstate ();
+// 	    }
+// 	}
+//       /* Try to do something intelligent with blank lines encountered while
+// 	 entering multi-line commands.  XXX - this is grotesque */
+//       else if (remember_on_history && shell_input_line &&
+// 	       shell_input_line[0] == '\0' &&
+// 	       current_command_line_count > 1)
+// 	{
+// 	  if (current_delimiter (dstack))
+// 	    /* We know shell_input_line[0] == 0 and we're reading some sort of
+// 	       quoted string.  This means we've got a line consisting of only
+// 	       a newline in a quoted string.  We want to make sure this line
+// 	       gets added to the history. */
+// 	    maybe_add_history (shell_input_line);
+// 	  else
+// 	    {
+// 	      char *hdcs;
+// 	      hdcs = history_delimiting_chars (shell_input_line);
+// 	      if (hdcs && hdcs[0] == ';')
+// 		maybe_add_history (shell_input_line);
+// 	    }
+// 	}
 
-#endif /* HISTORY */
+// #endif /* HISTORY */
 
       if (shell_input_line)
 	{
@@ -2795,7 +2793,7 @@ push_token (x)
 
 /* Place to remember the token.  We try to keep the buffer
    at a reasonable size, but it can grow. */
-static char *token = (char *)NULL;
+static __thread char *token = (char *)NULL;
 
 /* Current size of the token buffer. */
 static int token_buffer_size;
@@ -3619,7 +3617,7 @@ parse_matched_pair (qc, open, close, lenp, flags)
       if (ch == EOF)
 	{
 	  free (ret);
-	  parser_error (start_lineno, _("unexpected EOF while looking for matching `%c'"), close);
+	   parser_error (start_lineno, _("unexpected EOF while looking for matching `%c'"), close);
 	  EOF_Reached = 1;	/* XXX */
 	  return (&matched_pair_error);
 	}
@@ -3758,7 +3756,7 @@ parse_matched_pair (qc, open, close, lenp, flags)
 	      else
 		nestret = parse_matched_pair (ch, ch, ch, &nestlen, rflags);
 	      pop_delimiter (dstack);
-	      CHECK_NESTRET_ERROR ();
+	       CHECK_NESTRET_ERROR ();
 
 	      if MBTEST((tflags & LEX_WASDOL) && ch == '\'' && (extended_quote || (rflags & P_DQUOTE) == 0))
 		{
@@ -3821,7 +3819,7 @@ parse_matched_pair (qc, open, close, lenp, flags)
 	{
 	  nestret = parse_matched_pair (0, '`', '`', &nestlen, rflags);
 
-	  CHECK_NESTRET_ERROR ();
+	   CHECK_NESTRET_ERROR ();
 	  APPEND_NESTRET ();
 
 	  FREE (nestret);
@@ -3962,7 +3960,7 @@ parse_comsub (qc, open, close, lenp, flags)
   count = 1;
   tflags = LEX_RESWDOK;
 #if defined (BANG_HISTORY)
-  orig_histexp = history_expansion_inhibited;
+//   orig_histexp = history_expansion_inhibited;
 #endif
 
   if ((flags & P_COMMAND) && qc != '\'' && qc != '"' && (flags & P_DQUOTE) == 0)
@@ -3991,7 +3989,7 @@ comsub_readchar:
 	{
 eof_error:
 #if defined (BANG_HISTORY)
-	  history_expansion_inhibited = orig_histexp;
+	//   history_expansion_inhibited = orig_histexp;
 #endif
 	  free (ret);
 	  FREE (heredelim);
@@ -4012,7 +4010,7 @@ eof_error:
 	      tflags &= ~LEX_HEREDELIM;
 	      tflags |= LEX_INHEREDOC;
 #if defined (BANG_HISTORY)
-	      history_expansion_inhibited = 1;
+	    //   history_expansion_inhibited = 1;
 #endif
 	      lex_firstind = retind + 1;
 	    }
@@ -4030,7 +4028,7 @@ eof_error:
 		  heredelim = 0;
 		  lex_firstind = -1;
 #if defined (BANG_HISTORY)
-		  history_expansion_inhibited = orig_histexp;
+		//   history_expansion_inhibited = orig_histexp;
 #endif
 		}
 	      else
@@ -4067,7 +4065,7 @@ eof_error:
 	      heredelim = 0;
 	      lex_firstind = -1;
 #if defined (BANG_HISTORY)
-	      history_expansion_inhibited = orig_histexp;
+	    //   history_expansion_inhibited = orig_histexp;
 #endif
 	    }
 	}
@@ -4180,7 +4178,7 @@ eof_error:
 	      tflags &= ~LEX_HEREDELIM;
 	      lex_firstind = retind + 1;
 #if defined (BANG_HISTORY)
-	      history_expansion_inhibited = 1;
+	    //   history_expansion_inhibited = 1;
 #endif
 	    }
 #endif
@@ -4202,7 +4200,7 @@ eof_error:
 		  tflags &= ~LEX_HEREDELIM;
 		  lex_firstind = retind + 1;
 #if defined (BANG_HISTORY)
-		  history_expansion_inhibited = 1;
+		//   history_expansion_inhibited = 1;
 #endif
 		}
 	      else
@@ -4475,7 +4473,7 @@ eof_error:
     }
 
 #if defined (BANG_HISTORY)
-  history_expansion_inhibited = orig_histexp;
+//   history_expansion_inhibited = orig_histexp;
 #endif
   FREE (heredelim);
   ret[retind] = '\0';
@@ -5907,10 +5905,10 @@ prompt_history_number (pmt)
 
   if (pmt == ps1_prompt)	/* are we expanding $PS1? */
     return ret;
-  else if (pmt == ps2_prompt && command_oriented_history == 0)
-    return ret;			/* not command oriented history */
-  else if (pmt == ps2_prompt && command_oriented_history && current_command_first_line_saved)
-    return ret - 1;
+//   else if (pmt == ps2_prompt && command_oriented_history == 0)
+//     return ret;			/* not command oriented history */
+//   else if (pmt == ps2_prompt && command_oriented_history && current_command_first_line_saved)
+//     return ret - 1;
   else
     return ret - 1;		/* PS0, PS4, ${var@P}, PS2 other cases */
 }
@@ -6365,8 +6363,8 @@ int
 yyerror (msg)
      const char *msg;
 {
-  report_syntax_error ((char *)NULL);
-  reset_parser ();
+   report_syntax_error ((char *)NULL);
+   reset_parser ();
   return (0);
 }
 
@@ -6540,16 +6538,7 @@ report_syntax_error (message)
   set_pipestatus_from_exit (last_command_exit_value);
 }
 
-/* ??? Needed function. ??? We have to be able to discard the constructs
-   created during parsing.  In the case of error, we want to return
-   allocated objects to the memory pool.  In the case of no error, we want
-   to throw away the information about where the allocated objects live.
-   (dispose_command () will actually free the command.) */
-static void
-discard_parser_constructs (error_p)
-     int error_p;
-{
-}
+
 
 /************************************************
  *						*
@@ -6560,15 +6549,15 @@ discard_parser_constructs (error_p)
 /* Do that silly `type "bye" to exit' stuff.  You know, "ignoreeof". */
 
 /* A flag denoting whether or not ignoreeof is set. */
-int ignoreeof = 0;
+__thread int ignoreeof = 0;
 
 /* The number of times that we have encountered an EOF character without
    another character intervening.  When this gets above the limit, the
    shell terminates. */
-int eof_encountered = 0;
+__thread int eof_encountered = 0;
 
 /* The limit for eof_encountered. */
-int eof_encountered_limit = 10;
+__thread int eof_encountered_limit = 10;
 
 /* If we have EOF as the only input unit, this user wants to leave
    the shell.  If the shell is not interactive, then just leave.
@@ -6625,7 +6614,7 @@ handle_eof_input_unit ()
 /* It's very important that these two functions treat the characters
    between ( and ) identically. */
 
-static WORD_LIST parse_string_error;
+static __thread WORD_LIST parse_string_error;
 
 /* Take a string and run it through the shell parser, returning the
    resultant word list.  Used by compound array assignment. */
@@ -6643,13 +6632,13 @@ parse_string_to_word_list (s, flags, whom)
   int old_remember_on_history, old_history_expansion_inhibited;
 #endif
 
-#if defined (HISTORY)
-  old_remember_on_history = remember_on_history;
-#  if defined (BANG_HISTORY)
-  old_history_expansion_inhibited = history_expansion_inhibited;
-#  endif
-  bash_history_disable ();
-#endif
+// #if defined (HISTORY)
+//   old_remember_on_history = remember_on_history;
+// #  if defined (BANG_HISTORY)
+//   old_history_expansion_inhibited = history_expansion_inhibited;
+// #  endif
+//   bash_history_disable ();
+// #endif
 
   orig_line_number = line_number;
   orig_line_count = current_command_line_count;
@@ -6697,12 +6686,12 @@ parse_string_to_word_list (s, flags, whom)
   if (ea)
     parser_restore_alias ();
 
-#if defined (HISTORY)
-  remember_on_history = old_remember_on_history;
-#  if defined (BANG_HISTORY)
-  history_expansion_inhibited = old_history_expansion_inhibited;
-#  endif /* BANG_HISTORY */
-#endif /* HISTORY */
+// #if defined (HISTORY)
+//   remember_on_history = old_remember_on_history;
+// #  if defined (BANG_HISTORY)
+//   history_expansion_inhibited = old_history_expansion_inhibited;
+// #  endif /* BANG_HISTORY */
+// #endif /* HISTORY */
 
   echo_input_at_read = old_echo_input;
   expand_aliases = old_expand_aliases;
@@ -6832,12 +6821,12 @@ save_parser_state (ps)
 
   ps->current_command_line_count = current_command_line_count;
 
-#if defined (HISTORY)
-  ps->remember_on_history = remember_on_history;
-#  if defined (BANG_HISTORY)
-  ps->history_expansion_inhibited = history_expansion_inhibited;
-#  endif
-#endif
+// #if defined (HISTORY)
+//   ps->remember_on_history = remember_on_history;
+// #  if defined (BANG_HISTORY)
+//   ps->history_expansion_inhibited = history_expansion_inhibited;
+// #  endif
+// #endif
 
   ps->last_command_exit_value = last_command_exit_value;
 #if defined (ARRAY_VARS)
@@ -6870,7 +6859,6 @@ void
 restore_parser_state (ps)
      sh_parser_state_t *ps;
 {
-  int i;
 
   if (ps == 0)
     return;
@@ -6889,12 +6877,12 @@ restore_parser_state (ps)
 
   current_command_line_count = ps->current_command_line_count;
 
-#if defined (HISTORY)
-  remember_on_history = ps->remember_on_history;
-#  if defined (BANG_HISTORY)
-  history_expansion_inhibited = ps->history_expansion_inhibited;
-#  endif
-#endif
+// #if defined (HISTORY)
+//   remember_on_history = ps->remember_on_history;
+// #  if defined (BANG_HISTORY)
+//   history_expansion_inhibited = ps->history_expansion_inhibited;
+// #  endif
+// #endif
 
   last_command_exit_value = ps->last_command_exit_value;
 #if defined (ARRAY_VARS)

@@ -39,7 +39,7 @@
 #endif
 
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif /* !errno */
 
 /* The list of remembered directories. */

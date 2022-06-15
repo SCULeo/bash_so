@@ -37,7 +37,7 @@
 
 #include <errno.h>
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif /* !errno */
 
 #include "bashansi.h"
@@ -73,7 +73,7 @@ static void error_prolog PARAMS((int));
 
 const char * const the_current_maintainer = MAINTAINER;
 
-int gnu_error_format = 0;
+__thread int gnu_error_format = 0;
 
 static void
 error_prolog (print_lineno)
@@ -157,13 +157,13 @@ programming_error (format, va_alist)
   fprintf (stderr, "\n");
   va_end (args);
 
-#if defined (HISTORY)
-  if (remember_on_history)
-    {
-      h = last_history_line ();
-      fprintf (stderr, _("last command: %s\n"), h ? h : "(null)");
-    }
-#endif
+// #if defined (HISTORY)
+//   if (remember_on_history)
+//     {
+//       h = last_history_line ();
+//       fprintf (stderr, _("last command: %s\n"), h ? h : "(null)");
+//     }
+// #endif
 
 #if 0
   fprintf (stderr, "Report this to %s\n", the_current_maintainer);

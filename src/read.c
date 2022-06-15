@@ -35,7 +35,7 @@
 
 #if defined (READLINE)
 #include "bashline.h"
-#include <readline/readline.h>
+#include <readline.h>
 #endif
 
 #if defined (BUFFERED_INPUT)
@@ -45,7 +45,7 @@
 #include "shmbutil.h"
 
 #if !defined(errno)
-extern int errno;
+//extern int errno;
 #endif
 
 struct ttsave
@@ -72,7 +72,7 @@ static void reset_alarm PARAMS((void));
 
 /* Try this to see what the rest of the shell can do with the information. */
 procenv_t alrmbuf;
-int sigalrm_seen;
+__thread int sigalrm_seen;
 
 static int reading, tty_modified;
 static SigHandler *old_alrm;
@@ -275,7 +275,7 @@ read_builtin (list)
   /* Convenience: check early whether or not the first of possibly several
      variable names is a valid identifier, and bail early if so. */
 #if defined (ARRAY_VARS)
-  vflags = assoc_expand_once ? (VA_NOEXPAND|VA_ONEWORD) : 0;
+  // vflags = assoc_expand_once ? (VA_NOEXPAND|VA_ONEWORD) : 0;
   if (list && legal_identifier (list->word->word) == 0 && valid_array_reference (list->word->word, vflags) == 0)
 #else
   if (list && legal_identifier (list->word->word) == 0)
@@ -468,8 +468,8 @@ read_builtin (list)
   save_instream = 0;
   if (edit && fd != 0)
     {
-      if (bash_readline_initialized == 0)
-	initialize_readline ();
+  //     if (bash_readline_initialized == 0)
+	// initialize_readline ();
 
       unwind_protect_var (rl_instream);
       save_instream = rl_instream;
@@ -1047,8 +1047,8 @@ edit_line (p, itext)
   char *ret;
   int len;
 
-  if (bash_readline_initialized == 0)
-    initialize_readline ();
+  // if (bash_readline_initialized == 0)
+  //   initialize_readline ();
 
   old_attempted_completion_function = rl_attempted_completion_function;
   rl_attempted_completion_function = (rl_completion_func_t *)NULL;
@@ -1088,8 +1088,8 @@ set_eol_delim (c)
 {
   Keymap cmap;
 
-  if (bash_readline_initialized == 0)
-    initialize_readline ();
+  // if (bash_readline_initialized == 0)
+  //   initialize_readline ();
   cmap = rl_get_keymap ();
 
   /* Save the old delimiter char binding */

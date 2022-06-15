@@ -102,8 +102,8 @@ declare_internal (list, local_var)
   reset_internal_getopt ();
   while ((opt = internal_getopt (list, DECLARE_OPTS)) != -1)
     {
-      flags = list_opttype == '+' ? &flags_off : &flags_on;
-
+    //   flags = list_opttype == '+' ? &flags_off : &flags_on;
+		flags = &flags_off;
       /* If you add options here, see whether or not they need to be added to
 	 the loop in subst.c:shell_expand_word_list() */
       switch (opt)
@@ -243,7 +243,7 @@ declare_internal (list, local_var)
       name = savestring (list->word->word);
       wflags = list->word->flags;
 #if defined (ARRAY_VARS)
-      assoc_noexpand = assoc_expand_once && (wflags & W_ASSIGNMENT);
+    //   assoc_noexpand = assoc_expand_once && (wflags & W_ASSIGNMENT);
 #else
       assoc_noexpand = 0;
 #endif

@@ -166,7 +166,7 @@ static int _rl_col_width PARAMS((const char *, int, int, int));
    RL_DISPLAY_FIXED variable.  This is good for efficiency. */
 
 /* Application-specific redisplay function. */
-rl_voidfunc_t *rl_redisplay_function = rl_redisplay;
+__thread rl_voidfunc_t *rl_redisplay_function = rl_redisplay;
 
 /* Global variables declared here. */
 /* What YOU turn on when you have handled all redisplay yourself. */
@@ -174,7 +174,7 @@ int rl_display_fixed = 0;
 
 /* The stuff that gets printed out before the actual text of the line.
    This is usually pointing to rl_prompt. */
-char *rl_display_prompt = (char *)NULL;
+__thread char *rl_display_prompt = (char *)NULL;
 
 /* Variables used to include the editing mode in the prompt. */
 char *_rl_emacs_mode_str;

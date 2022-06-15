@@ -45,27 +45,27 @@ struct execstate
 	
 
 /* Variables declared in execute_cmd.c, used by many other files */
-extern int return_catch_flag;
-extern int return_catch_value;
-extern volatile int last_command_exit_value;
-extern int last_command_exit_signal;
-extern int builtin_ignoring_errexit;
-extern int executing_builtin;
-extern int executing_list;
-extern int comsub_ignore_return;
-extern int subshell_level;
-extern int match_ignore_case;
-extern int executing_command_builtin;
-extern int funcnest, funcnest_max;
-extern int evalnest, evalnest_max;
-extern int sourcenest, sourcenest_max;
-extern int stdin_redir;
-extern int line_number_for_err_trap;
+extern __thread int return_catch_flag;
+extern __thread int return_catch_value;
+extern __thread volatile int last_command_exit_value;
+extern __thread int last_command_exit_signal;
+extern __thread int builtin_ignoring_errexit;
+extern __thread int executing_builtin;
+extern __thread int executing_list;
+extern __thread int comsub_ignore_return;
+extern __thread int subshell_level;
+// extern int match_ignore_case;
+extern __thread int executing_command_builtin;
+extern __thread int funcnest, funcnest_max;
+extern __thread int evalnest, evalnest_max;
+extern __thread int sourcenest, sourcenest_max;
+extern __thread int stdin_redir;
+extern __thread int line_number_for_err_trap;
 
-extern char *the_printed_command_except_trap;
+extern __thread char *the_printed_command_except_trap;
 
-extern char *this_command_name;
-extern SHELL_VAR *this_shell_function;
+extern __thread char *this_command_name;
+extern __thread SHELL_VAR *this_shell_function;
 
 /* Functions declared in execute_cmd.c, used by many other files */
 

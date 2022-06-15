@@ -59,7 +59,7 @@
 #include <xmalloc.h>
 
 #ifndef errno
-extern int errno;
+//extern int errno;
 #endif
 
 #if !defined (HAVE_INET_ATON)

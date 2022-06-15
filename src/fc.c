@@ -32,12 +32,12 @@
 #include "parser.h"
 #include "bashhist.h"
 #include "maxpath.h"
-#include <readline/history.h>
+#include <history.h>
 #include "bashgetopt.h"
 #include "common.h"
 
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif /* !errno */
 
 #define HIST_INVALID INT_MIN
@@ -52,7 +52,7 @@ extern int unlink PARAMS((const char *));
 
 extern FILE *sh_mktmpfp PARAMS((char *, int, char **));
 
-extern int suppress_debug_trap_verbose;
+extern __thread int suppress_debug_trap_verbose;
 
 /* **************************************************************** */
 /*								    */
@@ -267,9 +267,11 @@ fc_builtin (list)
      remember_on_history, command substitution in a shell when set -o history
      has been enabled (interactive or not) should use it in the last_hist
      calculation as if it were on. */
-  rh = remember_on_history || ((subshell_environment & SUBSHELL_COMSUB) && enable_history_list);
-  last_hist = i - rh - hist_last_line_added;
+  // rh = remember_on_history || ((subshell_environment & SUBSHELL_COMSUB) && enable_history_list);
+    rh =  ((subshell_environment & SUBSHELL_COMSUB));
 
+  // last_hist = i - rh - hist_last_line_added;
+  last_hist = i - rh;
   /* Make sure that real_last is calculated the same way here and in
      fc_gethnum.  The return value from fc_gethnum is treated specially if
      it is == real_last and we are listing commands. */
@@ -336,7 +338,8 @@ fc_builtin (list)
 
   /* "When not listing, the fc command that caused the editing shall not be
      entered into the history list." */
-  if (listing == 0 && hist_last_line_added)
+  // if (listing == 0 && hist_last_line_added)
+  if (listing == 0)
     {
       bash_delete_last_history ();
       /* If we're editing a single command -- the last command in the
@@ -460,7 +463,7 @@ fc_builtin (list)
      call to parse_and_execute farther up the function call stack (e.g.,
      if this is called by vi_edit_and_execute_command) may have already
      called bash_history_disable. */
-  remember_on_history = 1;
+  // remember_on_history = 1;
 
   /* Turn on the `v' flag while fc_execute_file runs so the commands
      will be echoed as they are read by the parser. */
@@ -526,9 +529,11 @@ fc_gethnum (command, hlist, mode)
      remember_on_history, command substitution in a shell when set -o history
      has been enabled (interactive or not) should use it in the last_hist
      calculation as if it were on. */
-  rh = remember_on_history || ((subshell_environment & SUBSHELL_COMSUB) && enable_history_list);
-  last_hist = i - rh - hist_last_line_added;
+  // rh = remember_on_history || ((subshell_environment & SUBSHELL_COMSUB) && enable_history_list);
+  rh =   ((subshell_environment & SUBSHELL_COMSUB) );
 
+  // last_hist = i - rh - hist_last_line_added;
+  last_hist = i - rh;
   if (i == last_hist && hlist[last_hist] == 0)
     while (last_hist >= 0 && hlist[last_hist] == 0)
       last_hist--;

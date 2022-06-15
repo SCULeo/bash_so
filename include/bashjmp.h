@@ -28,7 +28,7 @@ extern procenv_t	subshell_top_level;
 extern procenv_t	return_catch;	/* used by `return' builtin */
 extern procenv_t	wait_intr_buf;
 
-extern int no_longjmp_on_fatal_error;
+// extern int no_longjmp_on_fatal_error;
 
 #define SHFUNC_RETURN()	sh_longjmp (return_catch, 1)
 

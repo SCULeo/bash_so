@@ -1037,7 +1037,7 @@ _rl_insert_next_callback (_rl_callback_generic_arg *data)
     }
 
   /* Deregister function, let rl_callback_read_char deallocate data */
-  _rl_callback_func = 0;
+  // _rl_callback_func = 0;
   _rl_want_redisplay = 1;
 
   if (count == 0)
@@ -1059,8 +1059,8 @@ rl_quoted_insert (int count, int key)
 #if defined (READLINE_CALLBACKS)
   if (RL_ISSTATE (RL_STATE_CALLBACK))
     {
-      _rl_callback_data = _rl_callback_data_alloc (count);
-      _rl_callback_func = _rl_insert_next_callback;
+      // _rl_callback_data = _rl_callback_data_alloc (count);
+      // _rl_callback_func = _rl_insert_next_callback;
       return (0);
     }
 #endif
@@ -1759,7 +1759,7 @@ static int
 _rl_char_search_callback (data)
      _rl_callback_generic_arg *data;
 {
-  _rl_callback_func = 0;
+  // _rl_callback_func = 0;
   _rl_want_redisplay = 1;
 
   return (_rl_char_search (data->count, data->i1, data->i2));
@@ -1772,10 +1772,10 @@ rl_char_search (int count, int key)
 #if defined (READLINE_CALLBACKS)
   if (RL_ISSTATE (RL_STATE_CALLBACK))
     {
-      _rl_callback_data = _rl_callback_data_alloc (count);
-      _rl_callback_data->i1 = FFIND;
-      _rl_callback_data->i2 = BFIND;
-      _rl_callback_func = _rl_char_search_callback;
+      // _rl_callback_data = _rl_callback_data_alloc (count);
+      // _rl_callback_data->i1 = FFIND;
+      // _rl_callback_data->i2 = BFIND;
+      // _rl_callback_func = _rl_char_search_callback;
       return (0);
     }
 #endif
@@ -1789,10 +1789,10 @@ rl_backward_char_search (int count, int key)
 #if defined (READLINE_CALLBACKS)
   if (RL_ISSTATE (RL_STATE_CALLBACK))
     {
-      _rl_callback_data = _rl_callback_data_alloc (count);
-      _rl_callback_data->i1 = BFIND;
-      _rl_callback_data->i2 = FFIND;
-      _rl_callback_func = _rl_char_search_callback;
+      // _rl_callback_data = _rl_callback_data_alloc (count);
+      //_rl_callback_data->i1 = BFIND;
+      //_rl_callback_data->i2 = FFIND;
+      // _rl_callback_func = _rl_char_search_callback;
       return (0);
     }
 #endif

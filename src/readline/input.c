@@ -59,7 +59,7 @@
 #include <errno.h>
 
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif /* !errno */
 
 /* System-specific feature definitions and include files. */
@@ -84,16 +84,16 @@ extern sigset_t _rl_orig_sigset;
 
 /* Non-null means it is a pointer to a function to run while waiting for
    character input. */
-rl_hook_func_t *rl_event_hook = (rl_hook_func_t *)NULL;
+__thread rl_hook_func_t *rl_event_hook = (rl_hook_func_t *)NULL;
 
 /* A function to call if a read(2) is interrupted by a signal. */
-rl_hook_func_t *rl_signal_event_hook = (rl_hook_func_t *)NULL;
+__thread rl_hook_func_t *rl_signal_event_hook = (rl_hook_func_t *)NULL;
 
 /* A function to replace _rl_input_available for applications using the
    callback interface. */
-rl_hook_func_t *rl_input_available_hook = (rl_hook_func_t *)NULL;
+__thread rl_hook_func_t *rl_input_available_hook = (rl_hook_func_t *)NULL;
 
-rl_getc_func_t *rl_getc_function = rl_getc;
+__thread rl_getc_func_t *rl_getc_function = rl_getc;
 
 static int _keyboard_input_timeout = 100000;		/* 0.1 seconds; it's in usec */
 

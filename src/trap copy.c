@@ -49,12 +49,12 @@
 #include "builtext.h"
 
 #if defined (READLINE)
-#  include <readline/readline.h>
+#  include <readline.h>
 #  include "bashline.h"
 #endif
 
 #ifndef errno
-extern int errno;
+//extern int errno;
 #endif
 
 /* Flags which describe the current handling state of a signal. */
@@ -89,7 +89,7 @@ static void trap_if_untrapped (int, char *);
 /* Variables used here but defined in other files. */
 extern procenv_t alrmbuf;
 
-extern volatile int from_return_trap;
+extern __thread volatile int from_return_trap;
 extern int waiting_for_child;
 
 extern WORD_LIST *subst_assign_varlist;
@@ -102,7 +102,7 @@ SigHandler *original_signals[NSIG];
    DEFAULT_SIG, which means do whatever you were going to do before
    you were so rudely interrupted, or IGNORE_SIG, which says ignore
    this signal. */
-char *trap_list[BASH_NSIG];
+__thread char *trap_list[BASH_NSIG];
 
 /* A bitmap of signals received for which we have trap handlers. */
 int pending_traps[NSIG];
@@ -111,18 +111,18 @@ int pending_traps[NSIG];
    Used in execute_cmd.c and builtins/common.c to clean up when
    parse_and_execute does not return normally after executing the
    trap command (e.g., when `return' is executed in the trap command). */
-int running_trap;
+__thread int running_trap;
 
 /* Set to last_command_exit_value before running a trap. */
-int trap_saved_exit_value;
+__thread int trap_saved_exit_value;
 
 /* The (trapped) signal received while executing in the `wait' builtin */
-int wait_signal_received;
+__thread int wait_signal_received;
 
-int trapped_signal_received;
+__thread int trapped_signal_received;
 
 /* Set to 1 to suppress the effect of `set v' in the DEBUG trap. */
-int suppress_debug_trap_verbose = 0;
+__thread int suppress_debug_trap_verbose = 0;
 
 #define GETORIGSIG(sig) \
   do { \

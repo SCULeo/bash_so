@@ -49,7 +49,7 @@
 #include <errno.h>
 
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif /* !errno */
 
 #include "posixstat.h"
@@ -70,7 +70,7 @@ extern char *strchr (), *strrchr ();
 #endif /* !strchr && !__STDC__ */
 
 /* Variables exported by this file. */
-Keymap rl_binding_keymap;
+__thread Keymap rl_binding_keymap;
 
 static int _rl_skip_to_delim PARAMS((char *, int, int));
 
@@ -1146,13 +1146,13 @@ parse_comparison_op (s, indp)
 typedef int _rl_parser_func_t PARAMS((char *));
 
 /* Things that mean `Control'. */
-const char * const _rl_possible_control_prefixes[] = {
-  "Control-", "C-", "CTRL-", (const char *)NULL
-};
+// const char * const _rl_possible_control_prefixes[] = {
+//   "Control-", "C-", "CTRL-", (const char *)NULL
+// };
 
-const char * const _rl_possible_meta_prefixes[] = {
-  "Meta", "M-", (const char *)NULL
-};
+// const char * const _rl_possible_meta_prefixes[] = {
+//   "Meta", "M-", (const char *)NULL
+// };
 
 /* Conditionals. */
 
@@ -1743,17 +1743,17 @@ rl_parse_and_bind (char *string)
 
   /* Add in control and meta bits. */
   foundmod = 0;
-  if (substring_member_of_array (string, _rl_possible_control_prefixes))
-    {
-      key = CTRL (_rl_to_upper (key));
-      foundmod = 1;
-    }
+  // if (substring_member_of_array (string, _rl_possible_control_prefixes))
+  //   {
+  //     key = CTRL (_rl_to_upper (key));
+  //     foundmod = 1;
+  //   }
 
-  if (substring_member_of_array (string, _rl_possible_meta_prefixes))
-    {
-      key = META (key);
-      foundmod = 1;
-    }
+  // if (substring_member_of_array (string, _rl_possible_meta_prefixes))
+  //   {
+  //     key = META (key);
+  //     foundmod = 1;
+  //   }
 
   if (foundmod == 0 && kname != string)
     {
@@ -1801,43 +1801,43 @@ static const struct {
   int *value;
   int flags;
 } boolean_varlist [] = {
-  { "bind-tty-special-chars",	&_rl_bind_stty_chars,		0 },
-  { "blink-matching-paren",	&rl_blink_matching_paren,	V_SPECIAL },
-  { "byte-oriented",		&rl_byte_oriented,		0 },
-#if defined (COLOR_SUPPORT)
-  { "colored-completion-prefix",&_rl_colored_completion_prefix,	0 },
-  { "colored-stats",		&_rl_colored_stats,		0 },
-#endif
-  { "completion-ignore-case",	&_rl_completion_case_fold,	0 },
-  { "completion-map-case",	&_rl_completion_case_map,	0 },
-  { "convert-meta",		&_rl_convert_meta_chars_to_ascii, 0 },
-  { "disable-completion",	&rl_inhibit_completion,		0 },
-  { "echo-control-characters",	&_rl_echo_control_chars,	0 },
-  { "enable-bracketed-paste",	&_rl_enable_bracketed_paste,	V_SPECIAL },
-  { "enable-keypad",		&_rl_enable_keypad,		0 },
-  { "enable-meta-key",		&_rl_enable_meta,		0 },
-  { "expand-tilde",		&rl_complete_with_tilde_expansion, 0 },
-  { "history-preserve-point",	&_rl_history_preserve_point,	0 },
-  { "horizontal-scroll-mode",	&_rl_horizontal_scroll_mode,	0 },
-  { "input-meta",		&_rl_meta_flag,			0 },
-  { "mark-directories",		&_rl_complete_mark_directories,	0 },
-  { "mark-modified-lines",	&_rl_mark_modified_lines,	0 },
-  { "mark-symlinked-directories", &_rl_complete_mark_symlink_dirs, 0 },
-  { "match-hidden-files",	&_rl_match_hidden_files,	0 },
-  { "menu-complete-display-prefix", &_rl_menu_complete_prefix_first, 0 },
-  { "meta-flag",		&_rl_meta_flag,			0 },
-  { "output-meta",		&_rl_output_meta_chars,		0 },
-  { "page-completions",		&_rl_page_completions,		0 },
-  { "prefer-visible-bell",	&_rl_prefer_visible_bell,	V_SPECIAL },
-  { "print-completions-horizontally", &_rl_print_completions_horizontally, 0 },
-  { "revert-all-at-newline",	&_rl_revert_all_at_newline,	0 },
-  { "show-all-if-ambiguous",	&_rl_complete_show_all,		0 },
-  { "show-all-if-unmodified",	&_rl_complete_show_unmodified,	0 },
-  { "show-mode-in-prompt",	&_rl_show_mode_in_prompt,	0 },
-  { "skip-completed-text",	&_rl_skip_completed_text,	0 },
-#if defined (VISIBLE_STATS)
-  { "visible-stats",		&rl_visible_stats,		0 },
-#endif /* VISIBLE_STATS */
+//   { "bind-tty-special-chars",	&_rl_bind_stty_chars,		0 },
+//   { "blink-matching-paren",	&rl_blink_matching_paren,	V_SPECIAL },
+//   { "byte-oriented",		&rl_byte_oriented,		0 },
+// #if defined (COLOR_SUPPORT)
+//   { "colored-completion-prefix",&_rl_colored_completion_prefix,	0 },
+//   { "colored-stats",		&_rl_colored_stats,		0 },
+// #endif
+//   { "completion-ignore-case",	&_rl_completion_case_fold,	0 },
+//   { "completion-map-case",	&_rl_completion_case_map,	0 },
+//   { "convert-meta",		&_rl_convert_meta_chars_to_ascii, 0 },
+//   { "disable-completion",	&rl_inhibit_completion,		0 },
+//   { "echo-control-characters",	&_rl_echo_control_chars,	0 },
+//   { "enable-bracketed-paste",	&_rl_enable_bracketed_paste,	V_SPECIAL },
+//   { "enable-keypad",		&_rl_enable_keypad,		0 },
+//   { "enable-meta-key",		&_rl_enable_meta,		0 },
+//   { "expand-tilde",		&rl_complete_with_tilde_expansion, 0 },
+//   { "history-preserve-point",	&_rl_history_preserve_point,	0 },
+//   { "horizontal-scroll-mode",	&_rl_horizontal_scroll_mode,	0 },
+//   { "input-meta",		&_rl_meta_flag,			0 },
+//   // { "mark-directories",		&_rl_complete_mark_directories,	0 },
+//   { "mark-modified-lines",	&_rl_mark_modified_lines,	0 },
+//   { "mark-symlinked-directories", &_rl_complete_mark_symlink_dirs, 0 },
+//   { "match-hidden-files",	&_rl_match_hidden_files,	0 },
+//   { "menu-complete-display-prefix", &_rl_menu_complete_prefix_first, 0 },
+//   { "meta-flag",		&_rl_meta_flag,			0 },
+//   { "output-meta",		&_rl_output_meta_chars,		0 },
+//   { "page-completions",		&_rl_page_completions,		0 },
+//   { "prefer-visible-bell",	&_rl_prefer_visible_bell,	V_SPECIAL },
+//   { "print-completions-horizontally", &_rl_print_completions_horizontally, 0 },
+//   { "revert-all-at-newline",	&_rl_revert_all_at_newline,	0 },
+//   // { "show-all-if-ambiguous",	&_rl_complete_show_all,		0 },
+//   // { "show-all-if-unmodified",	&_rl_complete_show_unmodified,	0 },
+//   { "show-mode-in-prompt",	&_rl_show_mode_in_prompt,	0 },
+//   { "skip-completed-text",	&_rl_skip_completed_text,	0 },
+// #if defined (VISIBLE_STATS)
+//   { "visible-stats",		&rl_visible_stats,		0 },
+// #endif /* VISIBLE_STATS */
   { (char *)NULL, (int *)NULL, 0 }
 };
 

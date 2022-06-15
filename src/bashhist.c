@@ -51,13 +51,14 @@
 #include "bashhist.h"	/* matching prototypes and declarations */
 #include "common.h"
 
-#include <readline/history.h>
+#include <history.h>
 #include <glob.h>
 #include <strmatch.h>
 
 #if defined (READLINE)
 #  include "bashline.h"
-extern int rl_done, rl_dispatching;	/* should really include readline.h */
+extern __thread int rl_done;
+extern __thread int rl_dispatching;	/* should really include readline.h */
 #endif
 
 #ifndef HISTSIZE_DEFAULT
@@ -65,7 +66,7 @@ extern int rl_done, rl_dispatching;	/* should really include readline.h */
 #endif
 
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif
 
 static int histignore_item_func PARAMS((struct ign *));
@@ -88,24 +89,24 @@ static struct ignorevar histignore =
 /* Non-zero means to remember lines typed to the shell on the history
    list.  This is different than the user-controlled behaviour; this
    becomes zero when we read lines from a file, for example. */
-int remember_on_history = 0;
-int enable_history_list = -1;	/* value for `set -o history' */
+// int remember_on_history = 0;
+// int enable_history_list = -1;	/* value for `set -o history' */
 
 /* The number of lines that Bash has added to this history session.  The
    difference between the number of the top element in the history list
    (offset from history_base) and the number of lines in the history file.
    Appending this session's history to the history file resets this to 0. */
-int history_lines_this_session;
+// int history_lines_this_session;
 
 /* The number of lines that Bash has read from the history file. */
-int history_lines_in_file;
+// int history_lines_in_file;
 
 #if defined (BANG_HISTORY)
 /* Non-zero means do no history expansion on this line, regardless
    of what history_expansion says. */
-int history_expansion_inhibited;
+// int history_expansion_inhibited;
 /* If non-zero, double quotes can quote the history expansion character. */
-int double_quotes_inhibit_history_expansion = 0;
+// int double_quotes_inhibit_history_expansion = 0;
 #endif
 
 /* With the old default, every line was saved in the history individually.
@@ -138,12 +139,12 @@ int double_quotes_inhibit_history_expansion = 0;
 
    This is now enabled by default.
    */
-int command_oriented_history = 1;
+// int command_oriented_history = 1;
 
 /* Set to 1 if the first line of a possibly-multi-line command was saved
    in the history list.  Managed by maybe_add_history(), but global so
    the history-manipluating builtins can see it. */
-int current_command_first_line_saved = 0;
+// int current_command_first_line_saved = 0;
 
 /* Set to the number of the most recent line of a possibly-multi-line command
    that contains a shell comment.  Used by bash_add_history() to determine
@@ -152,11 +153,11 @@ int current_command_line_comment = 0;
 
 /* Non-zero means to store newlines in the history list when using
    command_oriented_history rather than trying to use semicolons. */
-int literal_history;
+// int literal_history;
 
 /* Non-zero means to append the history to the history file at shell
    exit, even if the history has been stifled. */
-int force_append_history;
+// int force_append_history;
 
 /* A nit for picking at history saving.  Flags have the following values:
 
@@ -166,16 +167,16 @@ int force_append_history;
    line saved.
    Value & HC_ERASEDUPS means to remove all other matching lines from the
    history list before saving the latest line. */
-int history_control;
+// int history_control;
 
 /* Set to 1 if the last command was added to the history list successfully
    as a separate history entry; set to 0 if the line was ignored or added
    to a previous entry as part of command-oriented-history processing. */
-int hist_last_line_added;
+// int hist_last_line_added;
 
 /* Set to 1 if builtins/history.def:push_history added the last history
    entry. */
-int hist_last_line_pushed;
+// int hist_last_line_pushed;
 
 #if defined (READLINE)
 /* If non-zero, and readline is being used, the user is offered the
@@ -185,12 +186,12 @@ int history_reediting;
 /* If non-zero, and readline is being used, don't directly execute a
    line with history substitution.  Reload it into the editing buffer
    instead and let the user further edit and confirm with a newline. */
-int hist_verify;
+// int hist_verify;
 
 #endif /* READLINE */
 
 /* Non-zero means to not save function definitions in the history list. */
-int dont_save_function_defs;
+// int dont_save_function_defs;
 
 #if defined (BANG_HISTORY)
 static int bash_history_inhibit_expansion PARAMS((char *, int));
@@ -282,28 +283,28 @@ bash_history_reinit (interact)
      int interact;
 {
 #if defined (BANG_HISTORY)
-  history_expansion = (interact == 0) ? histexp_flag : HISTEXPAND_DEFAULT;
-  history_expansion_inhibited = (interact == 0) ? 1 - histexp_flag : 0;	/* changed in bash_history_enable() */
+  // history_expansion = (interact == 0) ? histexp_flag : HISTEXPAND_DEFAULT;
+  // history_expansion_inhibited = (interact == 0) ? 1 - histexp_flag : 0;	/* changed in bash_history_enable() */
   history_inhibit_expansion_function = bash_history_inhibit_expansion;
 #endif
-  remember_on_history = enable_history_list;
+  // remember_on_history = enable_history_list;
 }
 
 void
 bash_history_disable ()
 {
-  remember_on_history = 0;
+  // remember_on_history = 0;
 #if defined (BANG_HISTORY)
-  history_expansion_inhibited = 1;
+  // history_expansion_inhibited = 1;
 #endif
 }
 
 void
 bash_history_enable ()
 {
-  remember_on_history = enable_history_list = 1;
+  // remember_on_history = enable_history_list = 1;
 #if defined (BANG_HISTORY)
-  history_expansion_inhibited = 0;
+  // history_expansion_inhibited = 0;
   history_inhibit_expansion_function = bash_history_inhibit_expansion;
 #endif
   sv_history_control ("HISTCONTROL");
@@ -336,7 +337,7 @@ load_history ()
 	 read more lines than $HISTSIZE.  Remember the total number of lines
 	 we read so we don't count the last N lines as new over and over
 	 again. */
-      history_lines_in_file = history_lines_read_from_file;
+      // history_lines_in_file = history_lines_read_from_file;
       using_history ();
       /* history_lines_in_file = where_history () + history_base - 1; */
     }
@@ -346,7 +347,7 @@ void
 bash_clear_history ()
 {
   clear_history ();
-  history_lines_this_session = 0;
+  // history_lines_this_session = 0;
   /* XXX - reset history_lines_read_from_file? */
 }
 
@@ -361,7 +362,7 @@ bash_delete_histent (i)
   if (discard)
     {
       free_history_entry (discard);
-      history_lines_this_session--;
+      // history_lines_this_session--;
     }
   return discard != 0;
 }
@@ -376,7 +377,7 @@ bash_delete_history_range (first, last)
   discard_list = remove_history_range (first, last);
   for (i = 0; discard_list && discard_list[i]; i++)
     free_history_entry (discard_list[i]);
-  history_lines_this_session -= i;
+  // history_lines_this_session -= i;
 
   return 1;
 }
@@ -441,31 +442,31 @@ maybe_append_history (filename)
   struct stat buf;
 
   result = EXECUTION_SUCCESS;
-  if (history_lines_this_session > 0)
-    {
-      /* If the filename was supplied, then create it if necessary. */
-      if (stat (filename, &buf) == -1 && errno == ENOENT)
-	{
-	  fd = open (filename, O_WRONLY|O_CREAT, 0600);
-	  if (fd < 0)
-	    {
-	      builtin_error (_("%s: cannot create: %s"), filename, strerror (errno));
-	      return (EXECUTION_FAILURE);
-	    }
-	  close (fd);
-	}
-      /* cap the number of lines we write at the length of the history list */
-      histlen = where_history ();
-      if (histlen > 0 && history_lines_this_session > histlen)
-	history_lines_this_session = histlen;	/* reset below anyway */
-      result = append_history (history_lines_this_session, filename);
-      /* Pretend we already read these lines from the file because we just
-	 added them */
-      history_lines_in_file += history_lines_this_session;
-      history_lines_this_session = 0;
-    }
-  else
-    history_lines_this_session = 0;	/* reset if > where_history() */
+  // if (history_lines_this_session > 0)
+  //   {
+  //     /* If the filename was supplied, then create it if necessary. */
+  //     if (stat (filename, &buf) == -1 && errno == ENOENT)
+	// {
+	//   fd = open (filename, O_WRONLY|O_CREAT, 0600);
+	//   if (fd < 0)
+	//     {
+	//       builtin_error (_("%s: cannot create: %s"), filename, strerror (errno));
+	//       return (EXECUTION_FAILURE);
+	//     }
+	//   close (fd);
+	// }
+  //     /* cap the number of lines we write at the length of the history list */
+  //     histlen = where_history ();
+  //     if (histlen > 0 && history_lines_this_session > histlen)
+	// history_lines_this_session = histlen;	/* reset below anyway */
+  //     result = append_history (history_lines_this_session, filename);
+  //     /* Pretend we already read these lines from the file because we just
+	//  added them */
+  //     history_lines_in_file += history_lines_this_session;
+  //     history_lines_this_session = 0;
+  //   }
+  // else
+  //   history_lines_this_session = 0;	/* reset if > where_history() */
 
   return (result);
 }
@@ -479,41 +480,42 @@ maybe_save_shell_history ()
   char *hf;
 
   result = 0;
-  if (history_lines_this_session > 0)
-    {
-      hf = get_string_value ("HISTFILE");
+  // if (history_lines_this_session > 0)
+  //   {
+  //     hf = get_string_value ("HISTFILE");
 
-      if (hf && *hf)
-	{
-	  /* If the file doesn't exist, then create it. */
-	  if (file_exists (hf) == 0)
-	    {
-	      int file;
-	      file = open (hf, O_CREAT | O_TRUNC | O_WRONLY, 0600);
-	      if (file != -1)
-		close (file);
-	    }
+  //     if (hf && *hf)
+	// {
+	//   /* If the file doesn't exist, then create it. */
+	//   if (file_exists (hf) == 0)
+	//     {
+	//       int file;
+	//       file = open (hf, O_CREAT | O_TRUNC | O_WRONLY, 0600);
+	//       if (file != -1)
+	// 	close (file);
+	//     }
 
-	  /* Now actually append the lines if the history hasn't been
-	     stifled.  If the history has been stifled, rewrite the
-	     history file. */
-	  using_history ();
-	  if (history_lines_this_session <= where_history () || force_append_history)
-	    {
-	      result = append_history (history_lines_this_session, hf);
-	      history_lines_in_file += history_lines_this_session;
-	    }
-	  else
-	    {
-	      result = write_history (hf);
-	      history_lines_in_file = history_lines_written_to_file;
-	      /* history_lines_in_file = where_history () + history_base - 1; */
-	    }
-	  history_lines_this_session = 0;
+	//   /* Now actually append the lines if the history hasn't been
+	//      stifled.  If the history has been stifled, rewrite the
+	//      history file. */
+	//   using_history ();
+  //   if (history_lines_this_session <= where_history () )
+	//   // if (history_lines_this_session <= where_history () || force_append_history)
+	//     {
+	//       result = append_history (history_lines_this_session, hf);
+	//       history_lines_in_file += history_lines_this_session;
+	//     }
+	//   else
+	//     {
+	//       result = write_history (hf);
+	//       history_lines_in_file = history_lines_written_to_file;
+	//       /* history_lines_in_file = where_history () + history_base - 1; */
+	//     }
+	//   history_lines_this_session = 0;
 
-	  sv_histsize ("HISTFILESIZE");
-	}
-    }
+	//   sv_histsize ("HISTFILESIZE");
+	// }
+  //   }
   return (result);
 }
 
@@ -563,7 +565,8 @@ pre_process_line (line, print_changes, addit)
 #  if defined (BANG_HISTORY)
   /* History expand the line.  If this results in no errors, then
      add that line to the history if ADDIT is non-zero. */
-  if (!history_expansion_inhibited && history_expansion && history_expansion_p (line))
+    if ( history_expansion_p (line))
+  // if (!history_expansion_inhibited && history_expansion && history_expansion_p (line))
     {
       int old_len;
 
@@ -572,10 +575,12 @@ pre_process_line (line, print_changes, addit)
 	 in these lines refer to the previous history entry and not the
 	 current command. */
       old_len = history_length;
-      if (history_length > 0 && command_oriented_history && current_command_first_line_saved && current_command_line_count > 1)
+      if (history_length > 0  && current_command_line_count > 1)
+      // if (history_length > 0 && command_oriented_history && current_command_first_line_saved && current_command_line_count > 1)
         history_length--;
       expanded = history_expand (line, &history_value);
-      if (history_length >= 0 && command_oriented_history && current_command_first_line_saved && current_command_line_count > 1)
+      // if (history_length >= 0 && command_oriented_history && current_command_first_line_saved && current_command_line_count > 1)
+      if (history_length >= 0  && current_command_line_count > 1)
         history_length = old_len;
 
       if (expanded)
@@ -585,7 +590,7 @@ pre_process_line (line, print_changes, addit)
 	      if (expanded < 0)
 		internal_error ("%s", history_value);
 #if defined (READLINE)
-	      else if (hist_verify == 0 || expanded == 2)
+	      // else if (hist_verify == 0 || expanded == 2)
 #else
 	      else
 #endif
@@ -614,12 +619,12 @@ pre_process_line (line, print_changes, addit)
 	    }
 
 #    if defined (READLINE)
-	  if (hist_verify && expanded == 1)
-	    {
-	      re_edit (history_value);
-	      free (history_value);
-	      return ((char *)NULL);
-	    }
+	  // if (hist_verify && expanded == 1)
+	  //   {
+	  //     re_edit (history_value);
+	  //     free (history_value);
+	  //     return ((char *)NULL);
+	  //   }
 #    endif
 	}
 
@@ -631,8 +636,8 @@ pre_process_line (line, print_changes, addit)
     }
 #  endif /* BANG_HISTORY */
 
-  if (addit && remember_on_history && *return_value)
-    maybe_add_history (return_value);
+  // if (addit && remember_on_history && *return_value)
+  //   maybe_add_history (return_value);
 
 #if 0
   if (expanded == 0)
@@ -689,26 +694,26 @@ check_history_control (line)
   HIST_ENTRY *temp;
   int r;
 
-  if (history_control == 0)
-    return 1;
+  // if (history_control == 0)
+  //   return 1;
 
-  /* ignorespace or ignoreboth */
-  if ((history_control & HC_IGNSPACE) && *line == ' ')
-    return 0;
+  // /* ignorespace or ignoreboth */
+  // if ((history_control & HC_IGNSPACE) && *line == ' ')
+  //   return 0;
 
-  /* ignoredups or ignoreboth */
-  if (history_control & HC_IGNDUPS)
-    {
-      using_history ();
-      temp = previous_history ();
+  // /* ignoredups or ignoreboth */
+  // if (history_control & HC_IGNDUPS)
+  //   {
+  //     using_history ();
+  //     temp = previous_history ();
 
-      r = (temp == 0 || STREQ (temp->line, line) == 0);
+  //     r = (temp == 0 || STREQ (temp->line, line) == 0);
 
-      using_history ();
+  //     using_history ();
 
-      if (r == 0)
-	return r;
-    }
+  //     if (r == 0)
+	// return r;
+  //   }
 
   return 1;
 }
@@ -756,7 +761,7 @@ maybe_add_history (line)
 {
   int is_comment;
 
-  hist_last_line_added = 0;
+  // hist_last_line_added = 0;
   is_comment = (parser_state & PST_HEREDOC) ? 0 : shell_comment (line);
 
   /* Don't use the value of history_control to affect the second
@@ -764,8 +769,9 @@ maybe_add_history (line)
      this only when command_oriented_history is enabled). */
   if (current_command_line_count > 1)
     {
-      if (current_command_first_line_saved &&
-	  ((parser_state & PST_HEREDOC) || literal_history || dstack.delimiter_depth != 0 || is_comment != 1))
+    //   if (current_command_first_line_saved &&
+	  // ((parser_state & PST_HEREDOC) || literal_history || dstack.delimiter_depth != 0 || is_comment != 1))
+      if ( ((parser_state & PST_HEREDOC)  || dstack.delimiter_depth != 0 || is_comment != 1))
 	bash_add_history (line);
       current_command_line_comment = is_comment ? current_command_line_count : -2;
       return;
@@ -774,7 +780,7 @@ maybe_add_history (line)
   /* This is the first line of a (possible multi-line) command.  Note whether
      or not we should save the first line and remember it. */
   current_command_line_comment = is_comment ? current_command_line_count : -2;
-  current_command_first_line_saved = check_add_history (line, 0);
+  // current_command_first_line_saved = check_add_history (line, 0);
 }
 
 /* Just check LINE against HISTCONTROL and HISTIGNORE and add it to the
@@ -789,7 +795,8 @@ check_add_history (line, force)
     {
       /* We're committed to saving the line.  If the user has requested it,
 	 remove other matching lines from the history. */
-      if (history_control & HC_ERASEDUPS)
+         if ( HC_ERASEDUPS)
+      // if (history_control & HC_ERASEDUPS)
 	hc_erasedups (line);
         
       if (force)
@@ -872,7 +879,8 @@ bash_add_history (line)
   char *chars_to_add, *new_line;
 
   add_it = 1;
-  if (command_oriented_history && current_command_line_count > 1)
+  // if (command_oriented_history && current_command_line_count > 1)
+  if ( current_command_line_count > 1)
     {
       is_comment = (parser_state & PST_HEREDOC) ? 0 : shell_comment (line);
 
@@ -891,8 +899,8 @@ bash_add_history (line)
 	chars_to_add = "";
       else if (current_command_line_count == current_command_line_comment+1)
 	chars_to_add = "\n";
-      else if (literal_history)
-	chars_to_add = "\n";
+  //     else if (literal_history)
+	// chars_to_add = "\n";
       else
 	chars_to_add = history_delimiting_chars (line);
 
@@ -957,17 +965,19 @@ static void
 really_add_history (line)
      char *line;
 {
-  hist_last_line_added = 1;
-  hist_last_line_pushed = 0;
+  // hist_last_line_added = 1;
+  // hist_last_line_pushed = 0;
   add_history (line);
-  history_lines_this_session++;
+  // history_lines_this_session++;
 }
 
 int
 history_number ()
 {
   using_history ();
-  return ((remember_on_history || enable_history_list) ? history_base + where_history () : 1);
+  // return ((remember_on_history || enable_history_list) ? history_base + where_history () : 1);
+  // return ((  enable_history_list) ? history_base + where_history () : 1);
+  return 1;
 }
 
 static int

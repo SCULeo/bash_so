@@ -245,10 +245,10 @@ struct builtin static_shell_builtins[] = {
   { (char *)0x0, (sh_builtin_func_t *)0x0, 0, (char **)0x0, (char *)0x0, (char *)0x0 }
 };
 
-struct builtin *shell_builtins = static_shell_builtins;
-struct builtin *current_builtin;
+__thread struct builtin *shell_builtins = static_shell_builtins;
+__thread struct builtin *current_builtin;
 
-int num_shell_builtins =
+__thread int num_shell_builtins =
 	sizeof (static_shell_builtins) / sizeof (struct builtin) - 1;
 #if defined (ALIAS)
 char * const alias_doc[] = {

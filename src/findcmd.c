@@ -48,7 +48,7 @@
 #include <strmatch.h>
 
 #if !defined (errno)
-extern int errno;
+//extern int errno;
 #endif
 
 /* Static functions defined and used in this file. */
@@ -69,13 +69,13 @@ static char *file_to_lose_on;
 
 /* Non-zero if we should stat every command found in the hash table to
    make sure it still exists. */
-int check_hashed_filenames = CHECKHASH_DEFAULT;
+// int check_hashed_filenames = CHECKHASH_DEFAULT;
 
 /* DOT_FOUND_IN_SEARCH becomes non-zero when find_user_command ()
    encounters a `.' as the directory pathname while scanning the
    list of possible pathnames; i.e., if `.' comes before the directory
    containing the file of interest. */
-int dot_found_in_search = 0;
+__thread int dot_found_in_search = 0;
 
 /* Set up EXECIGNORE; a blacklist of patterns that executable files should not
    match. */
@@ -357,8 +357,9 @@ search_for_command (pathname, flags)
   /* If a command found in the hash table no longer exists, we need to
      look for it in $PATH.  Thank you Posix.2.  This forces us to stat
      every command found in the hash table. */
+  // if (hashed_file && (posixly_correct || check_hashed_filenames))
 
-  if (hashed_file && (posixly_correct || check_hashed_filenames))
+  if (hashed_file && (posixly_correct))
     {
       st = file_status (hashed_file);
       if ((st & (FS_EXISTS|FS_EXECABLE)) != (FS_EXISTS|FS_EXECABLE))
