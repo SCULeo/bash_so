@@ -183,6 +183,8 @@ static void cond_error PARAMS((void));
 static COND_COM *cond_expr PARAMS((void));
 static COND_COM *cond_or PARAMS((void));
 static COND_COM *cond_and PARAMS((void));
+static COND_COM *cond_equal PARAMS((void));
+static COND_COM *cond_equal_equal PARAMS((void));
 static COND_COM *cond_term PARAMS((void));
 static int cond_skip_newlines PARAMS((void));
 static COMMAND *parse_cond_command PARAMS((void));
@@ -347,7 +349,7 @@ static __thread REDIRECTEE redir;
 %token <number> NUMBER
 %token <word_list> ARITH_CMD ARITH_FOR_EXPRS
 %token <command> COND_CMD
-%token AND_AND OR_OR GREATER_GREATER LESS_LESS LESS_AND LESS_LESS_LESS
+%token AND_AND EQUAL_EQUAL OR_OR GREATER_GREATER LESS_LESS LESS_AND LESS_LESS_LESS
 %token GREATER_AND SEMI_SEMI SEMI_AND SEMI_SEMI_AND
 %token LESS_LESS_MINUS AND_GREATER AND_GREATER_GREATER LESS_GREATER
 %token GREATER_BAR BAR_AND
@@ -373,8 +375,8 @@ static __thread REDIRECTEE redir;
 %start inputunit
 
 %left '&' ';' '\n'  yacc_EOF
-%left AND_AND OR_OR
-%right '|' BAR_AND '='
+%left AND_AND EQUAL_EQUAL OR_OR
+%right  '|' BAR_AND '='
 %%
 
 inputunit:	simple_list simple_list_terminator
@@ -1042,7 +1044,7 @@ arith_command:	ARITH_CMD
 	;
 
 cond_command:	COND_START COND_CMD COND_END
-			{ $$ = $2; }
+			{ $$ = $2; }      
 	; 
 
 elif_clause:	ELIF compound_list THEN compound_list
@@ -1129,6 +1131,8 @@ list0:  	list1 '\n' newline_list
 
 list1:		list1 AND_AND newline_list list1
 			{ $$ = command_connect ($1, $4, AND_AND); }
+	|   list1 EQUAL_EQUAL newline_list list1
+			{ $$ = command_connect ($1, $4, EQUAL_EQUAL); }
 	|	list1 OR_OR newline_list list1
 			{ $$ = command_connect ($1, $4, OR_OR); }
 	|	list1 '&' newline_list list1
@@ -1237,6 +1241,8 @@ simple_list:	simple_list1
 
 simple_list1:	simple_list1 AND_AND newline_list simple_list1
 			{ $$ = command_connect ($1, $4, AND_AND); }
+	|   simple_list1 EQUAL_EQUAL newline_list simple_list1
+			{ $$ = command_connect ($1, $4, EQUAL_EQUAL); }
 	|	simple_list1 OR_OR newline_list simple_list1
 			{ $$ = command_connect ($1, $4, OR_OR); }
 	|	simple_list1 '&' simple_list1
@@ -2227,6 +2233,7 @@ STRING_INT_ALIST other_token_alist[] = {
   { "--", TIMEIGN },
   { "-p", TIMEOPT },
   { "&&", AND_AND },
+  { "==", EQUAL_EQUAL },
   { "||", OR_OR },
   { ">>", GREATER_GREATER },
   { "<<", LESS_LESS },
@@ -3050,6 +3057,7 @@ time_command_acceptable ()
 	return (0);
       /* FALLTHROUGH */
     case AND_AND:
+	case EQUAL_EQUAL:
     case OR_OR:
     case '&':
 	case '=':
@@ -3306,7 +3314,7 @@ read_token (command)
       cond_lineno = line_number;
       parser_state |= PST_CONDEXPR;
       yylval.command = parse_cond_command ();
-      if (cond_token != COND_END)
+      if (cond_token != COND_END&&cond_token!='='&&cond_token!=EQUAL_EQUAL)
 	{
 	  cond_error ();
 	  return (-1);
@@ -3433,6 +3441,8 @@ itrace("shell_getc: bash_input.location.string = `%s'", bash_input.location.stri
 
 	    case '&':
 	      return (AND_AND);
+		case '=':
+		  return (EQUAL_EQUAL);
 
 	    case '|':
 	      return (OR_OR);
@@ -4770,7 +4780,7 @@ cond_and ()
 {
   COND_COM *l, *r;
 
-  l = cond_term ();
+  l = cond_equal ();
   if (cond_token == AND_AND)
     {
       r = cond_and ();
@@ -4778,7 +4788,32 @@ cond_and ()
     }
   return l;
 }
+static COND_COM *
+cond_equal ()
+{
+  COND_COM *l, *r;
 
+  l = cond_equal_equal ();
+  if (cond_token == '=')
+    {
+      r = cond_equal ();
+      l = make_cond_node (COND_EQUAL, (WORD_DESC *)NULL, l, r);
+    }
+  return l;
+}
+static COND_COM *
+cond_equal_equal ()
+{
+  COND_COM *l, *r;
+
+  l = cond_term ();
+  if (cond_token == EQUAL_EQUAL)
+    {
+      r = cond_equal_equal ();
+      l = make_cond_node (COND_EQUAL_EQUAL, (WORD_DESC *)NULL, l, r);
+    }
+  return l;
+}
 static int
 cond_skip_newlines ()
 {
@@ -4887,7 +4922,7 @@ cond_term ()
 	op = make_word_from_token (tok);  /* ( */
       /* There should be a check before blindly accepting the `)' that we have
 	 seen the opening `('. */
-      else if (tok == COND_END || tok == AND_AND || tok == OR_OR || tok == ')')
+      else if (tok == COND_END || tok == AND_AND || tok == OR_OR || tok == ')'|| tok == EQUAL_EQUAL || tok == '=')
 	{
 	  /* Special case.  [[ x ]] is equivalent to [[ -n x ]], just like
 	     the test command.  Similarly for [[ x && expr ]] or
@@ -5062,7 +5097,7 @@ read_token_word (character)
    /*arithmetic_substitution becomes non-zero if we see a $(()).*/
    int arithmetic_substitution = 0;
 
-  if (token_buffer_size < TOKEN_DEFAULT_INITIAL_SIZE)
+  if (token_buffer_size < TOKEN_DEFAULT_INITIAL_SIZE||token==NULL)
     token = (char *)xrealloc (token, token_buffer_size = TOKEN_DEFAULT_INITIAL_SIZE);
 
   token_index = 0;
@@ -5636,6 +5671,7 @@ reserved_word_acceptable (toksym)
     case '{':
     case '}':		/* XXX */
     case AND_AND:
+	case EQUAL_EQUAL:
     case BANG:
     case BAR_AND:
     case DO:
@@ -5726,7 +5762,7 @@ reset_readline_prompt ()
 static const int no_semi_successors[] = {
   '\n', '{', '(', ')', ';', '&', '|',
   CASE, DO, ELSE, IF, SEMI_SEMI, SEMI_AND, SEMI_SEMI_AND, THEN, UNTIL,
-  WHILE, AND_AND, OR_OR, IN,
+  WHILE, AND_AND, EQUAL_EQUAL,OR_OR, IN,
   0
 };
 
@@ -6363,8 +6399,8 @@ int
 yyerror (msg)
      const char *msg;
 {
-   report_syntax_error ((char *)NULL);
-   reset_parser ();
+//    report_syntax_error ((char *)NULL);
+//    reset_parser ();
   return (0);
 }
 

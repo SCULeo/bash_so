@@ -48,18 +48,21 @@ extern void sh_xfree PARAMS((void *, const char *, int));
 #define xmalloc(x)	sh_xmalloc((x), __FILE__, __LINE__)
 #define xrealloc(x, n)	sh_xrealloc((x), (n), __FILE__, __LINE__)
 #define xfree(x)	sh_xfree((x), __FILE__, __LINE__)
-
+#ifdef USER_PROC
 #ifdef free
 #undef free
 #endif
 #define free(x)		sh_xfree((x), __FILE__, __LINE__)
+#endif
 
 extern PTR_T sh_malloc PARAMS((size_t, const char *, int));
 
+#ifdef USER_PROC
 #ifdef malloc
 #undef malloc
 #endif
 #define malloc(x)	sh_malloc((x), __FILE__, __LINE__)
+#endif
 
 #endif	/* USING_BASH_MALLOC */
 

@@ -36,7 +36,7 @@
 
 #include "shell.h"
 
-extern time_t shell_start_time;
+extern __thread time_t shell_start_time;
 
 extern int last_random_value;
 

@@ -108,7 +108,7 @@ static void print_function_def PARAMS((FUNCTION_DEF *));
 
 char *the_printed_command = (char *)NULL;
 int the_printed_command_size = 0;
-int command_string_index = 0;
+__thread int command_string_index = 0;
 
 int xtrace_fd = -1;
 FILE *xtrace_fp = 0;

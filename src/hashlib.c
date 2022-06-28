@@ -69,8 +69,7 @@ hash_create (buckets)
   if (buckets == 0)
     buckets = DEFAULT_HASH_BUCKETS;
 
-  new_table->bucket_array =
-    (BUCKET_CONTENTS **)xmalloc (buckets * sizeof (BUCKET_CONTENTS *));
+  new_table->bucket_array =(BUCKET_CONTENTS **)xmalloc (buckets * sizeof (BUCKET_CONTENTS *));
   new_table->nbuckets = buckets;
   new_table->nentries = 0;
 

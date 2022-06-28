@@ -106,11 +106,11 @@
 #  include <mbstr.h>		/* mbschr */
 #endif
 
-extern int command_string_index;
+extern __thread int command_string_index;
 extern char *the_printed_command;
 extern time_t shell_start_time;
 #if defined (HAVE_GETTIMEOFDAY)
-extern struct timeval shellstart;
+extern __thread struct timeval shellstart;
 #endif
 #if 0
 extern char *glob_argv_flags;

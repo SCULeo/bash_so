@@ -58,8 +58,8 @@ extern int glob_star;
 extern int glob_asciirange;
 extern int lastpipe_opt;
 extern int inherit_errexit;
-extern int localvar_inherit;
-extern int localvar_unset;
+extern __thread int localvar_inherit;
+extern __thread int localvar_unset;
 
 #if defined (EXTENDED_GLOB)
 extern __thread int extended_glob;

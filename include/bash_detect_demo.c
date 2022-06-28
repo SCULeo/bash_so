@@ -6,12 +6,25 @@
 #include "../include/shell.h" 
 #include"time.h"
 #include <pthread.h>
+#include "../include/common.h"
+#include "../include/general.h"
+#include "../include/execute_cmd.h"
+
 char **g_argv = NULL;
 int g_argc = 0;
+pthread_mutex_t gMutex;
+pthread_mutex_t cMutex;
+pthread_mutex_t c2Mutex;
+// extern int parse_and_execute (char *string,const char *from_file,int flags);
+extern __thread int running_trap;
 struct param{
     int id;
     char ** env;
 };
+
+
+
+extern int run_one_command (char *command);
 void print_self_command(COMMAND*command,int num);
 // 将strRes中的t替换为s，替换成功返回1，否则返回0。
 int StrReplace(char strRes[],char from[], char to[]) {
@@ -35,31 +48,7 @@ int StrReplace(char strRes[],char from[], char to[]) {
     }
     return flag;
 }
-/**
-* 读取文件内容
-* path:文件路径
-* length:文件大小(out)
-* return:文件内容
-*/
-char * ReadFile(char * path, int *length)
-{
-	FILE * pfile;
-	char * data;
- 
-	pfile = fopen(path, "rb");
-	if (pfile == NULL)
-	{
-		return NULL;
-	}
-	fseek(pfile, 0, SEEK_END);
-	*length = ftell(pfile);
-	data = (char *)malloc((*length + 1) * sizeof(char));
-	rewind(pfile);
-	*length = fread(data, 1, *length, pfile);
-	data[*length] = '\0';
-	fclose(pfile);
-	return data;
-}
+
 void print_tab(int num)
 {
     int i;
@@ -85,7 +74,7 @@ char* connection_type[] ={
 "<>",">|","|&",
 };
 char *cond_type[]={
-    "COND_AND","COND_OR","COND_UNARY","COND_BINARY","COND_TERM","COND_EXPR",
+    "COND_AND","COND_OR","COND_UNARY","COND_BINARY","COND_TERM","COND_EXPR","COND_EQUAL_EQUAL","COND_EQUAL"
 };
 void print_redirect(REDIRECT*redirect,int num){
     printf("reirect:{\n");
@@ -98,9 +87,9 @@ void print_redirect(REDIRECT*redirect,int num){
     print_tab(num);
     printf("instruction:%s\n",instruction[redirect->instruction]);
     print_tab(num);
-    if (redirect->instruction==14||redirect->instruction==15||redirect->instruction==18||redirect->instruction==19)
+    if (redirect->instruction==5||redirect->instruction==14||redirect->instruction==18||redirect->instruction==19)
     {
-        printf("redirectee:{dest:%d,filename:%s}\n",redirect->redirectee.dest,redirect->redirectee.filename);
+        printf("redirectee:{dest:%d,filename:%s}\n",redirect->redirectee.dest,redirect->redirectee.filename->word);
         
     }else{
         printf("redirectee:{dest:%d}\n",redirect->redirectee.dest);
@@ -184,7 +173,7 @@ void print_conmand_for(struct for_com *for_com_content,int num){
 void print_conmand_simple(struct simple_com * simple,int num){
     printf("{\n");
     print_tab(num+1);
-    printf("words:");
+    printf("wordispose_commandds:");
     if (simple->words)
     {
         print_WORD_LIST(simple->words,num+1);
@@ -275,7 +264,7 @@ void print_conmand_Arith(struct arith_com *Arith,int num)
 {
     printf("{\n");
     print_tab(num);
-    printf("exp:");
+    printf("expdispose_command:");
     print_WORD_LIST(Arith->exp,num+1);
     print_tab(num);
     printf("}\n");
@@ -287,7 +276,10 @@ void print_conmand_Cond(struct cond_com *Cond,int num)
     printf("type:%s\n",cond_type[Cond->type-1]);
     print_tab(num);
     printf("op:");
-    print_word_desc(Cond->op,num+1);
+    if (Cond->op)
+        print_word_desc(Cond->op,num+1);
+    else
+        printf("NULL\n");
     print_tab(num);
     printf("left:");
     if (Cond->left)
@@ -420,7 +412,8 @@ void print_self_command(COMMAND*command,int num){
 }
 void* bash_lint_pthread(void* arg)
 {
-    char *line = NULL;
+    COMMAND *local_command =NULL;
+    char msg[1024];
     size_t len = 0;
     FILE *fp = NULL;
     int begintime,endtime;
@@ -432,25 +425,64 @@ void* bash_lint_pthread(void* arg)
     }
     fp = fopen((char *)g_argv[temp.id], "r");
     int n = 0;
-    while (getline(&line, &len, fp) > 0){
+    while (NULL==feof(fp) && fgets(msg,1024-1,fp) > 0){
+        // msg[strlen(msg)-1] = '\0';
+        // printf("input_line:%s\n",msg);
         global_command =NULL;
-    
+        
+
         begintime = clock();
-        detect_bash_language(line,temp.env);
+        pthread_mutex_lock(&gMutex);
+        // parse_and_execute (savestring (msg), "-c", SEVAL_NOHIST|SEVAL_RESETLINE);
+        run_one_command(msg);
+        pthread_mutex_unlock(&gMutex);
+         if (global_command){
+            print_self_command(global_command,1);
+             printf("the string:%s\n",msg);
+            
+            
+        }
+        pthread_mutex_lock(&cMutex);
+        parse_and_execute_cleanup (-1);
+        pthread_mutex_unlock(&cMutex);
+
+        pthread_mutex_lock(&c2Mutex);
+        dispose_command(global_command);
+        pthread_mutex_unlock(&c2Mutex);
+        
         endtime = clock();
+        
+        
+       
         // printf("begintime:%d\n",begintime);
         // printf("endtime:%d\n\n",endtime);
-        sum = sum +endtime - begintime;
-        if (!global_command){
-            // print_self_command(global_command,1);
-            // printf("the string:%s\n",line);
-        }
-        n++;
-    }
-    printf("the totall:%lf\n,the average time:%lf,the number n:%d",sum/CLOCKS_PER_SEC,sum/(n*CLOCKS_PER_SEC),n);
-    fclose(fp);
-    
+        sum = sum + endtime - begintime;
+        // if (global_command){
+            
+        //      print_self_command(global_command,1);
+        //     // printf("the string:%s\n",line);
+        // } 
 
+       
+        
+        
+        
+        // if (global_command){
+        //     print_self_command(global_command,1);
+        //     // printf("the string:%s\n",msg);
+        // }
+        // // dispose_command(global_command);
+        // global_command = NULL;
+        n++;
+        memset(msg,0,1024);
+        len = 0;
+    }
+    printf("the totall:%lf\n,the average time:%lf\n,the number n:%d\n",sum/CLOCKS_PER_SEC,sum/(n*CLOCKS_PER_SEC),n);
+    fclose(fp);
+
+    // struct param temp = *((struct param*)arg);
+    // char * line = (char *)g_argv[temp.id];
+    // detect_bash_language(line,temp.env);
 
 
 
@@ -471,16 +503,19 @@ int main(int argc, char **argv,char**envp)
     char* err_str = NULL;
     int err_offset = 0, i;
     pthread_t tid, *tids = NULL;
+    int begintime,endtime;
     g_argv = argv;
     g_argc = argc;
+    float sum = 0;
 //    ppr_daemon();
-
+    pthread_mutex_init(&gMutex, NULL);
+    pthread_mutex_init(&cMutex, NULL);
+    pthread_mutex_init(&c2Mutex, NULL);
     if (argc == 1) {
         printf("Error! Use as \"bash_detect_demo detected-filepath1 detected-filepath2 ......\"\n");
         return -1;
     }
-
-    
+    begintime = clock();
     tids = malloc((argc - 1) * sizeof(pthread_t));
     if (tids == NULL) {
         printf("thread id array alloc failed!\n");
@@ -497,8 +532,10 @@ int main(int argc, char **argv,char**envp)
             printf("Thread create failed! Path:%s\n", argv[i]);
             continue;
         }
+        
         printf("Thead %lu created\n", tid);
-        tids[i - 1] = tid;
+            tids[i - 1] = tid;
+        
 #if 0
         pthread_detach(tid);
 #endif
@@ -509,6 +546,12 @@ int main(int argc, char **argv,char**envp)
     }
 
     ret = 0;
-
+    endtime = clock();
+    sum =endtime-begintime;
+    sum = sum/CLOCKS_PER_SEC;
+    float average = sum/12639;
+    printf("\nthe begintime:%d\n",begintime);
+    printf("the endtime:%d\n",endtime);
+    printf("the sum:%lf\n,the average:%lf",sum,average);
     return ret;
 }

@@ -99,52 +99,52 @@
 extern char **environ;
 
 /* Variables used here and defined in other files. */
-extern time_t shell_start_time;
-extern struct timeval shellstart;
+extern __thread time_t shell_start_time;
+extern __thread struct timeval shellstart;
 
 /* The list of shell variables that the user has created at the global
    scope, or that came from the environment. */
-VAR_CONTEXT *global_variables = (VAR_CONTEXT *)NULL;
+__thread VAR_CONTEXT *global_variables = (VAR_CONTEXT *)NULL;
 
 /* The current list of shell variables, including function scopes */
-VAR_CONTEXT *shell_variables = (VAR_CONTEXT *)NULL;
+__thread VAR_CONTEXT *shell_variables = (VAR_CONTEXT *)NULL;
 
 /* The list of shell functions that the user has created, or that came from
    the environment. */
-HASH_TABLE *shell_functions = (HASH_TABLE *)NULL;
+__thread HASH_TABLE *shell_functions = (HASH_TABLE *)NULL;
 
-HASH_TABLE *invalid_env = (HASH_TABLE *)NULL;
+__thread HASH_TABLE *invalid_env = (HASH_TABLE *)NULL;
 
 #if defined (DEBUGGER)
 /* The table of shell function definitions that the user defined or that
    came from the environment. */
-HASH_TABLE *shell_function_defs = (HASH_TABLE *)NULL;
+__thread HASH_TABLE *shell_function_defs = (HASH_TABLE *)NULL;
 #endif
 
 /* The current variable context.  This is really a count of how deep into
    executing functions we are. */
-int variable_context = 0;
+__thread int variable_context = 0;
 
 /* If non-zero, local variables inherit values and attributes from a variable
    with the same name at a previous scope. */
-int localvar_inherit = 0;
+__thread int localvar_inherit = 0;
 
 /* If non-zero, calling `unset' on local variables in previous scopes marks
    them as invisible so lookups find them unset. This is the same behavior
    as local variables in the current local scope. */
-int localvar_unset = 0;
+__thread int localvar_unset = 0;
 
 /* The set of shell assignments which are made only in the environment
    for a single command. */
-HASH_TABLE *temporary_env = (HASH_TABLE *)NULL;
+__thread HASH_TABLE *temporary_env = (HASH_TABLE *)NULL;
 
 /* Set to non-zero if an assignment error occurs while putting variables
    into the temporary environment. */
-int tempenv_assign_error;
+__thread int tempenv_assign_error;
 
 /* Some funky variables which are known about specially.  Here is where
    "$*", "$1", and all the cruft is kept. */
-char *dollar_vars[10];
+__thread char *dollar_vars[10];
 __thread WORD_LIST *rest_of_args = (WORD_LIST *)NULL;
 __thread int posparam_count = 0;
 
@@ -152,28 +152,28 @@ __thread int posparam_count = 0;
 pid_t dollar_dollar_pid;
 
 /* Non-zero means that we have to remake EXPORT_ENV. */
-int array_needs_making = 1;
+__thread int array_needs_making = 1;
 
 /* The number of times BASH has been executed.  This is set
    by initialize_variables (). */
-int shell_level = 0;
+__thread int shell_level = 0;
 
 /* An array which is passed to commands as their environment.  It is
    manufactured from the union of the initial environment and the
    shell variables that are marked for export. */
-char **export_env = (char **)NULL;
-static int export_env_index;
-static int export_env_size;
+__thread char **export_env = (char **)NULL;
+ static __thread int export_env_index;
+ static __thread int export_env_size;
 
 #if defined (READLINE)
-static int winsize_assignment;		/* currently assigning to LINES or COLUMNS */
+static __thread int winsize_assignment;		/* currently assigning to LINES or COLUMNS */
 #endif
 
-SHELL_VAR nameref_invalid_value;
-static SHELL_VAR nameref_maxloop_value;
+__thread SHELL_VAR nameref_invalid_value;
+static __thread SHELL_VAR nameref_maxloop_value;
 
-static HASH_TABLE *last_table_searched;	/* hash_lookup sets this */
-static VAR_CONTEXT *last_context_searched;
+static __thread HASH_TABLE *last_table_searched;	/* hash_lookup sets this */
+static __thread VAR_CONTEXT *last_context_searched;
 
 /* Some forward declarations. */
 static void create_variable_tables PARAMS((void));

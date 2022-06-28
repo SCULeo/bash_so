@@ -29,10 +29,10 @@
 #include "bashansi.h"
 #include "shell.h"
 
-extern sh_obj_cache_t wdcache, wlcache;
+extern __thread sh_obj_cache_t wdcache, wlcache;
 
 /* Dispose of the command structure passed. */
-void
+__attribute__((visibility("default"))) void
 dispose_command (command)
      COMMAND *command;
 {

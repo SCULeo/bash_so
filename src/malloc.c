@@ -267,17 +267,17 @@ typedef union _malloc_guard {
 
 /* nextf[i] is free list of blocks of size 2**(i + 3)  */
 
-static union mhead *nextf[NBUCKETS];
+static __thread union mhead *nextf[NBUCKETS];
 
 /* busy[i] is nonzero while allocation or free of block size i is in progress. */
 
-static char busy[NBUCKETS];
+static __thread char busy[NBUCKETS];
 
-static int pagesz;	/* system page size. */
-static int pagebucket;	/* bucket for requests a page in size */
-static int maxbuck;	/* highest bucket receiving allocation request. */
+static __thread int pagesz;	/* system page size. */
+static __thread int pagebucket;	/* bucket for requests a page in size */
+static __thread int maxbuck;	/* highest bucket receiving allocation request. */
 
-static char *memtop;	/* top of heap */
+static __thread  char *memtop;	/* top of heap */
 
 static const unsigned long binsizes[NBUCKETS] = {
 	8UL, 16UL, 32UL, 64UL, 128UL, 256UL, 512UL, 1024UL, 2048UL, 4096UL,

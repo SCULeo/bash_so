@@ -41,7 +41,7 @@
 /* Values for flags word in struct _fileinfo */
 #define MBOX_INITIALIZED	0x01
 
-extern time_t shell_start_time;
+extern __thread time_t shell_start_time;
 
 extern int mailstat PARAMS((const char *, struct stat *));
 

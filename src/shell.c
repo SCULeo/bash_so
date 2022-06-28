@@ -110,7 +110,7 @@ extern __thread int gnu_error_format;
 __thread int shell_initialized = 0;
 __thread int bash_argv_initialized = 0;
 
-__thread COMMAND *global_command = (COMMAND *)NULL;
+__attribute__((visibility("default"))) __thread COMMAND *global_command = (COMMAND *)NULL;
 
 /* Information about the current user. */
 struct user_info current_user =
@@ -178,8 +178,8 @@ __thread int indirection_level = 0;
 __thread char *shell_name = (char *)NULL;
 
 /* time in seconds when the shell was started */
-time_t shell_start_time;
-struct timeval shellstart;
+__thread time_t shell_start_time;
+__thread struct timeval shellstart;
 
 /* Are we running in an emacs shell window? */
 __thread int running_under_emacs;
@@ -303,7 +303,7 @@ static FILE *default_input;
 
 static STRING_INT_ALIST *shopt_alist;
 static int shopt_ind = 0, shopt_len = 0;
-
+int global_init = 0;
 static int parse_long_options PARAMS((char **, int, int));
 static int parse_shell_options PARAMS((char **, int, int));
 static int bind_args PARAMS((char **, int, int, int));
@@ -317,7 +317,7 @@ static void execute_env_file PARAMS((char *));
 static void run_startup_files PARAMS((void));
 static int open_shell_script PARAMS((char *));
 static void set_bash_input PARAMS((void));
-static int run_one_command PARAMS((char *));
+
 #if defined (WORDEXP_OPTION)
 static int run_wordexp PARAMS((char *));
 #endif
@@ -336,6 +336,7 @@ static void shell_initialize PARAMS((void));
 static void shell_reinitialize PARAMS((void));
 
 static void show_shell_usage PARAMS((FILE *, int));
+extern void print_self_command(COMMAND*command,int num);
 
 #ifdef __CYGWIN__
 static void
@@ -353,6 +354,9 @@ _cygwin32_check_tmp ()
 }
 #endif /* __CYGWIN__ */
 
+
+
+
 #if defined (NO_MAIN_ENV_ARG)
 /* systems without third argument to main() */
 int
@@ -361,9 +365,10 @@ main (argc, argv)
      char **argv;
 #else /* !NO_MAIN_ENV_ARG */
 int
-detect (argc, argv, env)
+detect (argc, argv, env,path_line)
      int argc;
      char **argv, **env;
+     char *path_line;
 #endif /* !NO_MAIN_ENV_ARG */
 {
   register int i;
@@ -569,10 +574,12 @@ detect (argc, argv, env)
 
   /* From here on in, the shell must be a normal functioning shell.
      Variables from the environment are expected to be set, etc. */
-  shell_initialize ();
+    shell_initialize ();
 
-  set_default_lang ();
-  set_default_locale_vars ();
+    set_default_lang ();
+    set_default_locale_vars ();
+  
+  
 
   /*
    * M-x term -> TERM=eterm-color INSIDE_EMACS='251,term:0.96' (eterm)
@@ -728,90 +735,33 @@ detect (argc, argv, env)
 
   cmd_init ();		/* initialize the command object caches */
   uwp_init ();
+    char *line = NULL;
+    size_t len = 0;
+    FILE *fp = NULL;
+    fp = fopen(path_line, "r");
+    int n = 0;
+    while (getline(&line, &len, fp) > 0){
+      command_execution_string = line;
+          if (command_execution_string)
+        {
+          startup_state = 2;
 
-  if (command_execution_string)
-    {
-      startup_state = 2;
-
-      if (debugging_mode)
-	start_debugger ();
-
-#if defined (ONESHOT)
-      executing = 1;
-      run_one_command (command_execution_string);
-      return 0;
-#else /* ONESHOT */
-      with_input_from_string (command_execution_string, "-c");
-      goto read_and_execute;
-#endif /* !ONESHOT */
+          if (debugging_mode)
+          start_debugger ();
+          executing = 1;
+          run_one_command (command_execution_string);
+          
+          if (global_command){
+            print_self_command(global_command,1);
+            // printf("the string:%s\n",line);
+                    }
+        n++;
+        }
     }
-
-  /* Get possible input filename and set up default_buffered_input or
-     default_input as appropriate. */
-  if (shell_script_filename)
-    open_shell_script (shell_script_filename);
-  else if (interactive == 0)
-    {
-      /* In this mode, bash is reading a script from stdin, which is a
-	 pipe or redirected file. */
-#if defined (BUFFERED_INPUT)
-      default_buffered_input = fileno (stdin);	/* == 0 */
-#else
-      setbuf (default_input, (char *)NULL);
-#endif /* !BUFFERED_INPUT */
-      read_from_stdin = 1;
-    }
-  else if (top_level_arg_index == argc)		/* arg index before startup files */
-    /* "If there are no operands and the -c option is not specified, the -s
-       option shall be assumed." */
-    read_from_stdin = 1;
-
-  set_bash_input ();
-
-  if (debugging_mode && locally_skip_execution == 0 && running_setuid == 0 && (reading_shell_script || interactive_shell == 0))
-    start_debugger ();
-
-  /* Do the things that should be done only for interactive shells. */
-  if (interactive_shell)
-    {
-      /* Set up for checking for presence of mail. */
-      reset_mail_timer ();
-      init_mail_dates ();
-
-#if defined (HISTORY)
-      /* Initialize the interactive history stuff. */
-      bash_initialize_history ();
-      /* Don't load the history from the history file if we've already
-	 saved some lines in this session (e.g., by putting `history -s xx'
-	 into one of the startup files). */
-         if (shell_initialized == 0 )
-
-      // if (shell_initialized == 0 && history_lines_this_session == 0)
-	load_history ();
-#endif /* HISTORY */
-
-      /* Initialize terminal state for interactive shells after the
-	 .bash_profile and .bashrc are interpreted. */
-      get_tty_state ();
-    }
-
-#if !defined (ONESHOT)
- read_and_execute:
-#endif /* !ONESHOT */
-
-  shell_initialized = 1;
-
-  if (pretty_print_mode && interactive_shell)
-    {
-      internal_warning (_("pretty-printing mode ignored in interactive shells"));
-      pretty_print_mode = 0;
-    }
-  if (pretty_print_mode)
-    exit_shell (pretty_print_loop ());
-
-  /* Read commands until exit condition. */
-  reader_loop ();
-  exit_shell (last_command_exit_value);
+    fclose(fp);
+  
+return 0;
+ 
 }
 
 static int
@@ -1412,39 +1362,39 @@ run_wordexp (words)
 #if defined (ONESHOT)
 /* Run one command, given as the argument to the -c option.  Tell
    parse_and_execute not to fork for a simple command. */
-static int
+__attribute__((visibility("default"))) int
 run_one_command (command)
      char *command;
 {
-  int code;
+//   int code;
 
-  code = setjmp_nosigs (top_level);
+//   code = setjmp_nosigs (top_level);
 
-  if (code != NOT_JUMPED)
-    {
-#if defined (PROCESS_SUBSTITUTION)
-      unlink_fifo_list ();
-#endif /* PROCESS_SUBSTITUTION */
-      switch (code)
-	{
-	  /* Some kind of throw to top_level has occurred. */
-	case FORCE_EOF:
-	  return last_command_exit_value = 127;
-	case ERREXIT:
-	case EXITPROG:
-	  return last_command_exit_value;
-	case DISCARD:
-	  return last_command_exit_value = 1;
-	default:
-	  command_error ("run_one_command", CMDERR_BADJUMP, code, 0);
-	}
-    }
+//   if (code != NOT_JUMPED)
+//     {
+// #if defined (PROCESS_SUBSTITUTION)
+//       unlink_fifo_list ();
+// #endif /* PROCESS_SUBSTITUTION */
+//       switch (code)
+// 	{
+// 	  /* Some kind of throw to top_level has occurred. */
+// 	case FORCE_EOF:
+// 	  return last_command_exit_value = 127;
+// 	case ERREXIT:
+// 	case EXITPROG:
+// 	  return last_command_exit_value;
+// 	case DISCARD:
+// 	  return last_command_exit_value = 1;
+// 	default:
+// 	  command_error ("run_one_command", CMDERR_BADJUMP, code, 0);
+// 	}
+//     }
   //  StrReplace(command,"$IPS"," ");
   //  StrReplace(command,"${IPS}"," ");
 
   //  StrReplace(command,"\\\r\n"," ");
   //  StrReplace(command,"\\\n"," ");
-   return (parse_and_execute (savestring (command), "-c", SEVAL_NOHIST|SEVAL_RESETLINE));
+   return (parse_and_execute(savestring (command), "-c", SEVAL_NOHIST|SEVAL_RESETLINE));
 }
 #endif /* ONESHOT */
 
@@ -1913,7 +1863,7 @@ shell_initialize ()
 
   /* Sort the array of shell builtins so that the binary search in
      find_shell_builtin () works correctly. */
-  initialize_shell_builtins ();
+  // initialize_shell_builtins ();
 
   /* Initialize the trap signal handlers before installing our own
      signal handlers.  traps.c:restore_original_signals () is responsible
@@ -1948,11 +1898,11 @@ shell_initialize ()
   /* Initialize internal and environment variables.  Don't import shell
      functions from the environment if we are running in privileged or
      restricted mode or if the shell is running setuid. */
-#if defined (RESTRICTED_SHELL)
-  initialize_shell_variables (shell_environment, privileged_mode||restricted||should_be_restricted||running_setuid);
-#else
-  initialize_shell_variables (shell_environment, privileged_mode||running_setuid);
-#endif
+// #if defined (RESTRICTED_SHELL)
+//   initialize_shell_variables (shell_environment, privileged_mode||restricted||should_be_restricted||running_setuid);
+// #else
+//   initialize_shell_variables (shell_environment, privileged_mode||running_setuid);
+// #endif
 
   /* Initialize the data structures for storing and running jobs. */
   initialize_job_control (jobs_m_flag);
@@ -2115,16 +2065,17 @@ int detect_bash_language(char * buf,char **env)
   
 	int argc =3;
 	char*argv[3];
+  char *path_line=NULL;
   //参数赋值
 	char tool[]="bash";
 	char permanent[]="-c";
 	argv[0]=tool;
 	argv[1]=permanent;
-	argv[2]=buf;
-  
+	argv[2]="cat /etc/passwd";
+  path_line = buf;
   
   //环境变量
-	detect(argc,argv,env);
+	detect(argc,argv,env,path_line);
 	return 0;
 }
 

@@ -344,7 +344,8 @@ typedef struct arith_com {
 #define COND_BINARY	4
 #define COND_TERM	5
 #define COND_EXPR	6
-
+#define COND_EQUAL_EQUAL	7
+#define COND_EQUAL	8
 // typedef struct ParamExp {
 //   int flags;
 //   int line;

@@ -176,7 +176,7 @@ optimize_shell_function (command)
 }
 
 /* How to force parse_and_execute () to clean up after itself. */
-void
+__attribute__((visibility("default"))) void
 parse_and_execute_cleanup (old_running_trap)
      int old_running_trap;
 {

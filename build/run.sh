@@ -1,4 +1,4 @@
 #!/bin/bash
 make
 cp libBASH_SHARED.so ../include/
-gcc ../include/testfor_bash.c ../include/libBASH_SHARED.so -g3 -o bash_c
+gcc ../include/bash_detect_demo.c ../include/libBASH_SHARED.so -g3 -o demo_bash_c -lpthread

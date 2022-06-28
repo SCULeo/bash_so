@@ -134,7 +134,7 @@
 #define SKIP1 "#'-+ 0"
 #define LENMODS "hjlLtz"
 
-extern time_t shell_start_time;
+extern __thread time_t shell_start_time;
 
 #if !HAVE_ASPRINTF
 extern int asprintf PARAMS((char **, const char *, ...)) __attribute__((__format__ (printf, 2, 3)));

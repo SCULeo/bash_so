@@ -234,26 +234,26 @@ extern SHELL_VAR nameref_invalid_value;
 typedef int sh_var_map_func_t PARAMS((SHELL_VAR *));
 
 /* Where we keep the variables and functions */
-extern VAR_CONTEXT *global_variables;
-extern VAR_CONTEXT *shell_variables;
+extern __thread VAR_CONTEXT *global_variables;
+extern __thread VAR_CONTEXT *shell_variables;
 
-extern HASH_TABLE *shell_functions;
-extern HASH_TABLE *temporary_env;
+extern __thread HASH_TABLE *shell_functions;
+extern __thread HASH_TABLE *temporary_env;
 
 extern int variable_context;
-extern char *dollar_vars[];
-extern char **export_env;
+extern __thread char *dollar_vars[];
+extern __thread char **export_env;
 
-extern int tempenv_assign_error;
+extern __thread int tempenv_assign_error;
 extern int array_needs_making;
-extern int shell_level;
+extern __thread int shell_level;
 
 /* XXX */
 extern __thread WORD_LIST *rest_of_args;
 extern __thread int posparam_count;
 extern pid_t dollar_dollar_pid;
 
-extern int localvar_inherit;		/* declared in variables.c */
+extern __thread int localvar_inherit;		/* declared in variables.c */
 
 extern void initialize_shell_variables PARAMS((char **, int));
 

@@ -86,7 +86,7 @@ static void clear_unwind_protects_internal PARAMS((char *, char *));
 static inline void restore_variable PARAMS((SAVED_VAR *));
 static void unwind_protect_mem_internal PARAMS((char *, char *));
 
-static UNWIND_ELT *unwind_protect_list = (UNWIND_ELT *)NULL;
+static __thread UNWIND_ELT *unwind_protect_list = (UNWIND_ELT *)NULL;
 
 /* Allocating from a cache of unwind-protect elements */
 #define UWCACHESIZE	128
@@ -322,10 +322,11 @@ unwind_frame_run_internal (tag, ignore)
 	  if (elt->head.cleanup == (Function *) restore_variable)
 	    restore_variable (&elt->sv.v);
 	  else
-	    (*(elt->head.cleanup)) (elt->arg.v);
+      (*(elt->head.cleanup)) (elt->arg.v);
+    // restore_variable (&elt->sv.v);
 	}
-
-      uwpfree (elt);
+    if(elt)
+    uwpfree (elt);
     }
   if (tag && found == 0)
     internal_warning ("unwind_frame_run: %s: frame not found", tag);
