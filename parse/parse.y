@@ -183,8 +183,6 @@ static void cond_error PARAMS((void));
 static COND_COM *cond_expr PARAMS((void));
 static COND_COM *cond_or PARAMS((void));
 static COND_COM *cond_and PARAMS((void));
-static COND_COM *cond_equal PARAMS((void));
-static COND_COM *cond_equal_equal PARAMS((void));
 static COND_COM *cond_term PARAMS((void));
 static int cond_skip_newlines PARAMS((void));
 static COMMAND *parse_cond_command PARAMS((void));
@@ -349,7 +347,7 @@ static __thread REDIRECTEE redir;
 %token <number> NUMBER
 %token <word_list> ARITH_CMD ARITH_FOR_EXPRS
 %token <command> COND_CMD
-%token AND_AND EQUAL_EQUAL OR_OR GREATER_GREATER LESS_LESS LESS_AND LESS_LESS_LESS
+%token AND_AND OR_OR GREATER_GREATER LESS_LESS LESS_AND LESS_LESS_LESS
 %token GREATER_AND SEMI_SEMI SEMI_AND SEMI_SEMI_AND
 %token LESS_LESS_MINUS AND_GREATER AND_GREATER_GREATER LESS_GREATER
 %token GREATER_BAR BAR_AND
@@ -375,8 +373,8 @@ static __thread REDIRECTEE redir;
 %start inputunit
 
 %left '&' ';' '\n'  yacc_EOF
-%left AND_AND EQUAL_EQUAL OR_OR
-%right  '|' BAR_AND '='
+%left AND_AND OR_OR
+%right  '|' BAR_AND 
 %%
 
 inputunit:	simple_list simple_list_terminator
@@ -1118,21 +1116,12 @@ list0:  	list1 '\n' newline_list
 			  else
 			    $$ = command_connect ($1, (COMMAND *)NULL, '&');
 			}
-	|	list1 '=' newline_list
-			{
-			  if ($1->type == cm_connection)
-			    $$ = connect_async_list ($1, (COMMAND *)NULL, '=');
-			  else
-			    $$ = command_connect ($1, (COMMAND *)NULL, '=');
-			}
 	|	list1 ';' newline_list
 
 	;
 
 list1:		list1 AND_AND newline_list list1
 			{ $$ = command_connect ($1, $4, AND_AND); }
-	|   list1 EQUAL_EQUAL newline_list list1
-			{ $$ = command_connect ($1, $4, EQUAL_EQUAL); }
 	|	list1 OR_OR newline_list list1
 			{ $$ = command_connect ($1, $4, OR_OR); }
 	|	list1 '&' newline_list list1
@@ -1141,13 +1130,6 @@ list1:		list1 AND_AND newline_list list1
 			    $$ = connect_async_list ($1, $4, '&');
 			  else
 			    $$ = command_connect ($1, $4, '&');
-			}
-	|	list1 '=' newline_list list1
-			{
-			  if ($1->type == cm_connection)
-			    $$ = connect_async_list ($1, $4, '=');
-			  else
-			    $$ = command_connect ($1, $4, '=');
 			}
 	|	list1 ';' newline_list list1
 			{ $$ = command_connect ($1, $4, ';'); }
@@ -1208,22 +1190,6 @@ simple_list:	simple_list1
 			      YYACCEPT;
 			    }
 			}
-	|	simple_list1 '='
-			{
-			  if ($1->type == cm_connection)
-			    $$ = connect_async_list ($1, (COMMAND *)NULL, '=');
-			  else
-			    $$ = command_connect ($1, (COMMAND *)NULL, '=');
-			  if (need_here_doc)
-			    gather_here_documents ();
-			  if ((parser_state & PST_CMDSUBST) && current_token == shell_eof_token)
-			    {
-			      global_command = $1;
-			      eof_encountered = 0;
-			      rewind_input_string ();
-			      YYACCEPT;
-			    }
-			}
 	|	simple_list1 ';'
 			{
 			  $$ = $1;
@@ -1241,8 +1207,6 @@ simple_list:	simple_list1
 
 simple_list1:	simple_list1 AND_AND newline_list simple_list1
 			{ $$ = command_connect ($1, $4, AND_AND); }
-	|   simple_list1 EQUAL_EQUAL newline_list simple_list1
-			{ $$ = command_connect ($1, $4, EQUAL_EQUAL); }
 	|	simple_list1 OR_OR newline_list simple_list1
 			{ $$ = command_connect ($1, $4, OR_OR); }
 	|	simple_list1 '&' simple_list1
@@ -1251,13 +1215,6 @@ simple_list1:	simple_list1 AND_AND newline_list simple_list1
 			    $$ = connect_async_list ($1, $3, '&');
 			  else
 			    $$ = command_connect ($1, $3, '&');
-			}
-	|	simple_list1 '=' simple_list1
-			{
-			  if ($1->type == cm_connection)
-			    $$ = connect_async_list ($1, $3, '=');
-			  else
-			    $$ = command_connect ($1, $3, '=');
 			}
 	|	simple_list1 ';' simple_list1
 			{ $$ = command_connect ($1, $3, ';'); }
@@ -2233,7 +2190,6 @@ STRING_INT_ALIST other_token_alist[] = {
   { "--", TIMEIGN },
   { "-p", TIMEOPT },
   { "&&", AND_AND },
-  { "==", EQUAL_EQUAL },
   { "||", OR_OR },
   { ">>", GREATER_GREATER },
   { "<<", LESS_LESS },
@@ -2261,7 +2217,6 @@ STRING_INT_ALIST other_token_alist[] = {
   { ")", ')' },
   { "|", '|' },
   { "&", '&' },
-  { "=", '=' },
   { "newline", '\n' },
   { (char *)NULL, 0}
 };
@@ -3057,10 +3012,8 @@ time_command_acceptable ()
 	return (0);
       /* FALLTHROUGH */
     case AND_AND:
-	case EQUAL_EQUAL:
     case OR_OR:
     case '&':
-	case '=':
     case WHILE:
     case DO:
     case UNTIL:
@@ -3314,7 +3267,7 @@ read_token (command)
       cond_lineno = line_number;
       parser_state |= PST_CONDEXPR;
       yylval.command = parse_cond_command ();
-      if (cond_token != COND_END&&cond_token!='='&&cond_token!=EQUAL_EQUAL)
+      if (cond_token != COND_END)
 	{
 	  cond_error ();
 	  return (-1);
@@ -3441,8 +3394,7 @@ itrace("shell_getc: bash_input.location.string = `%s'", bash_input.location.stri
 
 	    case '&':
 	      return (AND_AND);
-		case '=':
-		  return (EQUAL_EQUAL);
+
 
 	    case '|':
 	      return (OR_OR);
@@ -4780,37 +4732,11 @@ cond_and ()
 {
   COND_COM *l, *r;
 
-  l = cond_equal ();
+  l = cond_term ();
   if (cond_token == AND_AND)
     {
       r = cond_and ();
       l = make_cond_node (COND_AND, (WORD_DESC *)NULL, l, r);
-    }
-  return l;
-}
-static COND_COM *
-cond_equal ()
-{
-  COND_COM *l, *r;
-
-  l = cond_equal_equal ();
-  if (cond_token == '=')
-    {
-      r = cond_equal ();
-      l = make_cond_node (COND_EQUAL, (WORD_DESC *)NULL, l, r);
-    }
-  return l;
-}
-static COND_COM *
-cond_equal_equal ()
-{
-  COND_COM *l, *r;
-
-  l = cond_term ();
-  if (cond_token == EQUAL_EQUAL)
-    {
-      r = cond_equal_equal ();
-      l = make_cond_node (COND_EQUAL_EQUAL, (WORD_DESC *)NULL, l, r);
     }
   return l;
 }
@@ -4922,7 +4848,7 @@ cond_term ()
 	op = make_word_from_token (tok);  /* ( */
       /* There should be a check before blindly accepting the `)' that we have
 	 seen the opening `('. */
-      else if (tok == COND_END || tok == AND_AND || tok == OR_OR || tok == ')'|| tok == EQUAL_EQUAL || tok == '=')
+      else if (tok == COND_END || tok == AND_AND || tok == OR_OR || tok == ')')
 	{
 	  /* Special case.  [[ x ]] is equivalent to [[ -n x ]], just like
 	     the test command.  Similarly for [[ x && expr ]] or
@@ -5096,6 +5022,13 @@ read_token_word (character)
 
    /*arithmetic_substitution becomes non-zero if we see a $(()).*/
    int arithmetic_substitution = 0;
+
+   /*assignment becomes non-zero if we see a =.
+   A word is an assignment if it appears at the beginning of a simple command, 
+   or after another assignment word.  
+   This is context-dependent, so it cannot be handled in the grammar   
+*/
+	int assignment_flag = 0;
 
   if (token_buffer_size < TOKEN_DEFAULT_INITIAL_SIZE||token==NULL)
     token = (char *)xrealloc (token, token_buffer_size = TOKEN_DEFAULT_INITIAL_SIZE);
@@ -5401,11 +5334,7 @@ read_token_word (character)
 	  else
 	    shell_ungetc (peek_char);
 	}
-	else if (character=='=')
-	  {
-		  shell_ungetc (character);
-	  	  goto got_token;
-	  }
+
 #if defined (ARRAY_VARS)
       /* Identify possible array subscript assignment; match [...].  If
 	 parser_state&PST_COMPASSIGN, we need to parse [sub]=words treating
@@ -5579,12 +5508,17 @@ got_token:
   if (quoted)
     the_word->flags |= W_QUOTED;		/*(*/
   if (compound_assignment && token[token_index-1] == ')')
-    the_word->flags |= W_COMPASSIGN;
+  {
+	  the_word->flags |= W_COMPASSIGN;
+	  the_word->self_flags = W_ASSIGNMENT_SELF;
+  }
+    
   /* A word is an assignment if it appears at the beginning of a
      simple command, or after another assignment word.  This is
      context-dependent, so it cannot be handled in the grammar. */
   if (assignment (token, (parser_state & PST_COMPASSIGN) != 0))
     {
+	  the_word->self_flags = W_ASSIGNMENT_SELF;
       the_word->flags |= W_ASSIGNMENT;
       /* Don't perform word splitting on assignment statements. */
       if (assignment_acceptable (last_read_token) || (parser_state & PST_COMPASSIGN) != 0)
@@ -5667,11 +5601,9 @@ reserved_word_acceptable (toksym)
     case ')':
     case '|':
     case '&':
-	case '=':
     case '{':
     case '}':		/* XXX */
     case AND_AND:
-	case EQUAL_EQUAL:
     case BANG:
     case BAR_AND:
     case DO:
@@ -5762,7 +5694,7 @@ reset_readline_prompt ()
 static const int no_semi_successors[] = {
   '\n', '{', '(', ')', ';', '&', '|',
   CASE, DO, ELSE, IF, SEMI_SEMI, SEMI_AND, SEMI_SEMI_AND, THEN, UNTIL,
-  WHILE, AND_AND, EQUAL_EQUAL,OR_OR, IN,
+  WHILE, AND_AND,OR_OR, IN,
   0
 };
 

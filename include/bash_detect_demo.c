@@ -56,7 +56,7 @@ void print_tab(int num)
         printf("    ");
     }
 }
-char* self_flags_type[] ={"NULL","variable substitution","process substitution","brace","command substitution","arithmetic substitution","separator"};
+char* self_flags_type[] ={"NULL","variable substitution","process substitution","brace","command substitution","arithmetic substitution","separator","assignment"};
 char* command_type[] ={"cm_for","cm_case", "cm_while", "cm_if", "cm_simple", "cm_select",
 		    "cm_connection", "cm_function_def", "cm_until", "cm_group",
 		    "cm_arith", "cm_cond", "cm_arith_for", "cm_subshell", "cm_coproc"};
@@ -173,7 +173,7 @@ void print_conmand_for(struct for_com *for_com_content,int num){
 void print_conmand_simple(struct simple_com * simple,int num){
     printf("{\n");
     print_tab(num+1);
-    printf("wordispose_commandds:");
+    printf("words:");
     if (simple->words)
     {
         print_WORD_LIST(simple->words,num+1);
@@ -425,6 +425,7 @@ void* bash_lint_pthread(void* arg)
     }
     fp = fopen((char *)g_argv[temp.id], "r");
     int n = 0;
+    int num  = 0;
     while (NULL==feof(fp) && fgets(msg,1024-1,fp) > 0){
         // msg[strlen(msg)-1] = '\0';
         // printf("input_line:%s\n",msg);
@@ -436,10 +437,10 @@ void* bash_lint_pthread(void* arg)
         // parse_and_execute (savestring (msg), "-c", SEVAL_NOHIST|SEVAL_RESETLINE);
         run_one_command(msg);
         pthread_mutex_unlock(&gMutex);
-         if (global_command){
-            print_self_command(global_command,1);
+         if (!global_command){
+            // print_self_command(global_command,1);
              printf("the string:%s\n",msg);
-            
+                num++;
             
         }
         pthread_mutex_lock(&cMutex);
@@ -477,6 +478,7 @@ void* bash_lint_pthread(void* arg)
         memset(msg,0,1024);
         len = 0;
     }
+    printf("error number:%d\n",num);
     printf("the totall:%lf\n,the average time:%lf\n,the number n:%d\n",sum/CLOCKS_PER_SEC,sum/(n*CLOCKS_PER_SEC),n);
     fclose(fp);
 
