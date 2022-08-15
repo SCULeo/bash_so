@@ -1,0 +1,1 @@
+for f in *; do [[ -f "$f" ]] && mv "$f" "unix_$f"; done

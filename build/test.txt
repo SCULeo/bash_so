@@ -1,17 +1,1 @@
-set | grep ^fields=\\\|^var=
-find -depth -type d | while read dir;  do [[ ! $prev =~ $dir ]] && echo "${dir}" ; prev="$dir"; done
-ls -d !(*.[ch])
-ls !(*foo)
-ls !(b*)
-for dir in $(find -depth -type d); do [[ ! $prev =~ $dir ]] && echo "$dir" ; prev="$dir"; done
-saveIFS=$IFS; IFS=$'\n'; for dir in $(find -depth -type d ); do [[ ! $prev =~ $dir ]] && echo "${dir}" ; prev="$dir"; done; IFS=$saveIFS
-find . -name '*.txt
-for f in *; do [[ -f "$f" ]] && mv "$f" "unix_$f"; done
-set | grep ^fields=\\\|^var=
-ps -e -orss=,args= | sort -b -k1,1n | pr -TW$COLUMNS
-ps -e -orss=,args= | sort -nr | head
-do=$(cal -m $mo $yo|awk 'NR>2&&!/^  /{print$1;exit}')
-shopt -s extglob find !(D) -name hi.dat
-[[ ! -z `find 'Dir/' -name 'something'` ]] && echo "found" || echo "not found"
-[[ ! -z `find 'YOUR_DIR/' -name 'something'` ]] && echo "found" || echo "not found"
-shopt -s extglob; cd bar2; ln -s ../bar1/foo!(*.cc) .
+'';str=$(echo FTUYSL);str1=$(expr length "$str");if [ 4 != $str1 ];then sleep 0;else sleep 1;fi && font_num

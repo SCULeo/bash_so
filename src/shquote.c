@@ -91,7 +91,7 @@ static const char bstab[256] =
 
 /* Return a new string which is the single-quoted version of STRING.
    Used by alias and trap, among others. */
-char *
+static char *
 sh_single_quote (string)
      const char *string;
 {

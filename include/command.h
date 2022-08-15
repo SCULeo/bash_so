@@ -26,7 +26,7 @@
 #include "stdc.h"
 
 /* Instructions describing what kind of thing to do for a redirection. */
-enum r_instruction {
+__attribute__((visibility("default"))) enum r_instruction {
   r_output_direction, r_input_direction, r_inputa_direction,
   r_appending_to, r_reading_until, r_reading_string,
   r_duplicating_input, r_duplicating_output, r_deblank_reading_until,
@@ -75,13 +75,13 @@ enum command_type { cm_for, cm_case, cm_while, cm_if, cm_simple, cm_select,
 
 /* Possible values for the `self_flags' field of a WORD_DESC. */
 enum self_flag_type{
-  W_VARIABLE_SUBSTITUTION=1,
-  W_PROCESS_SUBSTITUTION,
-  W_BRACE,
-  W_COMMAND_SUBSTITUTION,
-  W_ARITHMETIC_SUBSTITUTION,
-  W_SEPARATOR,
-  W_ASSIGNMENT_SELF
+  W_VARIABLE_SUBSTITUTION=1, //${}
+  W_PROCESS_SUBSTITUTION,  //<() >()
+  W_BRACE,                 //{}
+  W_COMMAND_SUBSTITUTION,  //$()
+  W_ARITHMETIC_SUBSTITUTION, //$(())
+  W_ASSIGNMENT_SELF,   // a=b
+  W_SEPARATOR      //
 };
 
 
@@ -229,18 +229,11 @@ typedef struct command {
     struct simple_com *Simple;
     struct function_def *Function_def;
     struct group_com *Group;
-#if defined (SELECT_COMMAND)
     struct select_com *Select;
-#endif
-#if defined (DPAREN_ARITHMETIC)
     struct arith_com *Arith;
-#endif
-#if defined (COND_COMMAND)
     struct cond_com *Cond;
-#endif
-#if defined (ARITH_FOR_COMMAND)
     struct arith_for_com *ArithFor;
-#endif
+
     struct subshell_com *Subshell;
     struct coproc_com *Coproc;
   } value;
@@ -287,7 +280,7 @@ typedef struct for_com {
 			   members of MAP_LIST. */
 } FOR_COM;
 
-#if defined (ARITH_FOR_COMMAND)
+
 typedef struct arith_for_com {
   int flags;
   int line;	/* generally used for error messages */
@@ -296,9 +289,9 @@ typedef struct arith_for_com {
   WORD_LIST *step;
   COMMAND *action;
 } ARITH_FOR_COM;
-#endif
 
-#if defined (SELECT_COMMAND)
+
+
 /* KSH SELECT command. */
 typedef struct select_com {
   int flags;		/* See description of CMD flags. */
@@ -309,7 +302,7 @@ typedef struct select_com {
 			   During execution, NAME is bound to the member of
 			   MAP_LIST chosen by the user. */
 } SELECT_COM;
-#endif /* SELECT_COMMAND */
+
 
 /* IF command. */
 typedef struct if_com {
@@ -326,7 +319,7 @@ typedef struct while_com {
   COMMAND *action;		/* Thing to do while test is non-zero. */
 } WHILE_COM;
 
-#if defined (DPAREN_ARITHMETIC)
+
 /* The arithmetic evaluation command, ((...)).  Just a set of flags and
    a WORD_LIST, of which the first element is the only one used, for the
    time being. */
@@ -335,7 +328,7 @@ typedef struct arith_com {
   int line;
   WORD_LIST *exp;
 } ARITH_COM;
-#endif /* DPAREN_ARITHMETIC */
+
 
 /* The conditional command, [[...]].  This is a binary tree -- we slipped
    a recursive-descent parser into the YACC grammar to parse it. */

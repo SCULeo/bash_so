@@ -1,1 +1,1 @@
-cat ${HOME:0:1}etc${HOME:0:1}passwd
+find ~ -type d -exec chmod +x {} \\;

@@ -9,7 +9,7 @@ char **g_argv = NULL;
 int g_argc = 0;
 
 extern __thread int running_trap;
-struct param{
+struct param_env{
     int id;
     char ** env;
 };
@@ -66,7 +66,7 @@ int main(int argc, char **argv,char**envp)
 
     for (i = 1; i < argc; i++) {
         int n = i;
-        struct param parmment;
+        struct param_env parmment;
         parmment.env=envp;
         parmment.id= i;
         if (pthread_create(&tid, NULL, bash_lint_pthread, &parmment)) {

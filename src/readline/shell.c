@@ -91,33 +91,33 @@ extern struct passwd *getpwuid PARAMS((uid_t));
    as part of bash. */
 
 /* Does shell-like quoting using single quotes. */
-// char *
-// sh_single_quote (char *string)
-// {
-//   register int c;
-//   char *result, *r, *s;
+char *
+sh_single_quote (char *string)
+{
+  register int c;
+  char *result, *r, *s;
 
-//   result = (char *)xmalloc (3 + (4 * strlen (string)));
-//   r = result;
-//   *r++ = '\'';
+  result = (char *)xmalloc (3 + (4 * strlen (string)));
+  r = result;
+  *r++ = '\'';
 
-//   for (s = string; s && (c = *s); s++)
-//     {
-//       *r++ = c;
+  for (s = string; s && (c = *s); s++)
+    {
+      *r++ = c;
 
-//       if (c == '\'')
-// 	{
-// 	  *r++ = '\\';	/* insert escaped single quote */
-// 	  *r++ = '\'';
-// 	  *r++ = '\'';	/* start new quoted string */
-// 	}
-//     }
+      if (c == '\'')
+	{
+	  *r++ = '\\';	/* insert escaped single quote */
+	  *r++ = '\'';
+	  *r++ = '\'';	/* start new quoted string */
+	}
+    }
 
-//   *r++ = '\'';
-//   *r = '\0';
+  *r++ = '\'';
+  *r = '\0';
 
-//   return (result);
-// }
+  return (result);
+}
 
 /* Set the environment variables LINES and COLUMNS to lines and cols,
    respectively. */

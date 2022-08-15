@@ -1,30 +1,33 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include<stdlib.h>
+#include<string.h>
 #include <unistd.h>
 #include <malloc.h>
 #include "../include/shell.h" 
 #include"time.h"
-#include <pthread.h>
+#include"bash_detect_demo.h"
 #include "../include/common.h"
 #include "../include/general.h"
 #include "../include/execute_cmd.h"
-
+#include "../include/parser.h"
+#include "token_extract.h"
 char **g_argv = NULL;
 int g_argc = 0;
 pthread_mutex_t gMutex;
 pthread_mutex_t cMutex;
 pthread_mutex_t c2Mutex;
+extern __thread Param assign_param_list;
 // extern int parse_and_execute (char *string,const char *from_file,int flags);
+extern struct replace_word_param g_command_re_params[];
 extern __thread int running_trap;
-struct param{
+struct param_env{
     int id;
     char ** env;
 };
 
 
 
-extern int run_one_command (char *command);
+
 void print_self_command(COMMAND*command,int num);
 // 将strRes中的t替换为s，替换成功返回1，否则返回0。
 int StrReplace(char strRes[],char from[], char to[]) {
@@ -56,7 +59,7 @@ void print_tab(int num)
         printf("    ");
     }
 }
-char* self_flags_type[] ={"NULL","variable substitution","process substitution","brace","command substitution","arithmetic substitution","separator","assignment"};
+char* self_flags_type[] ={"NULL","variable substitution","process substitution","brace","command substitution","arithmetic substitution","assignment","single_quote"};
 char* command_type[] ={"cm_for","cm_case", "cm_while", "cm_if", "cm_simple", "cm_select",
 		    "cm_connection", "cm_function_def", "cm_until", "cm_group",
 		    "cm_arith", "cm_cond", "cm_arith_for", "cm_subshell", "cm_coproc"};
@@ -103,11 +106,52 @@ void print_redirect(REDIRECT*redirect,int num){
     print_tab(num);
     printf("}\n");
 }
+void run_and_print_command(char *word,int num)
+{
+    COMMAND *local_command = NULL;
+     pthread_mutex_lock(&gMutex);
+        // parse_and_execute (savestring (msg), "-c", SEVAL_NOHIST|SEVAL_RESETLINE);
+        run_one_command(word);
+        pthread_mutex_unlock(&gMutex);
+        local_command = global_command;
+        global_command = NULL;
+        if (local_command){
+             print_self_command(local_command,num);  
+        }
+        pthread_mutex_lock(&cMutex);
+        
+
+        current_token  = 0;
+        parse_and_execute_cleanup (-1);
+        pthread_mutex_unlock(&cMutex);
+
+        pthread_mutex_lock(&c2Mutex);
+        dispose_command(local_command);
+        pthread_mutex_unlock(&c2Mutex);
+}
 void print_word_desc(WORD_DESC*name,int num){
    
     printf("{\n");
     print_tab(num+1);
     printf("word:%s\n",name->word);
+    if (name->flags&&W_QUOTED \
+        &&name->word[0]!='\'' \
+        &&(name->word[0]=='\"'||name->word[0]=='`'))
+    {
+        char * temp_word=(char *)malloc(strlen(name->word)*sizeof(char));
+        memset(temp_word,0,strlen(temp_word));
+        // for (int i =1;i<strlen(name->word)-1;i++)
+        // {
+        //     temp_word[i-1] = name->word[i];
+        // }
+        strncpy(temp_word,&name->word[1],strlen(name->word)-2);
+
+        temp_word[strlen(name->word)-2] = '\0';
+        print_tab(num+2);
+        run_and_print_command(temp_word,num);
+        free(temp_word);
+    }
+    
     print_tab(num+1);
     printf("self_flags:%s\n",self_flags_type[name->self_flags]);
     print_tab(num);
@@ -127,6 +171,23 @@ void print_WORD_LIST(WORD_LIST*map_list,int num){
         print_tab(num+2);
         printf("word:%s\n",temp->word->word);
         print_tab(num+2);
+        if (temp->word->flags&&W_QUOTED \
+        &&temp->word->word[0]!='\'' \
+        &&(temp->word->word[0]=='\"'||temp->word->word[0]=='`'))
+    {
+
+        char * temp_word=(char *)malloc(strlen(temp->word->word)*sizeof(char));
+        memset(temp_word,0,strlen(temp_word));
+        // for (int i =1;i<strlen(temp->word->word)-1;i++)
+        // {
+        //     temp_word[i-1] = temp->word->word[i];
+        // }
+        strncpy(temp_word,&temp->word->word[1],strlen(temp->word->word)-2);
+        temp_word[strlen(temp->word->word)-2] = '\0';
+        print_tab(num+2);
+        run_and_print_command(temp_word,num+2);
+        free(temp_word);
+    }
         printf("self_flags:%s\n",self_flags_type[temp->word->self_flags]);
         print_tab(num+2);
         printf("flags:%d\n",temp->word->flags);
@@ -219,10 +280,20 @@ void pirnt_PATTERN_LIST(PATTERN_LIST *clauses,int num)
     printf("{\n");
     print_tab(num);
     print_WORD_LIST(clauses->patterns,num+1);
-    print_tab(num);
-    print_self_command(clauses->action,num+1);
+    print_tab(num+1);
+    
+    if (clauses->action)
+    {
+        
+        print_self_command(clauses->action,num+1);
+    }    
+    else
+    {
+        printf("action:NULL\n");
+    }
     print_tab(num);
     printf("}\n");
+    print_tab(num);
     if (clauses->next)
     {
         pirnt_PATTERN_LIST(clauses->next,num);
@@ -231,11 +302,11 @@ void pirnt_PATTERN_LIST(PATTERN_LIST *clauses,int num)
 void print_conmand_case(struct case_com * case_content,int num)
 {
     printf("{\n");
-    print_tab(num);
+    print_tab(num+1);
     print_word_desc(case_content->word,num+1);
-    print_tab(num);
+    print_tab(num+1);
     pirnt_PATTERN_LIST(case_content->clauses,num+1);
-    print_tab(num);
+    print_tab(num+1);
     printf("}\n");
 }
 void print_conmand_while(struct while_com* while_content,int num)
@@ -414,43 +485,135 @@ void* bash_lint_pthread(void* arg)
 {
     COMMAND *local_command =NULL;
     char msg[1024];
+    char buf[4096]={0};
     size_t len = 0;
     FILE *fp = NULL;
+    int feature[num_max_feature]={0};
+    int used =0;
     int begintime,endtime;
     double sum = 0;
-    struct param temp = *((struct param*)arg);
+    struct param_env temp = *((struct param_env*)arg);
     if(temp.id == NULL) {
         printf("Paramter error!\n");
         pthread_exit(NULL);
     }
     fp = fopen((char *)g_argv[temp.id], "r");
     int n = 0;
+    int errornum  = 0;
     int num  = 0;
+    FILE * fpwrite = fopen("data.txt","w");
+    char temp_add_word[1024]={0};
+    
     while (NULL==feof(fp) && fgets(msg,1024-1,fp) > 0){
         // msg[strlen(msg)-1] = '\0';
-        // printf("input_line:%s\n",msg);
-        global_command =NULL;
         
-
+        global_command =NULL;
+        local_command =NULL;
+        num++;
+        if(num == 94)
+        {
+            printf("msg:%s",msg);
+        }
         begintime = clock();
+        // printf("num:%d\n",num);
+        // printf("input_line:%s",msg);
         pthread_mutex_lock(&gMutex);
         // parse_and_execute (savestring (msg), "-c", SEVAL_NOHIST|SEVAL_RESETLINE);
         run_one_command(msg);
         pthread_mutex_unlock(&gMutex);
-         if (!global_command){
-            // print_self_command(global_command,1);
-             printf("the string:%s\n",msg);
-                num++;
+        if (global_command){
+             local_command = global_command;
+             global_command = NULL;
+            //  print_self_command(local_command,0);
+                memset(buf,0,strlen(buf));
+                memset(buf,0,sizeof(buf));
+             used = token_command(local_command,&buf,used,&feature);
+            for (int i =0 ;i<strlen(buf);i++)
+             {
+                 if(buf[i]=='\n'||buf[i]=='\r')
+                 {
+                     buf[i]= ' ';
+                 }
+             }
+             buf[used] = '\0';
+            // printf("msg:%s\n",buf);
+            // printf("buf:%s\n",buf);
+            // fprintf(fpwrite,"msg:%s",msg);
+            //  fprintf(fpwrite,"buf:%s\n",buf);
+             fprintf(fpwrite,"%s\n",buf);
+        }else
+        { 
+            if (msg[0]=='"')
+            {
+                sprintf(temp_add_word,"%s%s","\"",msg);
+
+            }
+            if (msg[0]=='\'')
+            {
+                sprintf(temp_add_word,"%s%s","\'",msg);
+
+            }
+            if (msg[0]=='&'||msg[0]=='|'||msg[0]==';')
+            {
+                
+                sprintf(temp_add_word,"%s%s","front_content",msg);
+                goto run_command;
+            }
+            if (msg[strlen(msg)-1]=='&'||msg[strlen(msg)-1]=='|')
+            {
+                sprintf(temp_add_word,"%s%s", msg, "back_content");
+                goto run_command;
+            }
             
+            
+        run_command:
+            pthread_mutex_lock(&gMutex);
+       
+            run_one_command(temp_add_word);
+            pthread_mutex_unlock(&gMutex);
+            if (global_command){
+             local_command = global_command;
+             global_command = NULL;
+            //  print_self_command(local_command,0);
+             used = token_command(local_command,&buf,used,&feature);
+
+            //  printf("input_line:%s",temp_add_word);
+            //  printf("buf:%s\n\n",buf);
+             for (int i =0 ;i<strlen(buf);i++)
+             {
+                 if(buf[i]=='\n'||buf[i]=='\r')
+                 {
+                     buf[i]= ' ';
+                 }
+             }
+             buf[used]='\0';
+            //  printf("msg:%s\n",temp_add_word);
+            //  printf("buf:%s\n",buf);
+            //  fprintf(fpwrite,"msg:%s",temp_add_word);
+            //  fprintf(fpwrite,"buf:%s\n",buf);
+             fprintf(fpwrite,"%s\n",buf);
+            }else{
+                errornum++;
+                // printf("msg:%s",msg);
+                // printf("temp_add_word:%s\n",temp_add_word);
+            }
         }
+        
+        
+        
+
         pthread_mutex_lock(&cMutex);
+        current_token  = 0;
         parse_and_execute_cleanup (-1);
         pthread_mutex_unlock(&cMutex);
 
         pthread_mutex_lock(&c2Mutex);
-        dispose_command(global_command);
+        dispose_command(local_command);
         pthread_mutex_unlock(&c2Mutex);
-        
+        memset(buf,0,strlen(buf));
+        clean_paramlist(&assign_param_list);
+        memset(&assign_param_list,0,sizeof(assign_param_list));
+        used = 0;
         endtime = clock();
         
         
@@ -478,9 +641,10 @@ void* bash_lint_pthread(void* arg)
         memset(msg,0,1024);
         len = 0;
     }
-    printf("error number:%d\n",num);
+    printf("error number:%d\n",errornum);
+    printf("num number:%d\n",num);
     printf("the totall:%lf\n,the average time:%lf\n,the number n:%d\n",sum/CLOCKS_PER_SEC,sum/(n*CLOCKS_PER_SEC),n);
-    fclose(fp);
+    fclose(fpwrite);
 
     // struct param temp = *((struct param*)arg);
     // char * line = (char *)g_argv[temp.id];
@@ -509,6 +673,10 @@ int main(int argc, char **argv,char**envp)
     g_argv = argv;
     g_argc = argc;
     float sum = 0;
+
+    init_hash_words(0);
+    init_regex(g_command_re_params,MAX_REPLACE_WORD_PARAM_NUM);
+   
 //    ppr_daemon();
     pthread_mutex_init(&gMutex, NULL);
     pthread_mutex_init(&cMutex, NULL);
@@ -527,7 +695,7 @@ int main(int argc, char **argv,char**envp)
 
     for (i = 1; i < argc; i++) {
         int n = i;
-        struct param parmment;
+        struct param_env parmment;
         parmment.env=envp;
         parmment.id= i;
         if (pthread_create(&tid, NULL, bash_lint_pthread, &parmment)) {

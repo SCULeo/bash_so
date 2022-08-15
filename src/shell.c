@@ -228,9 +228,9 @@ int protected_mode = 0;		/* No command substitution with --wordexp */
 int pretty_print_mode = 0;	/* pretty-print a shell script */
 
 #if defined (STRICT_POSIX)
-__thread int posixly_correct = 1;	/* Non-zero means posix.2 superset. */
+__attribute__((visibility("default"))) __thread int posixly_correct = 1;	/* Non-zero means posix.2 superset. */
 #else
-__thread int posixly_correct = 0;	/* Non-zero means posix.2 superset. */
+__attribute__((visibility("default"))) __thread int posixly_correct = 0;	/* Non-zero means posix.2 superset. */
 #endif
 
 /* Some long-winded argument names.  These are obviously new. */

