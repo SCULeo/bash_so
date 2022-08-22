@@ -5480,7 +5480,8 @@ read_token_word (character)
 			  brace = 1;
 			  token[token_index++]=character;
 			  strcpy (token + token_index, ttok);
-	  		  token_index += ttoklen;
+			  if (ttoklen>0)
+	  		  	token_index += ttoklen;
 			  goto got_token;
 			  
 			  
@@ -5525,7 +5526,13 @@ got_escaped_character:
 got_token:
 
   /* Calls to RESIZE_MALLOCED_BUFFER ensure there is sufficient room. */
-  token[token_index] = '\0';
+  if (token_index<strlen(token))
+    token[token_index] = '\0';
+  else
+  {
+    token[0] = '\0';
+    token_index = 0;
+  }
 
   /* Check to see what thing we should return.  If the last_read_token
      is a `<', or a `&', or the character which ended this token is
