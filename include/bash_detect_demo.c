@@ -123,10 +123,12 @@ void run_and_print_command(char *word,int num)
 
         current_token  = 0;
         parse_and_execute_cleanup (-1);
+        
         pthread_mutex_unlock(&cMutex);
 
         pthread_mutex_lock(&c2Mutex);
         dispose_command(local_command);
+        
         pthread_mutex_unlock(&c2Mutex);
 }
 void print_word_desc(WORD_DESC*name,int num){
@@ -503,17 +505,13 @@ void* bash_lint_pthread(void* arg)
     int num  = 0;
     FILE * fpwrite = fopen("data.txt","w");
     char temp_add_word[1024]={0};
-    
-    while (NULL==feof(fp) && fgets(msg,1024-1,fp) > 0){
+    while (NULL==feof(fp) && fgets(msg,4096-1,fp) > 0){
         // msg[strlen(msg)-1] = '\0';
         
         global_command =NULL;
         local_command =NULL;
         num++;
-        if(num == 94)
-        {
-            printf("msg:%s",msg);
-        }
+        
         begintime = clock();
         // printf("num:%d\n",num);
         // printf("input_line:%s",msg);
@@ -524,11 +522,11 @@ void* bash_lint_pthread(void* arg)
         if (global_command){
              local_command = global_command;
              global_command = NULL;
-            //  print_self_command(local_command,0);
+                print_self_command(local_command,0);
                 memset(buf,0,strlen(buf));
-                memset(buf,0,sizeof(buf));
+                
              used = token_command(local_command,&buf,used,&feature);
-            for (int i =0 ;i<strlen(buf);i++)
+            for (int i =0 ;i<strlen(buf);i++) 
              {
                  if(buf[i]=='\n'||buf[i]=='\r')
                  {
@@ -539,42 +537,44 @@ void* bash_lint_pthread(void* arg)
             // printf("msg:%s\n",buf);
             // printf("buf:%s\n",buf);
             // fprintf(fpwrite,"msg:%s",msg);
-            //  fprintf(fpwrite,"buf:%s\n",buf);
-             fprintf(fpwrite,"%s\n",buf);
+            //  fprintf(fpwrite,"token:%s\n\n",buf);
+            //  fprintf(fpwrite,"%s\n",buf);
         }else
         { 
+            sprintf(temp_add_word,"%s",msg);
             if (msg[0]=='"')
             {
-                sprintf(temp_add_word,"%s%s","\"",msg);
+                sprintf(temp_add_word,"%s%s","\"",temp_add_word);
 
             }
             if (msg[0]=='\'')
             {
-                sprintf(temp_add_word,"%s%s","\'",msg);
+                sprintf(temp_add_word,"%s%s","\'",temp_add_word);
 
             }
             if (msg[0]=='&'||msg[0]=='|'||msg[0]==';')
             {
                 
-                sprintf(temp_add_word,"%s%s","front_content",msg);
+                sprintf(temp_add_word,"%s%s","front_content",temp_add_word);
                 goto run_command;
             }
-            if (msg[strlen(msg)-1]=='&'||msg[strlen(msg)-1]=='|')
+            if (msg[strlen(msg)-2]=='&'||msg[strlen(msg)-2]=='|'||msg[strlen(msg)-2]=='/')
             {
-                sprintf(temp_add_word,"%s%s", msg, "back_content");
+                sprintf(temp_add_word,"%s%s", temp_add_word, "back_content");
                 goto run_command;
             }
+            
             
             
         run_command:
             pthread_mutex_lock(&gMutex);
-       
+            
             run_one_command(temp_add_word);
             pthread_mutex_unlock(&gMutex);
-            if (global_command){
+        if (global_command){
              local_command = global_command;
              global_command = NULL;
-            //  print_self_command(local_command,0);
+             print_self_command(local_command,0);
              used = token_command(local_command,&buf,used,&feature);
 
             //  printf("input_line:%s",temp_add_word);
@@ -587,28 +587,33 @@ void* bash_lint_pthread(void* arg)
                  }
              }
              buf[used]='\0';
+
             //  printf("msg:%s\n",temp_add_word);
             //  printf("buf:%s\n",buf);
-            //  fprintf(fpwrite,"msg:%s",temp_add_word);
-            //  fprintf(fpwrite,"buf:%s\n",buf);
-             fprintf(fpwrite,"%s\n",buf);
+             fprintf(fpwrite,"msg:%s",msg);
+             fprintf(fpwrite,"token:%s\n\n",buf);
+            //  fprintf(fpwrite,"%s\n",buf);
             }else{
                 errornum++;
-                // printf("msg:%s",msg);
+                printf("error msg:%s",msg);
                 // printf("temp_add_word:%s\n",temp_add_word);
             }
         }
         
         
-        
+        fprintf(fpwrite,"msg:%s",msg);
+        fprintf(fpwrite,"token:%s\n\n",buf);
 
         pthread_mutex_lock(&cMutex);
         current_token  = 0;
+        
         parse_and_execute_cleanup (-1);
+        
         pthread_mutex_unlock(&cMutex);
 
         pthread_mutex_lock(&c2Mutex);
         dispose_command(local_command);
+       
         pthread_mutex_unlock(&c2Mutex);
         memset(buf,0,strlen(buf));
         clean_paramlist(&assign_param_list);
@@ -640,6 +645,7 @@ void* bash_lint_pthread(void* arg)
         n++;
         memset(msg,0,1024);
         len = 0;
+        
     }
     printf("error number:%d\n",errornum);
     printf("num number:%d\n",num);

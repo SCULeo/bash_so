@@ -344,8 +344,9 @@ parse_command ()
     }
 
   current_command_line_count = 0;
+  
   r = yyparse ();
-
+  
   if (need_here_doc)
     gather_here_documents ();
 

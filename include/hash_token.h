@@ -75,11 +75,16 @@ extern SEARCH_LIST g_token_key_word_file_hash;
 extern token_hash_t g_token_keywords_hash;
 #define AI_LOOP_NUM 2
 
-#define COMMAND_INJECTION_KEYWORD_FILE "/home/hxg/work/test_c/sensitive_words.txt"
-#define COMMAND_INJECTION_ENV_FILE "/home/hxg/work/test_c/env_words.txt"
-#define COMMAND_INJECTION_FUZZY_SUFFIX_FILE "/home/hxg/work/test_c/fuzzy_suffix.txt"
-#define COMMAND_INJECTION_KEY_PATH_FILE "/home/hxg/work/test_c/key_path.txt"
-#define COMMAND_INJECTION_KEY_WORD_FILE_FILE "/home/hxg/work/test_c/key_word_file.txt"
+#define COMMAND_INJECTION_KEYWORD_FILE "./conf/sensitive_words.txt"
+#define COMMAND_INJECTION_ENV_FILE "./conf/env_words.txt"
+#define COMMAND_INJECTION_FUZZY_SUFFIX_FILE "./conf/fuzzy_suffix.txt"
+#define COMMAND_INJECTION_KEY_PATH_FILE "./conf/key_path.txt"
+#define COMMAND_INJECTION_KEY_WORD_FILE_FILE "./conf/key_word_file.txt"
+// #define COMMAND_INJECTION_KEYWORD_FILE "/home/hxg/work/test_c/sensitive_words.txt"
+// #define COMMAND_INJECTION_ENV_FILE "/home/hxg/work/test_c/env_words.txt"
+// #define COMMAND_INJECTION_FUZZY_SUFFIX_FILE "/home/hxg/work/test_c/fuzzy_suffix.txt"
+// #define COMMAND_INJECTION_KEY_PATH_FILE "/home/hxg/work/test_c/key_path.txt"
+// #define COMMAND_INJECTION_KEY_WORD_FILE_FILE "/home/hxg/work/test_c/key_word_file.txt"
 extern int visit_sens_information(char * buf, char * token,int used,int times);
 extern int visit_env_var(char * buf, char * token,int used,int times);
 #endif // _HASH_TOKEN_H_

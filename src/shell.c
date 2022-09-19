@@ -751,11 +751,7 @@ detect (argc, argv, env,path_line)
           executing = 1;
           run_one_command (command_execution_string);
           
-          if (global_command){
-            print_self_command(global_command,1);
-            // printf("the string:%s\n",line);
-                    }
-        n++;
+          
         }
     }
     fclose(fp);

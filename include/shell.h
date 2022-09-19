@@ -238,4 +238,5 @@ extern void restore_parser_state PARAMS((sh_parser_state_t *));
 
 extern sh_input_line_state_t *save_input_line_state PARAMS((sh_input_line_state_t *));
 extern void restore_input_line_state PARAMS((sh_input_line_state_t *));
+
 #endif // _SHELL_H_

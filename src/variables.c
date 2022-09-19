@@ -3955,7 +3955,7 @@ makunbound (name, vc)
 
   if (old_var && exported_p (old_var))
     array_needs_making++;
-
+  
   /* If we're unsetting a local variable and we're still executing inside
      the function, just mark the variable as invisible.  The function
      eventually called by pop_var_context() will clean it up later.  This

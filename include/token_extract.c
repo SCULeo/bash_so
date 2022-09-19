@@ -2,7 +2,7 @@
 #include<string.h>
 #include<stdlib.h>
 #include "token_extract.h"
-
+#include "../include/common.h"
 token_hash_t g_token_env_hash;
 SEARCH_LIST g_token_fuzzy_suffix_hash;
 SEARCH_LIST g_token_key_path_hash;
@@ -12,9 +12,13 @@ __thread Param assign_param_list={0};
 __thread Param used_param_list={0};
 int ai_update_times = 0;
 __thread int grep_flag = 0;
+__thread int grep_self_flag = 0;
 __thread int assignment_flag = 0;
 
-
+//函数申明
+int visit_command_parament(char * buf, char * string,int used,int * feature);
+int visit_file(char * buf, char * string,int used,int * feature);
+int run_and_visit_command(char *word,char *buf ,int used ,int *feature);
 struct replace_word_param g_command_re_params[] = REPLACE_WORD_PARAMS;
 
 static int init_single_replace_param(struct replace_word_param *param)
@@ -128,8 +132,6 @@ int  regex_match_cut(int word_param_num,char *word,char *line,int * num)
   int ret  =0;
   int return_num = 0;
   regmatch_t pmatch[1];
-  char * result = NULL;
-
   ret = regexec(&g_command_re_params[word_param_num].reg,word,nmatch,pmatch,0);
   if (ret == REG_NOERROR)
   {
@@ -145,24 +147,26 @@ int  regex_match_cut(int word_param_num,char *word,char *line,int * num)
  
   return return_num;
 }
-char * regex_match(int word_param_num,char *word)
+const char * regex_match(int word_param_num,char *word)
 {
   int nmatch = 1;
   int ret  =0;
   regmatch_t pmatch[1];
-  char * result = NULL;
+  const char * result = NULL;
   char * temp = NULL;
   memset(pmatch,0,sizeof(regmatch_t));
-
   ret = regexec(&g_command_re_params[word_param_num].reg,word,nmatch,pmatch,0);
   if (ret == REG_NOERROR)
       {
           result = g_command_re_params[word_param_num].sub;
+          
+          
   }
   if (temp)
   {
     free(temp);
   }
+  
   return result;
 }
 
@@ -181,14 +185,14 @@ int visit_number(char * buf,char *word,int used,int * feature)
 {
   int nmatch = 1;
   regmatch_t pmatch[1];
-  char * result  =NULL;
+  const char * result  =NULL;
   int ret = 0;
   
   ret  = regexec(&g_command_re_params[IS_DECIMAL_OR_OCTAL_NUM].reg,word,nmatch,pmatch,0);
   if (ret == REG_NOERROR)
   {
       result = g_command_re_params[IS_DECIMAL_OR_OCTAL_NUM].sub;
-      char * temp_result = NULL;
+      const char * temp_result = NULL;
       temp_result = regex_match(IS_DECTIMAL_IP_ADDRESS_NUM,word);
       if (temp_result!=NULL)
       {
@@ -226,7 +230,9 @@ return_result:
   
   if (result!=NULL)
   {
-     used += put_word_in_buf(buf+used,result,strlen(result),BUF_LEN-used,used);
+     char temp_result[1024]={0};
+     snprintf(temp_result,sizeof(result),"%s",result);
+     used += put_word_in_buf(buf+used,temp_result,strlen(temp_result),BUF_LEN-used,used);
      return used;
   }
   return used;
@@ -263,11 +269,9 @@ int visit_word_char(char * buf, char * token,char * word_char,int used,int *feat
 {
    int nmatch = 1;
   regmatch_t pmatch[1];
-  char * result  =NULL;
   int ret = 0;
   char line[4096]={0};
   char temp_string[4096]={0};
-  int temp_used = 0;
   if (strlen(word_char)>2048)
     return used;
   strcpy(temp_string,word_char);
@@ -345,6 +349,7 @@ int add_paramlist(char * word,Param * param)
 void clean_paramlist(Param * param)
 {
   int i;
+  
   for (i  = 0; i < param->num;i++)
   {
      free(param->param_list[i]);
@@ -377,7 +382,6 @@ int find_brace(char *word)
 {
   int i;
   int num = 0;
-  int brace;
   int brace_start = 0;
   for (i=0;i<strlen(word);i++)
   {
@@ -394,7 +398,7 @@ int find_brace(char *word)
   return num;
 }
 
-int visit_qutoed(char * buf ,char *word,int used,int *feature)
+int visit_qutoed(char * buf ,char *word,int used,int *feature,int is_single_quoted)
 {
         
         char temp_word[4096]={0};
@@ -404,18 +408,18 @@ int visit_qutoed(char * buf ,char *word,int used,int *feature)
           return used;
         }
 
-        strncpy(&temp_word,&word[1],strlen(word)-2);
+        strncpy(temp_word,&word[1],strlen(word)-2);
         temp_word[strlen(word)-2] = '\0';
         if ((temp_word[strlen(word)-3]=='$')||strstr(temp_word,"$/"))
         {
           used+= put_word_in_buf(buf+used,"maybe_regex",strlen("maybe_regex"),BUF_LEN-used,used);
 
-        }else
+        }else if (!is_single_quoted)
         {
-          used = run_and_visit_command(&temp_word,buf,used,feature);
+          used = run_and_visit_command(temp_word,buf,used,feature);
         }
         
-        free(temp_word);
+        
 
         return used;
        
@@ -443,7 +447,9 @@ int run_and_visit_command(char *word,char *buf ,int used ,int *feature)
         }
         pthread_mutex_lock(&cMutex);
         current_token  = 0;
+        
         parse_and_execute_cleanup (-1);
+        
         pthread_mutex_unlock(&cMutex);
 
         pthread_mutex_lock(&c2Mutex);
@@ -516,7 +522,6 @@ finish:
 int visit_value(char * buf, char * word,int used,int * feature)
 {
        int flag = 0;
-       char * temp = word;
        if (word[0]!='$')
        {
          return used;
@@ -552,21 +557,21 @@ int visit_aissignment(char * buf, WORD_DESC * word,int used,int * feature)
 {
         char param_name[1024]={0};
         assignment_flag = 1;
-       get_paramname(word->word,&param_name);
+       get_paramname(word->word,param_name);
        feature[num_of_assignment]++;
        used+=put_word_in_buf(buf+used,"flag_assign",strlen("flag_assign"),BUF_LEN-used,used);
        int flag = 0;
 
-       flag = visit_env_var(buf,&param_name,used,ai_update_times);
+       flag = visit_env_var(buf,param_name,used,ai_update_times);
        if (flag)
        {
          used+=put_word_in_buf(buf+used,"reassign_env",strlen("reassign_env"),BUF_LEN-used,used);
-       }else if (IF_word_in_paramlist(&param_name,&assign_param_list)){
+       }else if (IF_word_in_paramlist(param_name,&assign_param_list)){
          used+=put_word_in_buf(buf+used,"assigned_param",strlen("assigned_param"),BUF_LEN-used,used);
          
        }else{
          used+=put_word_in_buf(buf+used,"unassigned_param",strlen("unassigned_param"),BUF_LEN-used,used);
-         add_paramlist(&param_name,&assign_param_list);
+         add_paramlist(param_name,&assign_param_list);
        }
 
       used+=put_word_in_buf(buf+used,"=",strlen("="),BUF_LEN-used,used);
@@ -616,7 +621,7 @@ int visit_path(char * buf, char * string,int used,int * feature)
 {
   int nmatch = 1;
   regmatch_t pmatch[1];
-  char * result  =NULL;
+  const char * result  =NULL;
   int ret = 0;
   
 
@@ -624,7 +629,7 @@ int visit_path(char * buf, char * string,int used,int * feature)
   {
      result = "current_path";
   }
-  char * temp_result = NULL;
+  const char * temp_result = NULL;
   temp_result  = regex_match(IS_PATH,string);
   
   if (temp_result)
@@ -644,12 +649,12 @@ int visit_path(char * buf, char * string,int used,int * feature)
       }
       char temp_file[1024]={0};
 
-      if (get_file_from_path(string,&temp_file)==-1)
+      if (get_file_from_path(string,temp_file)==-1)
       {
         goto return_result;
       }
       
-      ret = regexec(&g_command_re_params[IS_FILE].reg,&temp_file,nmatch,pmatch,0);
+      ret = regexec(&g_command_re_params[IS_FILE].reg,temp_file,nmatch,pmatch,0);
 
       if (ret == REG_NOERROR)
       {
@@ -663,7 +668,9 @@ int visit_path(char * buf, char * string,int used,int * feature)
   
   if (result!=NULL)
   {
-     used += put_word_in_buf(buf+used,result,strlen(result),BUF_LEN-used,used);
+     char temp_result[1024]={0};
+     snprintf(temp_result,sizeof(result),"%s",result);
+     used += put_word_in_buf(buf+used,temp_result,strlen(temp_result),BUF_LEN-used,used);
      return used;
   }
   return used;
@@ -674,10 +681,8 @@ int visit_no_change(char * buf, char * string,int used,int * feature)
 {
   int ret = 0;
   char * result =NULL;
-  char *temp_file = NULL;
   int nmatch = 1;
-  char line[1024]={0};
-  regmatch_t pmatch[1];
+  regmatch_t pmatch[1];  
   int temp_used = 0;
   if ((strstr(string,"'")||strstr(string,"\"")||strstr(string,"`")||strstr(string,"\\"))&&!strstr(string," "))
       remove_quote_mark(string);
@@ -833,7 +838,6 @@ int visit_command_parament(char * buf, char * string,int used,int * feature)
 {
   int ret = 0;
   char * result =NULL;
-  char *temp_file = NULL;
   int nmatch = 1;
   char line[4096]={0};
   regmatch_t pmatch[1];
@@ -881,11 +885,11 @@ int visit_file(char * buf, char * string,int used,int * feature)
   regmatch_t pmatch[1];
 
   
-  if(get_file_from_path(string,&temp_file)==-1)
+  if(get_file_from_path(string,temp_file)==-1)
   {
     ret = regexec(&g_command_re_params[IS_FILE].reg,string,nmatch,pmatch,0);
   }else{
-    ret = regexec(&g_command_re_params[IS_FILE].reg,&temp_file,nmatch,pmatch,0);
+    ret = regexec(&g_command_re_params[IS_FILE].reg,temp_file,nmatch,pmatch,0);
   }
     
   
@@ -895,7 +899,6 @@ int visit_file(char * buf, char * string,int used,int * feature)
   {
       result = "maybe_file";
   }
-return_position:
 
   if (result!=NULL)
   {
@@ -905,42 +908,31 @@ return_position:
   return used;
 }
 
-int deal_word(char * buf, WORD_DESC * word,int used,int * feature)
+int deal_word(char * buf, char * word,int used,int * feature,char * token_prefix,int is_quoted)
 {
   int temp_used = 0;
-   feature[num_of_word]++;
-   char token_prefix[20] ={0};
-   if (!word->word)
-   {
-     return used;
-   }
-   if (word->flags&W_QUOTED)
-   {
-     strcpy(token_prefix,"string");
-   }else{
-     strcpy(token_prefix,"word");
-   }
-  if(strstr(word->word,"~"))
+   
+  if(strstr(word,"~"))
   {
     feature[num_of_tilde]++;
     used += put_word_in_buf(buf+used,"~",strlen("~"),BUF_LEN-used,used);
     goto finish;
   }
    //判断word是否是环境变量
-  if (visit_env_var(buf,word->word,used,ai_update_times))
+  if (visit_env_var(buf,word,used,ai_update_times))
   {
     used += put_word_in_buf(buf+used,"$env",strlen("$env"),BUF_LEN-used,used);
     goto finish;
   }
-  //判断word->word字段是否是纯数字
-  temp_used  = visit_number(buf,word->word,used,feature);
+  //判断word字段是否是纯数字
+  temp_used  = visit_number(buf,word,used,feature);
    if (used != temp_used)
    {
      used = temp_used;
      goto finish;
    }
-  //判断word->word字段是否属于敏感信息
-   temp_used = visit_sens_information(buf,word->word,used,ai_update_times);
+  //判断word字段是否属于敏感信息
+   temp_used = visit_sens_information(buf,word,used,ai_update_times);
   if (used != temp_used)
    {
      used = temp_used;
@@ -948,22 +940,22 @@ int deal_word(char * buf, WORD_DESC * word,int used,int * feature)
    }
 
 
-   //判断word->word字段是否是路径相关
-  temp_used  = visit_path(buf,word->word,used,feature);
+   //判断word字段是否是路径相关
+  temp_used  = visit_path(buf,word,used,feature);
    if (used != temp_used)
    {
      used = temp_used;
      goto finish;
    }
-   //判断word->word字段是否是文件
-   temp_used  = visit_file(buf,word->word,used,feature);
+   //判断word字段是否是文件
+   temp_used  = visit_file(buf,word,used,feature);
    if (used != temp_used)
    {
      used = temp_used;
      goto finish;
    }
-    //判断word->word字段是否是短横线开头的参数
-    temp_used  = visit_command_parament(buf,word->word,used,feature);
+    //判断word字段是否是短横线开头的参数
+    temp_used  = visit_command_parament(buf,word,used,feature);
    if (used != temp_used)
    {
      used = temp_used;
@@ -972,52 +964,60 @@ int deal_word(char * buf, WORD_DESC * word,int used,int * feature)
 
    
   //参数泛化，如果该参数存在于assign_param_list列表中，那么该参数泛化为$assigned，否则泛化为$unassigned
-  temp_used = visit_value(buf,word->word,used,feature);
+  temp_used = visit_value(buf,word,used,feature);
   if (used != temp_used)
    {
      used = temp_used;
      goto finish;
    }
   
-  if (grep_flag)
+  if (grep_flag&&!grep_self_flag)
   {
-     temp_used = visit_word_char(buf,token_prefix,word->word,used,feature);
+     temp_used = visit_word_char(buf,token_prefix,word,used,feature);
   }
   else
   {
-     temp_used = visit_no_change(buf,word->word,used,feature);
+    grep_self_flag = 0;
+     temp_used = visit_no_change(buf,word,used,feature);
   }
   if (used != temp_used)
    {
      used = temp_used;
      goto finish;
    }
-  if (word->flags&&W_QUOTED \
-        &&word->word[0]!='\'' \
-        &&(word->word[0]=='`'))
+  if (is_quoted \
+        &&strlen(word)>3 \
+        &&word[0]!='\"')
     {
-      used = visit_qutoed(buf,word->word,used,feature) ; 
+      // 这里visit_qutoed 1 代表是单引号，0 代表是 `（间隔号）
+      if(word[0]=='\'')
+      {
+        used = visit_qutoed(buf,word,used,feature,1); 
+      }else{
+        used = visit_qutoed(buf,word,used,feature,0);
+      }
+      
       goto finish;
     }
-  used  = word_length_generailzation(buf,token_prefix,word->word,used);
+  used  = word_length_generailzation(buf,token_prefix,word,used);
   
   finish:
   return used;
 }
-int deal_arith_substitution(char * buf, WORD_DESC * word,int used,int * feature)
-{
-  char * p =NULL;
-  int len =0;
-  char temp_word[4096]={0};
-  if (temp_word>2048)
-  {
-    return used;
-  }
-  strncpy(temp_word,&word->word[3],strlen(word->word)-5);
-  used+=put_word_in_buf(buf+used,"flag_arith_sub",strlen("flag_arith_sub"),BUF_LEN-used,used);
-  used = run_and_visit_command(temp_word,buf,used,feature);
-  used+=put_word_in_buf(buf+used,"flag_arith_sub_end",strlen("flag_arith_sub_end"),BUF_LEN-used,used);
-}
+// int deal_arith_substitution(char * buf, WORD_DESC * word,int used,int * feature)
+// {
+//   char * p =NULL;
+//   int len =0;
+//   char temp_word[4096]={0};
+//   if (temp_word>2048)
+//   {
+//     return used;
+//   }
+//   strncpy(temp_word,&word->word[3],strlen(word->word)-5);
+//   used+=put_word_in_buf(buf+used,"flag_arith_sub",strlen("flag_arith_sub"),BUF_LEN-used,used);
+//   used = run_and_visit_command(temp_word,buf,used,feature);
+//   used+=put_word_in_buf(buf+used,"flag_arith_sub_end",strlen("flag_arith_sub_end"),BUF_LEN-used,used);
+// }
 
 /**
  * @brief 命令替换
@@ -1059,7 +1059,7 @@ int deal_command_substitution(char * buf, WORD_DESC * word,int used,int * featur
     if (strlen(word->word)>2)
       {
           
-          int ret = regex_match_cut(QUTOED_WORD,word->word,&line,&num);
+          int ret = regex_match_cut(QUTOED_WORD,word->word,line,&num);
           line[strlen(line)-1]='\0';
           if (ret)
           {
@@ -1067,11 +1067,7 @@ int deal_command_substitution(char * buf, WORD_DESC * word,int used,int * featur
           }   
       }
     used+=put_word_in_buf(buf+used,"flag_cmdsub_end",strlen("flag_cmdsub_end"),BUF_LEN-used,used);
-  }
- 
-  
-finish:
-  
+  } 
   return used;
 }
 /**
@@ -1092,14 +1088,14 @@ finish:
 int deal_variable_substitution(char * buf, WORD_DESC * word,int used,int * feature)
 {
   char * p =NULL;
-  int len =0;
+  int len =strlen(word->word);
   char temp_word[4096]={0};
-  if (strlen(word->word)>2048)
+  if (len>2048)
   {
     return used;
   }
-  strncpy(temp_word,word->word,strlen(word->word));
-  temp_word[strlen(word->word)-1] = '\0';
+  strncpy(temp_word,word->word,len);
+  temp_word[len-1] = '\0';
   if (strstr(word->word,":")){
     p = strtok(temp_word,":");
     
@@ -1141,7 +1137,7 @@ deal:
           goto finish;
         }
   }
-  if (temp_word[0]=='$'&&temp_word[1]=='{'||temp_word[strlen(temp_word)-1]=='}')
+  if (temp_word[0]=='$'&&temp_word[1]=='{'&&temp_word[strlen(temp_word)-1]=='}')
   { 
       feature[num_of_parameter]++;
       
@@ -1184,13 +1180,12 @@ finish:
 int deal_process_substitution(char * buf, WORD_DESC * word,int used,int * feature)
 {
 
-    char * p = NULL;
-    int len = 0;
+    int len = strlen(word->word);
     char temp_word[4096]={0};
     used+=put_word_in_buf(buf+used,"flag_procsub",strlen("flag_procsub"),BUF_LEN-used,used); 
-    if (strlen(word->word)>2&&strlen(word->word)<2048)
+    if (len>2&&len<2048)
       {
-          strncpy(temp_word,&word->word[2],strlen(word->word)-3);
+          strncpy(temp_word,&word->word[2],len-3);
           used = run_and_visit_command(temp_word,buf,used,feature);
     
       }
@@ -1227,7 +1222,7 @@ int visit_word(char * buf, WORD_DESC * word,int used,int * feature)
      }
      case W_BRACE:
      {
-       feature[num_of_expansioned_word_call]+=find_brace(word);
+       feature[num_of_expansioned_word_call]+=find_brace(word->word);
        break;
      }
      case W_COMMAND_SUBSTITUTION:
@@ -1253,18 +1248,30 @@ int visit_word(char * buf, WORD_DESC * word,int used,int * feature)
      }
    }
    
-   
-   used = deal_word(buf,word,used,feature);
+   char token_prefix[20] ={0};
+   if (!word->word)
+   {
+     goto finish;
+   }
+   feature[num_of_word]++;
+   if (word->flags&W_QUOTED)
+   {
+     strcpy(token_prefix,"string");
+   }else{
+     strcpy(token_prefix,"word");
+   }
+    
+   used = deal_word(buf,word->word,used,feature,token_prefix,word->flags&&W_QUOTED);
   
    
 finish:
    return used;
 }
 
-int visit_heredoc_body(REDIRECT*redirect,char *buf,int used,int feature)
+int visit_heredoc_body(REDIRECT*redirect,char *buf,int used,int* feature)
 {
-      used = visit_word(buf,redirect->redirectee.filename->word,used,feature);
-      used = visit_word(buf,redirect->here_doc_eof,used,feature);
+      used = visit_word(buf,redirect->redirectee.filename,used,feature);
+      used = deal_word(buf,redirect->here_doc_eof,used,feature,"word",redirect->flags&&W_QUOTED);
 
       return used;
 }
@@ -1278,7 +1285,6 @@ int visit_heredoc_header(REDIRECT*redirect,char *buf,int used,int *feature)
 {
 
     int kill_leading;
-    char *x;
     kill_leading = redirect->instruction == r_deblank_reading_until;
     char line[4096] = {0};
     // redirect结构通常分为三部分，首部，连接符号，尾部
@@ -1287,13 +1293,13 @@ int visit_heredoc_header(REDIRECT*redirect,char *buf,int used,int *feature)
     // 头部泛化
     if (redirect->rflags & REDIR_VARASSIGN)
     {
-        used = visit_word(buf,redirect->redirector.filename->word,used,feature);
+        used = visit_word(buf,redirect->redirector.filename,used,feature);
     }
     else if (redirect->redirector.dest != 0)
     {
      char temp[2] ={0};
      itoa(temp,redirect->redirector.dest,2);
-     used+=put_word_in_buf(buf+used,temp,strlen(strlen(temp)),BUF_LEN-used,used);
+     used+=put_word_in_buf(buf+used,temp,strlen(temp),BUF_LEN-used,used);
     }
 
     // 连接符号泛化
@@ -1431,7 +1437,7 @@ int visit_redirection(char *buf,REDIRECT*redirect,int used,int* feature)
       used+=put_word_in_buf(buf+used,line,strlen(line),BUF_LEN-used,used);
       memset(line,0,sizeof(line));
 
-      used = visit_word(buf,line,used,feature);
+      used = visit_word(buf,redirectee,used,feature);
       break;
 
     case r_deblank_reading_until:
@@ -1766,7 +1772,8 @@ int visit_word_list(char * buf,WORD_LIST * list,int used,int* feature,char * sep
   int local_assignment_flag = 0;
   for (w = list; w; w = w->next)
   {
-    grep_flag = is_grep_type(w->word);
+    grep_flag = is_grep_type(w->word->word);
+    grep_self_flag = grep_flag;
     used = visit_word(buf,w->word,used,feature);
     if (strcmp(separate," ")!=0)
     {
@@ -1807,7 +1814,7 @@ int visit_command_for(FOR_COM *for_com_content,char *buf,int used,int* feature)
   feature[num_of_for]++;
   used += put_word_in_buf(buf+used,"for",strlen("for"),BUF_LEN-used,used);
   used =  visit_word(buf,for_com_content->name,used,feature);
-  add_paramlist(for_com_content->name,&assign_param_list);
+  add_paramlist(for_com_content->name->word,&assign_param_list);
   feature[num_of_parameter]++;
   used += put_word_in_buf(buf+used,"in",strlen("in"),BUF_LEN-used,used);
   used =  visit_word_list(buf,for_com_content->map_list,used,feature," ");
@@ -1897,7 +1904,7 @@ int visit_op_connector(char * buf,int op,int used,int * feature)
 	    {
 	    case '&':
         {
-		      char* c = op;
+		      char c = op;
           snprintf(line, sizeof(line), "op_%c",c);
           used += put_word_in_buf(buf+used,line,strlen(line),BUF_LEN-used,used);
           memset(line,0,sizeof(line));
@@ -1906,7 +1913,7 @@ int visit_op_connector(char * buf,int op,int used,int * feature)
         }
 	    case '|':
 	      {
-		      char* c = op;
+		      char c = op;
           snprintf(line, sizeof(line), "pipe_%c",c);
           used += put_word_in_buf(buf+used,line,strlen(line),BUF_LEN-used,used);
           memset(line,0,sizeof(line));
@@ -2044,21 +2051,21 @@ int visit_conmand_cond(COND_COM * cond_com_content,char*buf,int used,int *featur
 int visit_conmand_arithfor(ARITH_FOR_COM * arith_for_com_content,char*buf,int used,int *feature)
 {
   feature[num_of_arith_for]++;
-  used+= put_word_in_buf(buf+used,"for ((",strlen("for (("),BUF_LEN-used,used);
-  used = visit_word_list(buf,arith_for_com_content->init,used,feature," ");
-  used+= put_word_in_buf(buf+used,";",strlen(";"),BUF_LEN-used,used);
-  visit_word_list (buf,arith_for_com_content->test,used,feature," ");
-  used+= put_word_in_buf(buf+used,";",strlen(";"),BUF_LEN-used,used);
-  visit_word_list (buf,arith_for_com_content->step,used,feature," ");
-  used+= put_word_in_buf(buf+used,"))",strlen("))"),BUF_LEN-used,used);
-  used+= put_word_in_buf(buf+used,"do",strlen("do"),BUF_LEN-used,used);
+  used+= put_word_in_buf(buf+used,"reserved_for",strlen("reserved_for"),BUF_LEN-used,used);
+  // used = visit_word_list(buf,arith_for_com_content->init,used,feature," ");
+  used+= put_word_in_buf(buf+used,"for_exp",strlen("for_exp"),BUF_LEN-used,used);
+  // visit_word_list (buf,arith_for_com_content->test,used,feature," ");
+  used+= put_word_in_buf(buf+used,"reserved_;",strlen("reserved_;"),BUF_LEN-used,used);
+  // visit_word_list (buf,arith_for_com_content->step,used,feature," ");
+  // used+= put_word_in_buf(buf+used,"))",strlen("))"),BUF_LEN-used,used);
+  used+= put_word_in_buf(buf+used,"reserved_do",strlen("reserved_do"),BUF_LEN-used,used);
   if (arith_for_com_content->action)
   {
      used = visit_command_string_internal (buf,arith_for_com_content->action,used,feature);
   }
    
-  used+= put_word_in_buf(buf+used,";",strlen(";"),BUF_LEN-used,used);
-  used+= put_word_in_buf(buf+used,"done",strlen("done"),BUF_LEN-used,used);
+  used+= put_word_in_buf(buf+used,"reserved_;",strlen("reserved_;"),BUF_LEN-used,used);
+  used+= put_word_in_buf(buf+used,"reserved_done",strlen("reserved_done"),BUF_LEN-used,used);
   return used;
 }
 int visit_conmand_subshell(SUBSHELL_COM * subshell_com_content,char*buf,int used,int *feature)

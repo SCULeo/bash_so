@@ -5506,7 +5506,7 @@ got_character:
 got_escaped_character:
 	RESIZE_MALLOCED_BUFFER (token, token_index, 1, token_buffer_size,
 				TOKEN_DEFAULT_GROW_SIZE);
-
+	  
       token[token_index++] = character;
 
       all_digit_token &= DIGIT (character);
@@ -5526,12 +5526,12 @@ got_escaped_character:
 got_token:
 
   /* Calls to RESIZE_MALLOCED_BUFFER ensure there is sufficient room. */
-  if (token_index<strlen(token))
+  if (token_index<=strlen(token))
     token[token_index] = '\0';
   else
   {
-    token[0] = '\0';
-    token_index = 0;
+    token[strlen(token)] = '\0';
+    token_index = strlen(token);
   }
 
   /* Check to see what thing we should return.  If the last_read_token
